@@ -1,0 +1,24 @@
+[SpinPerf] === spin perf probe ===
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;sysbisect=0;forcebisect=0;mode=rigid;spin=0;dur=1.5;gravity=0;mega=0
+[SpinPerf] worlds: manager.IsReady=True simulating=True
+[SpinPerf] load: D:\rpgvx + magpie\BPRC 2026.3.2 proj\bpsim-main\perf/angel.csv exists=True
+[SpinPerf] settings: gravityY=0.00 solver=8 fixedStep=0.02 joints=True strengthFactor=4.00 infinite=False selfCollision=False mega=False breakSpeed=8.00
+[SpinPerf] load result=True error=none
+[SpinPerf] build scene: parts=20405 center=-363.50,1507.00
+[SpinPerf] start: StartSimulation 822.50ms
+[SpinPerf] simulation: parts=20405 joints=53690 components=1 jointEntities=180832
+[SpinPerf] mega: active=False body=0:0 parts=0 mass=0.00 keyBits=15 breakSpeed=0.00
+[SpinPerf] diag: extMap=483 circuit: elements=2463 nodes=8152 unknowns=0 sample: Bpsim.Parts.PartTypeInfo=src0/dir0/str250.00 Bpsim.Parts.PartTypeInfo=src0/dir0/str250.00 Bpsim.Parts.PartTypeInfo=src0/dir0/str250.00 Bpsim.Parts.PartTypeInfo=src0/dir0/str250.00 buildMap=10255 simMap=10255 jointEntities=180832 constrPairs=180832 partsWithSource=11090/20405 partsWithNeighbour=20405 partJointInfoOnPart=0 part0=(-228,1530) type=MetalFrame#121 src=1 dir=15 str=600.00 map=1 partSimulationSystem=on
+[SpinPerf] frame: targetFrameRate=-1 timeScale=1.00 fixedDelta=0.02
+[SpinPerf] fix=1: 连通块过滤已就位（重复 apply 改动=0）
+[SpinPerf] coverage: parts=20405 existing=20405 collider=20405 component=20405 isolated=20405 uncreatedCollider=0 filters nonEmptyCategories=1 multiBit=0 zeroBit=0 bit1=20405
+[SpinPerf] joint pairs: total=180832 collisionEnabled=0 (PhysicsConstrainedBodyPair.EnableCollision=0 表示这一对不生成接触)
+[SpinPerf] [warmup] frames=2 fps=2.82 ms avg/p50/p95/p99/max=372.94/500.04/500.04/500.04/500.04 min=245.84 slow=2 gc0=0 joints=53690->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [single w=0.00] frames=7 fps=4.14 ms avg/p50/p95/p99/max=243.10/231.80/274.28/274.28/274.28 min=224.02 slow=7 gc0=0 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] systems after: SceneRenderSystem=1 PartRenderSystem=1 PartSimulationSystem=1 ConstraintSystem=1 FrameJointSystem=1 TransparentFrameSystem=1 ColoredFrameSystem=1 PartGameplayManager=1  behaviorsRunning=True
+[SpinPerf] filters end: components=1 mismatches=0 joints=180832
+[SpinPerf] coverage: parts=20405 existing=20405 collider=20405 component=20405 isolated=20405 uncreatedCollider=0 filters nonEmptyCategories=1 multiBit=0 zeroBit=0 bit1=20405
+[SpinPerf] gravity restored to -9.81
+[SpinPerf] settings restored: solver=8 joints=True strengthFactor=4.00 infinite=False
+[SpinPerf] mega restored to False breakSpeed=8.00
+[SpinPerf] === done ===

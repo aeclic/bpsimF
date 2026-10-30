@@ -1,0 +1,422 @@
+[
+    {
+        "name": "Part_Engine_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "0.9,0.9,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Engine",
+                "partTier": "Regular",
+                "partIndex": 0
+            }
+        ],
+        "children": [
+            {
+                "name": "EngineVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Engine_0_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Engine_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "0.9,0.9,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Engine",
+                "partTier": "Common",
+                "partIndex": 1
+            }
+        ],
+        "children": [
+            {
+                "name": "EngineVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.034,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Engine_1_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Engine_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "0.9,0.9,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Engine",
+                "partTier": "Rare",
+                "partIndex": 2
+            }
+        ],
+        "children": [
+            {
+                "name": "EngineVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.024,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Engine_2_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Engine_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "0.9,0.9,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Engine",
+                "partTier": "Epic",
+                "partIndex": 3
+            }
+        ],
+        "children": [
+            {
+                "name": "EngineVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1.0404,1.0404,1.0404"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Engine_3_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Engine_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "0.9,0.9,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Engine",
+                "partTier": "Rare",
+                "partIndex": 4
+            }
+        ],
+        "children": [
+            {
+                "name": "EngineVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1.0404,1.0404,1.0404"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Engine_4_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Engine_5",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "0.9,0.9,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Engine",
+                "partTier": "Epic",
+                "partIndex": 5
+            }
+        ],
+        "children": [
+            {
+                "name": "EngineVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1.0404,1.0404,1.0404"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Engine_5_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Engine_6",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "0.9,0.9,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Engine",
+                "partTier": "Common",
+                "partIndex": 6
+            }
+        ],
+        "children": [
+            {
+                "name": "EngineVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.034,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Engine_6_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    }
+]

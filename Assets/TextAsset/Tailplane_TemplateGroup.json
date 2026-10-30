@@ -1,0 +1,182 @@
+[
+    {
+        "name": "Part_Tailplane_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0.06,0.03,0",
+                "size": "0.85,0.75,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Tailplane",
+                "partTier": "Regular",
+                "partIndex": 0
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Tailplane_0_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_Tailplane_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0.06,0.03,0",
+                "size": "0.85,0.75,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Tailplane",
+                "partTier": "Common",
+                "partIndex": 1
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Tailplane_1_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_Tailplane_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0.06,0.03,0",
+                "size": "0.85,0.75,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Tailplane",
+                "partTier": "Rare",
+                "partIndex": 2
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Tailplane_2_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_Tailplane_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0.06,0.03,0",
+                "size": "0.85,0.75,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "Tailplane",
+                "partTier": "Epic",
+                "partIndex": 3
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Tailplane_3_1"
+            }
+        ],
+        "children": []
+    }
+]

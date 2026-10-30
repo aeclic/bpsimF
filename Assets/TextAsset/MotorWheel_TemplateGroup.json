@@ -1,0 +1,1025 @@
+[
+    {
+        "name": "Part_MotorWheel_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "MotorWheel",
+                "partTier": "Regular",
+                "partIndex": 0
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Sphere",
+                "enabled": true,
+                "center": "0,-0.075,0",
+                "size": "0,0,0",
+                "radius": 0.45,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.025,
+                "staticFriction": 0.0,
+                "bounceCombine": "Multiply",
+                "frictionCombine": "Multiply"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_MotorWheel_0_2"
+            }
+        ],
+        "children": [
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.075,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SpokeSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0.075,0.2",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_0_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.04326272,-0.06546092,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.05,0.4,0",
+                        "size": "0.6,0.2,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "FakeWheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.07500052,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0.075,0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_0_1"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_MotorWheel_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "MotorWheel",
+                "partTier": "Common",
+                "partIndex": 1
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Sphere",
+                "enabled": true,
+                "center": "0,-0.075,0",
+                "size": "0,0,0",
+                "radius": 0.45,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.025,
+                "staticFriction": 0.0,
+                "bounceCombine": "Multiply",
+                "frictionCombine": "Multiply"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_MotorWheel_1_3"
+            }
+        ],
+        "children": [
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.088,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SpokeSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0.005,0.2",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_1_4"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.04326272,-0.06546092,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.05,0.4,0",
+                        "size": "0.6,0.2,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "FakeWheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.07500052,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.009,0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_1_5"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_MotorWheel_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "MotorWheel",
+                "partTier": "Rare",
+                "partIndex": 2
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Sphere",
+                "enabled": true,
+                "center": "0,-0.075,0",
+                "size": "0,0,0",
+                "radius": 0.45,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.025,
+                "staticFriction": 0.0,
+                "bounceCombine": "Multiply",
+                "frictionCombine": "Multiply"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_MotorWheel_2_3"
+            }
+        ],
+        "children": [
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.003,-0.079,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SpokeSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0.2",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_2_4"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.04326272,-0.06546092,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.05,0.4,0",
+                        "size": "0.6,0.2,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "FakeWheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.004,-0.075,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_2_5"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_MotorWheel_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "MotorWheel",
+                "partTier": "Rare",
+                "partIndex": 3
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Sphere",
+                "enabled": true,
+                "center": "0,-0.075,0",
+                "size": "0,0,0",
+                "radius": 0.45,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.025,
+                "staticFriction": 0.0,
+                "bounceCombine": "Multiply",
+                "frictionCombine": "Multiply"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_MotorWheel_3_3"
+            }
+        ],
+        "children": [
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.01,-0.08,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SpokeSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0.2",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_3_4"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.04326272,-0.06546092,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.05,0.4,0",
+                        "size": "0.6,0.2,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "FakeWheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.07500052,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0.6",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_3_5"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_MotorWheel_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "MotorWheel",
+                "partTier": "Epic",
+                "partIndex": 4
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Sphere",
+                "enabled": true,
+                "center": "0,-0.075,0",
+                "size": "0,0,0",
+                "radius": 0.45,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.025,
+                "staticFriction": 0.0,
+                "bounceCombine": "Multiply",
+                "frictionCombine": "Multiply"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_MotorWheel_4_3"
+            }
+        ],
+        "children": [
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.075,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SpokeSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0.2",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_4_4"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_4_5"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.04326272,-0.06546092,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.05,0.4,0",
+                        "size": "0.6,0.2,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_MotorWheel_5",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "MotorWheel",
+                "partTier": "Common",
+                "partIndex": 5
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Sphere",
+                "enabled": true,
+                "center": "0,-0.075,0",
+                "size": "0,0,0",
+                "radius": 0.45,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.025,
+                "staticFriction": 0.0,
+                "bounceCombine": "Multiply",
+                "frictionCombine": "Multiply"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_MotorWheel_5_3"
+            }
+        ],
+        "children": [
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.088,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SpokeSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0.005,0.058",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_5_4"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.04326272,-0.06546092,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.05,0.4,0",
+                        "size": "0.6,0.2,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "FakeWheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.07500052,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.009,0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_5_5"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_MotorWheel_6",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "MotorWheel",
+                "partTier": "Epic",
+                "partIndex": 6
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Sphere",
+                "enabled": true,
+                "center": "0,-0.075,0",
+                "size": "0,0,0",
+                "radius": 0.45,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.025,
+                "staticFriction": 0.0,
+                "bounceCombine": "Multiply",
+                "frictionCombine": "Multiply"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_MotorWheel_6_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.075,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_MotorWheel_6_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.04326272,-0.06546092,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.05,0.4,0",
+                        "size": "0.6,0.2,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    }
+]

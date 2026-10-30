@@ -1,0 +1,8 @@
+<linker>
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="Bpsim.Mods.BepInExHost.BpsimModHost" preserve="all" />
+    <type fullname="Bpsim.Modding.ModManifest" preserve="all" />
+    <type fullname="Bpsim.Modding.IBpsimMod" preserve="all" />
+    <type fullname="Bpsim.Parts.FrameShapeSystem" preserve="all" />
+  </assembly>
+</linker>

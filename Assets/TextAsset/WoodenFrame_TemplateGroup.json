@@ -1,0 +1,478 @@
+[
+    {
+        "name": "Part_WoodenFrame_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Regular",
+                "partIndex": 0
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_0_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Common",
+                "partIndex": 1
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_1_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Common",
+                "partIndex": 2
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_2_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Rare",
+                "partIndex": 3
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_3_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Epic",
+                "partIndex": 4
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_4_1"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_5",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Epic",
+                "partIndex": 5
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_5_0"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_6",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Rare",
+                "partIndex": 6
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_6_1"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_7",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Rare",
+                "partIndex": 7
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_7_1"
+            }
+        ],
+        "children": []
+    },
+    {
+        "name": "Part_WoodenFrame_8",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Epic",
+                "partIndex": 8
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_8_2"
+            }
+        ],
+        "children": [
+            {
+                "name": "Part_WoodenFrame_09_SET (1)",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.6",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_WoodenFrame_8_1"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_WoodenFrame_9",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,0,0",
+                "size": "1,1,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "WoodenFrame",
+                "partTier": "Common",
+                "partIndex": 9
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_WoodenFrame_9_0"
+            }
+        ],
+        "children": []
+    }
+]

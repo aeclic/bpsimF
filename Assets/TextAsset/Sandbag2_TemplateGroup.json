@@ -1,0 +1,446 @@
+[
+    {
+        "name": "Part_Sandbag2_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Sandbag2",
+                "partTier": "Regular",
+                "partIndex": 0
+            }
+        ],
+        "children": [
+            {
+                "name": "SandbagVisualization",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Sandbag_0_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Sandbag2Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Icon_Sandbag_2 (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0.1",
+                                "localRotation": "0,0,0.05866513,0.9982777",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag2_0_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Icon_Sandbag_1 (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.2497557,0.02592468,0",
+                                "localRotation": "0,0,-0.1525376,0.9882977",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag2_0_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Sandbag2_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Sandbag2",
+                "partTier": "Common",
+                "partIndex": 1
+            }
+        ],
+        "children": [
+            {
+                "name": "SandbagVisualization",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Sandbag_1_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Sandbag2Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.09999847",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SandbagVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.148,-0.009,-0.1",
+                                "localRotation": "0,0,0.07970851,0.9968182",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag_1_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "SandbagVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.086,0.083,0",
+                                "localRotation": "0,0,-0.1249157,0.9921674",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag_1_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Sandbag2_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Sandbag2",
+                "partTier": "Rare",
+                "partIndex": 2
+            }
+        ],
+        "children": [
+            {
+                "name": "SandbagVisualization",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Sandbag_2_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Sandbag2Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.09999847",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SandbagVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.137,-0.055,0",
+                                "localRotation": "0,0,-0.07975761,0.9968144",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag_2_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "SandbagVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.182,-0.137,-0.1",
+                                "localRotation": "0,0,0.1259028,0.9920426",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag_2_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Sandbag2_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Sandbag2",
+                "partTier": "Epic",
+                "partIndex": 3
+            }
+        ],
+        "children": [
+            {
+                "name": "SandbagVisualization",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Sandbag_3_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Sandbag2Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.09999847",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "SandbagVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.149,0.007,0",
+                                "localRotation": "0,0,-0.09518412,0.9954597",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag_3_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "SandbagVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.156,-0.071,-0.1",
+                                "localRotation": "0,0,0.1176186,0.9930589",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Sandbag_3_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    }
+]

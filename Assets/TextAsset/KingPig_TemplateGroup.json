@@ -1,0 +1,1790 @@
+[
+    {
+        "name": "Part_KingPig_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "KingPig",
+                "partTier": "Regular",
+                "partIndex": 0
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Capsule",
+                "enabled": true,
+                "center": "0,0.4,0",
+                "size": "0,0,0",
+                "radius": 0.9,
+                "height": 2.1,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "KingPig",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.35,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Body",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_0_5"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Face",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Crown",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.5168462,1.07,-0.001",
+                                        "localRotation": "0,0,-0.1736482,0.9848078",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_6"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Ears",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "-0.5497072,0.9293751,-0.001",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_7"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Face",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,-0.1",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_8"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "MouthPos",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,-0.4578124,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Collider",
+                                                "colliderType": "Capsule",
+                                                "enabled": true,
+                                                "center": "0,0,0",
+                                                "size": "0,0,0",
+                                                "radius": 0.3,
+                                                "height": 1.2,
+                                                "bounciness": 0.0,
+                                                "dynamicFriction": 0.6,
+                                                "staticFriction": 0.6,
+                                                "bounceCombine": "Average",
+                                                "frictionCombine": "Average"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "PupilMover",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,0",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "Eyes",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "-0.006823719,0.0096654,-0.1100001",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_0_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_KingPig_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "KingPig",
+                "partTier": "Common",
+                "partIndex": 1
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Capsule",
+                "enabled": true,
+                "center": "0,0.4,0",
+                "size": "0,0,0",
+                "radius": 0.9,
+                "height": 2.1,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "KingPig",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.35,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Body",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_0_5"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Face",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Crown",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.481,0.948,-0.001",
+                                        "localRotation": "0,0,0.5537751,0.8326663",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_1_4"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Glasses",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.03500009,-0.01500091,-0.2",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "0.99,0.99,0.99"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_1_5"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Ears",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "-0.5497072,0.9293751,-0.001",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_7"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Face",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,-0.1",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_8"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "MouthPos",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,-0.4578124,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Collider",
+                                                "colliderType": "Capsule",
+                                                "enabled": true,
+                                                "center": "0,0,0",
+                                                "size": "0,0,0",
+                                                "radius": 0.3,
+                                                "height": 1.2,
+                                                "bounciness": 0.0,
+                                                "dynamicFriction": 0.6,
+                                                "staticFriction": 0.6,
+                                                "bounceCombine": "Average",
+                                                "frictionCombine": "Average"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "PupilMover",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,0",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "Eyes",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "-0.006823719,0.0096654,-0.1100001",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_0_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_KingPig_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "KingPig",
+                "partTier": "Rare",
+                "partIndex": 2
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Capsule",
+                "enabled": true,
+                "center": "0,0.4,0",
+                "size": "0,0,0",
+                "radius": 0.9,
+                "height": 2.1,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "KingPig",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.35,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Body",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_0_5"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Face",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Crown",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.5168462,1.07,-0.05",
+                                        "localRotation": "0,0,-0.1736482,0.9848078",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_2_4"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Ears",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "-0.5497072,0.9293751,-0.001",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_7"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "monokel",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.9559999,-0.04499969,-0.3",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_2_5"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Face",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,-0.1",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_8"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "MouthPos",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,-0.4578124,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Collider",
+                                                "colliderType": "Capsule",
+                                                "enabled": true,
+                                                "center": "0,0,0",
+                                                "size": "0,0,0",
+                                                "radius": 0.3,
+                                                "height": 1.2,
+                                                "bounciness": 0.0,
+                                                "dynamicFriction": 0.6,
+                                                "staticFriction": 0.6,
+                                                "bounceCombine": "Average",
+                                                "frictionCombine": "Average"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "PupilMover",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,0",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "Eyes",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "-0.006823719,0.0096654,-0.1100001",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_0_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_KingPig_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "KingPig",
+                "partTier": "Epic",
+                "partIndex": 3
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Capsule",
+                "enabled": true,
+                "center": "0,0.4,0",
+                "size": "0,0,0",
+                "radius": 0.9,
+                "height": 2.1,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "KingPig",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.35,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Body",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_0_5"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Face",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Crown",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.007,0.509,-0.001",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_3_2"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Face",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,-0.1",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_8"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "MouthPos",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,-0.4578124,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Collider",
+                                                "colliderType": "Capsule",
+                                                "enabled": true,
+                                                "center": "0,0,0",
+                                                "size": "0,0,0",
+                                                "radius": 0.3,
+                                                "height": 1.2,
+                                                "bounciness": 0.0,
+                                                "dynamicFriction": 0.6,
+                                                "staticFriction": 0.6,
+                                                "bounceCombine": "Average",
+                                                "frictionCombine": "Average"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "PupilMover",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,0",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "Eyes",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "-0.006823719,0.0096654,-0.1100001",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_0_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_KingPig_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "KingPig",
+                "partTier": "Rare",
+                "partIndex": 4
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Capsule",
+                "enabled": true,
+                "center": "0,0.4,0",
+                "size": "0,0,0",
+                "radius": 0.9,
+                "height": 2.1,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "KingPig",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.35,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Body",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_0_5"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Face",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Crown",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "-0.017,1.059,-0.05",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_4_1"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Glasses",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.035,-0.08,-0.2",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_4_2"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Face",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,-0.04,-0.1",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_8"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "MouthPos",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,-0.46,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Collider",
+                                                "colliderType": "Capsule",
+                                                "enabled": true,
+                                                "center": "0,0,0",
+                                                "size": "0,0,0",
+                                                "radius": 0.3,
+                                                "height": 1.2,
+                                                "bounciness": 0.0,
+                                                "dynamicFriction": 0.6,
+                                                "staticFriction": 0.6,
+                                                "bounceCombine": "Average",
+                                                "frictionCombine": "Average"
+                                            }
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "name": "Moustache",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0.04,-0.56,-0.2",
+                                                "localRotation": "0,0,0.7071068,0.7071067",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_4_3"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "PupilMover",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,-0.04,0",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "Eyes",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "-0.006823719,0.0096654,-0.1100001",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_0_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_KingPig_5",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "KingPig",
+                "partTier": "Epic",
+                "partIndex": 5
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Capsule",
+                "enabled": true,
+                "center": "0,0.4,0",
+                "size": "0,0,0",
+                "radius": 0.9,
+                "height": 2.1,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "KingPig",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.35,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Body",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_0_5"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Beard",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.0359993,-0.9139992,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_5_3"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Face",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,-0.15",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Face",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,-0.2",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_8"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "MouthPos",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,-0.4578124,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Collider",
+                                                "colliderType": "Capsule",
+                                                "enabled": true,
+                                                "center": "0,0,0",
+                                                "size": "0,0,0",
+                                                "radius": 0.3,
+                                                "height": 1.2,
+                                                "bounciness": 0.0,
+                                                "dynamicFriction": 0.6,
+                                                "staticFriction": 0.6,
+                                                "bounceCombine": "Average",
+                                                "frictionCombine": "Average"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Crown",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.4290009,0.9499992,-0.1",
+                                        "localRotation": "0,0,0.6225147,0.7826081",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_5_4"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Ears",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "-0.5860004,0.8659996,-0.01",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_7"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "PupilMover",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,0",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "Eyes",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "-0.006823719,0.0096654,-0.3",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_0_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_KingPig_6",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "KingPig",
+                "partTier": "Common",
+                "partIndex": 6
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Capsule",
+                "enabled": true,
+                "center": "0,0.4,0",
+                "size": "0,0,0",
+                "radius": 0.9,
+                "height": 2.1,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "KingPig",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.35,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Body",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_6_5"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Beard",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.004000187,-0.6480004,-0.05",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_KingPig_6_6"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "Face",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.012,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Crown",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.013,1.096,-0.01",
+                                        "localRotation": "0,0,0.03905974,0.9992369",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_6_7"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Ears",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "-0.5497072,0.9293751,-0.001",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_7"
+                                    }
+                                ],
+                                "children": []
+                            },
+                            {
+                                "name": "Face",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "-0.034,0,-0.1",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_KingPig_0_8"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "MouthPos",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,-0.4578124,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Collider",
+                                                "colliderType": "Capsule",
+                                                "enabled": true,
+                                                "center": "0,0,0",
+                                                "size": "0,0,0",
+                                                "radius": 0.3,
+                                                "height": 1.2,
+                                                "bounciness": 0.0,
+                                                "dynamicFriction": 0.6,
+                                                "staticFriction": 0.6,
+                                                "bounceCombine": "Average",
+                                                "frictionCombine": "Average"
+                                            }
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "name": "Glasses (1)",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0,0.45,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "0.99,0.99,0.99"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_6_8"
+                                            }
+                                        ],
+                                        "children": []
+                                    },
+                                    {
+                                        "name": "Moustache",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "0.06,-0.45,-0.1",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "0.99,0.99,0.99"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_6_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "PupilMover",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0,0,0",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "name": "Eyes",
+                                        "layer": 6,
+                                        "active": true,
+                                        "components": [
+                                            {
+                                                "type": "Transform",
+                                                "localPosition": "-0.006823719,0.0096654,-0.1100001",
+                                                "localRotation": "0,0,0,1",
+                                                "localScale": "1,1,1"
+                                            },
+                                            {
+                                                "type": "Renderer",
+                                                "enabled": true,
+                                                "material": {
+                                                    "name": "Part_Texture_0"
+                                                }
+                                            },
+                                            {
+                                                "type": "Sprite",
+                                                "name": "Part_KingPig_0_9"
+                                            }
+                                        ],
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

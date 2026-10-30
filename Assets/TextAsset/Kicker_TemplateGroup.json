@@ -1,0 +1,872 @@
+[
+    {
+        "name": "Part_Kicker_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Part",
+                "partType": "Kicker",
+                "partTier": "Regular",
+                "partIndex": 0
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.008453846,0",
+                "size": "1.061103,0.4918759,0",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Kicker_0_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "Deg0",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_0_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg90",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_0_2"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg180",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg270",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_0_4"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "VerticalCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.002809003,0,0",
+                        "size": "0.4984221,1.059353,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Kicker_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Part",
+                "partType": "Kicker",
+                "partTier": "Common",
+                "partIndex": 1
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.008453846,0",
+                "size": "1.061103,0.4918759,0",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Kicker_1_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "Deg0",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_1_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg90",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_1_2"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg180",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg270",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_1_4"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "VerticalCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.002809003,0,0",
+                        "size": "0.4984221,1.059353,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Kicker_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Part",
+                "partType": "Kicker",
+                "partTier": "Rare",
+                "partIndex": 2
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.008453846,0",
+                "size": "1.061103,0.4918759,0",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Kicker_2_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "Deg0",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_2_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg90",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_MetalWing_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg180",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_2_2"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg270",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "VerticalCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.002809003,0,0",
+                        "size": "0.4984221,1.059353,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Kicker_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Part",
+                "partType": "Kicker",
+                "partTier": "Epic",
+                "partIndex": 3
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.008453846,0",
+                "size": "1.061103,0.4918759,0",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Kicker_3_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "Deg0",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.017,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_3_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg90",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.021,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_3_2"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg180",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.019,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg270",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.017,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_3_4"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "VerticalCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.002809003,0,0",
+                        "size": "0.4984221,1.059353,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Kicker_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Part",
+                "partType": "Kicker",
+                "partTier": "Rare",
+                "partIndex": 4
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.008453846,0",
+                "size": "1.061103,0.4918759,0",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_Kicker_4_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "Deg0",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_4_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg90",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_4_2"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg180",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_4_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Deg270",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Kicker_4_4"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "VerticalCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "-0.002809003,0,0",
+                        "size": "0.4984221,1.059353,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    }
+]

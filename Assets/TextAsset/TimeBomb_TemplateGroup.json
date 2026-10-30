@@ -1,0 +1,62 @@
+[
+    {
+        "name": "Part_TimeBomb_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.8,0.5,0",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.7,
+                "staticFriction": 0.5,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            },
+            {
+                "type": "Part",
+                "partType": "TimeBomb",
+                "partTier": "Regular",
+                "partIndex": 0
+            }
+        ],
+        "children": [
+            {
+                "name": "Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_TimeBomb_0_0"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    }
+]

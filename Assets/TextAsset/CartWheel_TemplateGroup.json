@@ -1,0 +1,1306 @@
+[
+    {
+        "name": "Part_CartWheel_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Regular",
+                "partIndex": 0
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_0_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_0_1"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Common",
+                "partIndex": 1
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_1_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_1_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Common",
+                "partIndex": 2
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_2_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_2_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Common",
+                "partIndex": 3
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_3_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_3_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Rare",
+                "partIndex": 4
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_4_0"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.021,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_4_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_5",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Epic",
+                "partIndex": 5
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_5_2"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.024,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_5_3"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_6",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Epic",
+                "partIndex": 6
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_6_3"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.021,-0.095",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_6_4"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "WheelSprite (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.039,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_6_5"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_7",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Rare",
+                "partIndex": 7
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_7_2"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.024,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_7_3"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_8",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Rare",
+                "partIndex": 8
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_8_2"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.024,-0.09999847",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_8_3"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_9",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Epic",
+                "partIndex": 9
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_9_3"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.024,-0.095",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_9_4"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "WheelSprite (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.02399969,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_9_5"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_CartWheel_10",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "CartWheel",
+                "partTier": "Rare",
+                "partIndex": 10
+            },
+            {
+                "type": "Renderer",
+                "enabled": true,
+                "material": {
+                    "name": "Part_Texture_0"
+                }
+            },
+            {
+                "type": "Sprite",
+                "name": "Part_CartWheel_10_2"
+            }
+        ],
+        "children": [
+            {
+                "name": "SupportCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.3402374,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0.85,0.25,1",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "WheelPivot",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.01121712,-0.1308608,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0.005,0",
+                        "size": "0,0,0",
+                        "radius": 0.36,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.05,
+                        "staticFriction": 0.0,
+                        "bounceCombine": "Multiply",
+                        "frictionCombine": "Multiply"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "WheelSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,-0.044,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_CartWheel_10_3"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,0 +1,10 @@
+{
+  "name": "com.unity.render-pipelines.universal",
+  "version": "14.0.7",
+  "unity": "2022.2",
+  "displayName": "Universal RP (shader library only)",
+  "description": "HLSL-only vendored copy of the Editor's built-in URP 14.0.7, providing the #include targets used by bpsim-main's restored shaders. Contains no C#, no .asmdef and no .shader, so it produces no assembly and no duplicate shader names.",
+  "dependencies": {
+    "com.unity.render-pipelines.core": "14.0.7"
+  }
+}

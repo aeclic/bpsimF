@@ -1,0 +1,150 @@
+[
+    {
+        "name": "Part_Pumpkin_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Pumpkin",
+                "partTier": "Regular",
+                "partIndex": 0
+            }
+        ],
+        "children": [
+            {
+                "name": "PumpkinCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,-0.06,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Capsule",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.32,
+                        "height": 0.85,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Pumpkin_0_1"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_Pumpkin_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Pumpkin",
+                "partTier": "Common",
+                "partIndex": 1
+            }
+        ],
+        "children": [
+            {
+                "name": "PumpkinCollider",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.013,-0.117,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1.000084,0.8334032,0.8334032"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Capsule",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.32,
+                        "height": 0.85,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.7,
+                        "staticFriction": 0.5,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.004,-0.098,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Pumpkin_1_1"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    }
+]

@@ -1,0 +1,1154 @@
+[
+    {
+        "key": {
+            "partType": "Pig",
+            "partStartIndex": 0,
+            "partEndIndex": 19
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 20.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "TimeBomb",
+            "partStartIndex": 0,
+            "partEndIndex": 0
+        },
+        "value": {
+            "mass": 0.2,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Down",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "KingPig",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 4.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Egg",
+            "partStartIndex": 0,
+            "partEndIndex": 0
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Egg",
+            "partStartIndex": 1,
+            "partEndIndex": 1
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Egg",
+            "partStartIndex": 2,
+            "partEndIndex": 5
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "WoodenFrame",
+            "partStartIndex": 0,
+            "partEndIndex": 9
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "WoodenFrame",
+            "partStartIndex": 10,
+            "partEndIndex": 10
+        },
+        "value": {
+            "mass": 2.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MetalFrame",
+            "partStartIndex": 0,
+            "partEndIndex": 129
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MetalFrame",
+            "partStartIndex": 130,
+            "partEndIndex": 130
+        },
+        "value": {
+            "mass": 4.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MetalFrame",
+            "partStartIndex": 131,
+            "partEndIndex": 133
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "CartWheel",
+            "partStartIndex": 0,
+            "partEndIndex": 10
+        },
+        "value": {
+            "mass": 0.75,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Up",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "NormalWheel",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 0.75,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Up",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "SmallWheel",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 0.25,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Up",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "SmallWheel",
+            "partStartIndex": 7,
+            "partEndIndex": 7
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 100.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Up",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MotorWheel",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 100.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Up",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MotorWheel",
+            "partStartIndex": 7,
+            "partEndIndex": 7
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 100.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": true,
+            "connectionDirection": "Up",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Bellows",
+            "partStartIndex": 0,
+            "partEndIndex": 7
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Right",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Fan",
+            "partStartIndex": 0,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 30.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Left",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Fan",
+            "partStartIndex": 5,
+            "partEndIndex": 5
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 10.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Left",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Propeller",
+            "partStartIndex": 0,
+            "partEndIndex": 9
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 100.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Left",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Rotor",
+            "partStartIndex": 0,
+            "partEndIndex": 9
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 200.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Down",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "CokeBottle",
+            "partStartIndex": 0,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "SodaBottle",
+            "partStartIndex": 0,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Rocket",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "RedRocket",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "EngineSmall",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.25,
+            "enginePower": 50.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "EngineSmall",
+            "partStartIndex": 4,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 0.25,
+            "enginePower": 5000.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "EngineSmall",
+            "partStartIndex": 5,
+            "partEndIndex": 9
+        },
+        "value": {
+            "mass": 0.25,
+            "enginePower": 50.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Engine",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 150.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "EngineBig",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 1.5,
+            "enginePower": 250.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Umbrella",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 0.2,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Down",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "PoweredUmbrella",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.2,
+            "enginePower": 0.0,
+            "powerConsumption": 100.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Down",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Spring",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.3,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": true,
+            "connectionDirection": "UpAndDown",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "TNT",
+            "partStartIndex": 0,
+            "partEndIndex": 5
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "TNT",
+            "partStartIndex": 6,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 2.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Rope",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": true,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Rope",
+            "partStartIndex": 4,
+            "partEndIndex": 7
+        },
+        "value": {
+            "mass": 0.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": true,
+            "connectionDirection": "None",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Balloon",
+            "partStartIndex": 0,
+            "partEndIndex": 7
+        },
+        "value": {
+            "mass": 0.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Balloons2",
+            "partStartIndex": 0,
+            "partEndIndex": 7
+        },
+        "value": {
+            "mass": 0.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Balloons3",
+            "partStartIndex": 0,
+            "partEndIndex": 7
+        },
+        "value": {
+            "mass": 0.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Sandbag",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.1,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Sandbag",
+            "partStartIndex": 4,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 5.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Sandbag",
+            "partStartIndex": 5,
+            "partEndIndex": 5
+        },
+        "value": {
+            "mass": 1.1,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Sandbag2",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Sandbag3",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Wings",
+            "partStartIndex": 0,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 0.75,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Tailplane",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.25,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Right",
+            "connectionStrength": 250.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MetalWing",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.75,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MetalTail",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.25,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Right",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "SpringBoxingGlove",
+            "partStartIndex": 0,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "StickyWheel",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 80.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Up",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "GrapplingHook",
+            "partStartIndex": 0,
+            "partEndIndex": 10
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Pumpkin",
+            "partStartIndex": 0,
+            "partEndIndex": 1
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Kicker",
+            "partStartIndex": 0,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "Gearbox",
+            "partStartIndex": 0,
+            "partEndIndex": 5
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "GoldenPig",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 10.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 125.0
+        }
+    },
+    {
+        "key": {
+            "partType": "PointLight",
+            "partStartIndex": 0,
+            "partEndIndex": 6
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "SpotLight",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 50.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 600.0
+        }
+    },
+    {
+        "key": {
+            "partType": "JetEngine",
+            "partStartIndex": 0,
+            "partEndIndex": 1
+        },
+        "value": {
+            "mass": 2.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "JetEngine",
+            "partStartIndex": 2,
+            "partEndIndex": 2
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "LeftAndRight",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "JetEngine",
+            "partStartIndex": 3,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "JetEngine",
+            "partStartIndex": 4,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 6.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "JetEngine",
+            "partStartIndex": 5,
+            "partEndIndex": 5
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "LeftAndRight",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "ElectricalPart",
+            "partStartIndex": 0,
+            "partEndIndex": 3
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "ElectricalPart",
+            "partStartIndex": 4,
+            "partEndIndex": 37
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "ElectricalPart",
+            "partStartIndex": 38,
+            "partEndIndex": 39
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "ElectricalPart",
+            "partStartIndex": 40,
+            "partEndIndex": 41
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "ElectricalPart",
+            "partStartIndex": 42,
+            "partEndIndex": 42
+        },
+        "value": {
+            "mass": 0.5,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "ElectricalPart",
+            "partStartIndex": 43,
+            "partEndIndex": 48
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "None",
+            "connectionStrength": 900.0
+        }
+    },
+    {
+        "key": {
+            "partType": "MechanicalPart",
+            "partStartIndex": 0,
+            "partEndIndex": 4
+        },
+        "value": {
+            "mass": 1.0,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": false,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 1200.0
+        }
+    },
+    {
+        "key": {
+            "partType": "SkinPart",
+            "partStartIndex": 0,
+            "partEndIndex": 0
+        },
+        "value": {
+            "mass": 0.35,
+            "enginePower": 0.0,
+            "powerConsumption": 0.0,
+            "isConnectionSource": true,
+            "hasCustomConnection": false,
+            "connectionDirection": "Any",
+            "connectionStrength": 900.0
+        }
+    }
+]

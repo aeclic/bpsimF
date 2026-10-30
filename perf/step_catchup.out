@@ -1,0 +1,23 @@
+=== verify new API
+{"ok":true,"result":"maximumDeltaTime=0.333 fixedDeltaTime=0.020"}
+--- enter play
+=== A: full save, default catch-up (maximumDeltaTime=0.333) + sched
+{"ok":true,"result":"armed sched=True"}
+[BehaviorTiming] sched frame#=5524 durMs=44 fixedSteps=3.00 t=21.25
+[BehaviorTiming] sched frame#=5525 durMs=30037 fixedSteps=16.00 t=51.28
+[BehaviorTiming] sched frame#=5526 durMs=7629 fixedSteps=17.00 t=58.91
+[BehaviorTiming] sched frame#=5527 durMs=7473 fixedSteps=17.00 t=66.39
+[BehaviorTiming] sched frame#=5528 durMs=7393 fixedSteps=16.00 t=73.78
+[SpinPerf] [single w=0.00] frames=1 fps=0.14 ms avg/p50/p95/p99/max=7392.92/7392.92/7392.92/7392.92/7392.92 min=7392.92 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+=== B: full save, catch-up capped to one step (maximumDeltaTime=0.02)
+{"ok":true,"result":"maximumDeltaTime=0.020 fixedDeltaTime=0.020"}
+{"ok":true,"result":"armed sched=True"}
+[BehaviorTiming] sched frame#=5530 durMs=1682 fixedSteps=1.00 t=83.55
+[BehaviorTiming] sched frame#=5531 durMs=422 fixedSteps=1.00 t=83.97
+[BehaviorTiming] sched frame#=5532 durMs=54 fixedSteps=1.00 t=84.03
+[BehaviorTiming] sched frame#=5533 durMs=8 fixedSteps=1.00 t=84.03
+[BehaviorTiming] sched frame#=5534 durMs=26706 fixedSteps=1.00 t=110.74
+[BehaviorTiming] sched frame#=5535 durMs=552 fixedSteps=1.00 t=111.29
+[SpinPerf] [single w=0.00] frames=2 fps=1.95 ms avg/p50/p95/p99/max=515.27/592.35/592.35/592.35/592.35 min=438.19 slow=2 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+=== restore
+{"ok":true,"result":"maximumDeltaTime=0.333 fixedDeltaTime=0.020"}

@@ -1,0 +1,1194 @@
+[
+    {
+        "name": "Part_Balloons3_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Regular",
+                "partIndex": 0
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_0_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.114,0.129,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_0_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.173,-0.012,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_0_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.161,-0.129,-0.15",
+                                "localRotation": "0,0,-0.07646147,0.9970726",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_0_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Balloons3_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Common",
+                "partIndex": 1
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_1_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.089,0.134,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_1_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.174,-0.005,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_1_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.188,-0.129,-0.2",
+                                "localRotation": "0,0,-0.105438,0.994426",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_1_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Balloons3_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Common",
+                "partIndex": 2
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_2_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.114,0.134,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_2_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.178,-0.01,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_2_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.154,-0.134,-0.2",
+                                "localRotation": "0,0,-0.06260054,0.9980386",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_2_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Balloons3_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Rare",
+                "partIndex": 3
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_3_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.15,0.122,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_3_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.168,-0.01,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_3_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.154,-0.124,-0.2",
+                                "localRotation": "0,0,-0.0640876,0.9979443",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_3_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Balloons3_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Epic",
+                "partIndex": 4
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_4_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.099,0.134,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_4_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.193,-0.012,-0.1",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_4_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.157,-0.123,-0.2",
+                                "localRotation": "0,0,-0.06986508,0.9975565",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_4_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Balloons3_5",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Rare",
+                "partIndex": 5
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_5_1"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloons3_5_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.16,0.125,0.1",
+                                "localRotation": "0,0,-0.2588191,0.9659258",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloons3_5_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.25,-0.05,-0.1",
+                                "localRotation": "0,0,-0.1736482,0.9848078",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloons3_5_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Balloons3_6",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Epic",
+                "partIndex": 6
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_6_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloons2_6_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.28,-0.09,-0.1",
+                                "localRotation": "0,0,0.08193852,0.9966374",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloons2_6_0"
+                            }
+                        ],
+                        "children": []
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.2,-0.09,-0.2",
+                                "localRotation": "0,0,-0.1564345,0.9876884",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloons2_6_0"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Balloons3_7",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Balloons3",
+                "partTier": "Epic",
+                "partIndex": 7
+            }
+        ],
+        "children": [
+            {
+                "name": "BalloonVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": false,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Balloon_7_2"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Face1",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.012,0.149,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": false,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_7_3"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "name": "Balloon3Visualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "BalloonVisualization (1)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_7_0"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Face1 (1)",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.05,0.1,-0.05",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_Balloon_7_3"
+                                    }
+                                ],
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "name": "BalloonVisualization (2)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.28,-0.09,-0.1",
+                                "localRotation": "0,0,0.08193852,0.9966374",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_7_0"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Face2 (1)",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.05,0.1,-0.05",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_Balloons2_7_1"
+                                    }
+                                ],
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "name": "BalloonVisualization (3)",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.2,-0.09,-0.2",
+                                "localRotation": "0,0,-0.1564345,0.9876884",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Balloon_7_0"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "Face3 (1)",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.05,0.1,-0.05",
+                                        "localRotation": "0,0,0,1",
+                                        "localScale": "1,1,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_Balloons3_7_1"
+                                    }
+                                ],
+                                "children": []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

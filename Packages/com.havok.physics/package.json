@@ -1,0 +1,8 @@
+{
+  "name": "com.havok.physics",
+  "displayName": "Havok Physics (bypassed local shim)",
+  "version": "1.0.0-pre.44",
+  "unity": "2022.2",
+  "unityRelease": "2f1",
+  "description": "Local shim package. Only purpose: make Unity.Physics / Unity.Physics.Hybrid define HAVOK_PHYSICS_EXISTS. The real Havok runtime comes from Assets/Plugins/Havok.Physics.dll + Assets/Plugins/x86_64/HavokNative.dll."
+}

@@ -1,0 +1,21 @@
+--- enter play
+--- bisect on full save
+done
+[SpinPerf] spec: file=perf/angel_10k.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=0.1
+[SpinPerf] simulation: parts=10000 joints=30472 components=242 jointEntities=30472
+[SpinPerf] [single w=0.00] frames=1 fps=1.17 ms avg/p50/p95/p99/max=856.82/856.82/856.82/856.82/856.82 min=856.82 slow=1 gc0=1 joints=30472->30472 comp=242->242 avgW=0.00 maxW=2.28 avgV=0.00
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=0.1
+[SpinPerf] simulation: parts=20405 joints=180832 components=1 jointEntities=180832
+[SpinPerf] [single w=0.00] frames=1 fps=0.12 ms avg/p50/p95/p99/max=8247.33/8247.33/8247.33/8247.33/8247.33 min=8247.33 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=1;mode=rigid;spin=0;gravity=0;dur=0.05
+[SpinPerf] simulation: parts=20405 joints=180832 components=1 jointEntities=180832
+[SpinPerf] [single w=0.00] frames=1 fps=0.13 ms avg/p50/p95/p99/max=7832.88/7832.88/7832.88/7832.88/7832.88 min=7832.88 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [bisect base w=0.00] frames=1 fps=0.12 ms avg/p50/p95/p99/max=8239.75/8239.75/8239.75/8239.75/8239.75 min=8239.75 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-render w=0.00] frames=1 fps=0.14 ms avg/p50/p95/p99/max=7363.04/7363.04/7363.04/7363.04/7363.04 min=7363.04 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-render no-gameplay w=0.00] frames=1 fps=0.14 ms avg/p50/p95/p99/max=7422.73/7422.73/7422.73/7422.73/7422.73 min=7422.73 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-gameplay w=0.00] frames=1 fps=0.13 ms avg/p50/p95/p99/max=7494.87/7494.87/7494.87/7494.87/7494.87 min=7494.87 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-PartSimulationSystem w=0.00] frames=1 fps=0.13 ms avg/p50/p95/p99/max=7673.89/7673.89/7673.89/7673.89/7673.89 min=7673.89 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-ConstraintSystem w=0.00] frames=1 fps=0.13 ms avg/p50/p95/p99/max=7902.31/7902.31/7902.31/7902.31/7902.31 min=7902.31 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-FrameJointSystem w=0.00] frames=1 fps=0.13 ms avg/p50/p95/p99/max=7490.22/7490.22/7490.22/7490.22/7490.22 min=7490.22 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-CustomBackgroundSystem w=0.00] frames=1 fps=0.14 ms avg/p50/p95/p99/max=7360.57/7360.57/7360.57/7360.57/7360.57 min=7360.57 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] [no-TransparentFrame w=0.00] frames=1 fps=0.14 ms avg/p50/p95/p99/max=7373.65/7373.65/7373.65/7373.65/7373.65 min=7373.65 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00

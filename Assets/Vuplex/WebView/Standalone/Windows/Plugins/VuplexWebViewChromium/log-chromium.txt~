@@ -1,0 +1,51 @@
+[1014/223206.673:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1014/223206.675:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1014/223206.743:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1014/224002.656:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1014/224113.801:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1014/224513.135:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1014/225559.125:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1014/225627.503:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1014/233755.408:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1014/233841.375:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1015/110130.796:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with HRESULT error code: 0x6d
+[1015/110239.917:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1015/110240.557:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
+[1016/111922.023:WARNING:dns_config_service_win.cc(606)] Failed to read DnsConfig.
+[1016/111922.044:WARNING:dns_config_service_win.cc(606)] Failed to read DnsConfig.
+[1016/111922.507:WARNING:dns_config_service_win.cc(606)] Failed to read DnsConfig.
+[1016/111922.520:WARNING:dns_config_service_win.cc(606)] Failed to read DnsConfig.
+[1016/113238.192:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1016/121040.197:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1016/121201.780:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1016/122517.275:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/154137.297:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/154328.745:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/154511.805:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/154650.966:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/154916.126:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/155009.667:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/161453.557:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/161753.247:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with HRESULT error code: 0x6d
+[1018/161912.754:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1018/161913.064:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
+[1018/162103.334:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with HRESULT error code: 0x6d
+[1018/162152.340:WARNING:alloy_browser_main.cc(156)] Unhandled app relaunch; implement CefBrowserProcessHandler::OnAlreadyRunningAppRelaunch.
+[1018/162152.489:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0x6
+[1018/162204.082:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1018/162204.165:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
+[1018/162610.621:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with HRESULT error code: 0x6d
+[1018/162720.080:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1018/162720.390:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
+[1018/164025.877:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with HRESULT error code: 0x6d
+[1018/164115.961:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1018/164116.199:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
+[1018/165010.412:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/171320.711:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/171558.513:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1018/174732.056:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1023/194022.543:ERROR:ChromiumLogFunctions.h(15)] Message received for a non-existent webview: {"type":13,"webViewId":"WebView-871cf49d-9f28-4ee2-9591-f930942a4a6a"}
+[1023/194022.543:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with HRESULT error code: 0x6d
+[1023/194117.606:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1023/194117.657:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
+[1024/180348.590:WARNING:task_impl.cc(32)] No task runner for threadId 0

@@ -1,0 +1,2 @@
+Part_Texture_0,                         4096,   2048,   0.01
+ColoredFrame_White,                     1646,   1860,   100,    100,    0,      0,      0.5,    0.5

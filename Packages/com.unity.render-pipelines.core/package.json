@@ -1,0 +1,8 @@
+{
+  "name": "com.unity.render-pipelines.core",
+  "version": "14.0.7",
+  "unity": "2022.2",
+  "displayName": "Core RP Library (shader library only)",
+  "description": "HLSL-only vendored copy of the Editor's built-in SRP Core, providing the #include targets used by bpsim-main's restored URP shaders. Contains no C# and no asmdef, so it produces no assembly and cannot collide with the player-built RenderPipelines plugin DLLs in Assets/Plugins.",
+  "dependencies": {}
+}

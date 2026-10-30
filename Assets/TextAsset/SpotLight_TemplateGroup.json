@@ -1,0 +1,2046 @@
+[
+    {
+        "name": "Part_SpotLight_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "SpotLight",
+                "partTier": "Regular",
+                "partIndex": 0
+            }
+        ],
+        "children": [
+            {
+                "name": "LightSprite",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0.707106,0.7071076",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Container",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.395,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "0,0,0"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "LightCone",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.574,0,0",
+                                        "localRotation": "0,0,-0.7071072,0.7071064",
+                                        "localScale": "0.675,0.9609355,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_SpotLight_0_2"
+                                    }
+                                ],
+                                "children": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "BottomLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,-0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "RightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "LeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-1,0",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomAttachment",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_0_3"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_SpotLight_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "SpotLight",
+                "partTier": "Common",
+                "partIndex": 1
+            }
+        ],
+        "children": [
+            {
+                "name": "LightSprite",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0.707106,0.7071076",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_2"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Container",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.395,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "0,0,0"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "LightCone",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.574,0,0",
+                                        "localRotation": "0,0,-0.7071072,0.7071064",
+                                        "localScale": "0.675,0.9609355,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_SpotLight_0_2"
+                                    }
+                                ],
+                                "children": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "BottomLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,-0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "RightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "LeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-1,0",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomAttachment",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.1822917,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_1_3"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_SpotLight_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "SpotLight",
+                "partTier": "Rare",
+                "partIndex": 2
+            }
+        ],
+        "children": [
+            {
+                "name": "LightSprite",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,0",
+                        "localRotation": "0,0,0.707106,0.7071076",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_2"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Container",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.395,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "0,0,0"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "LightCone",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.574,0,0",
+                                        "localRotation": "0,0,-0.7071072,0.7071064",
+                                        "localScale": "0.675,0.9609355,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_SpotLight_0_2"
+                                    }
+                                ],
+                                "children": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "BottomLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,-0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "RightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "LeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-1,0",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomAttachment",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.2083333,0",
+                        "size": "0.625,0.703125,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_2_3"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    },
+    {
+        "name": "Part_SpotLight_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "SpotLight",
+                "partTier": "Epic",
+                "partIndex": 3
+            }
+        ],
+        "children": [
+            {
+                "name": "LightSprite",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.044,0,0",
+                        "localRotation": "0,0,0.707106,0.7071076",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_2"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "Container",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0.395,-0.066,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "0,0,0"
+                            }
+                        ],
+                        "children": [
+                            {
+                                "name": "LightCone",
+                                "layer": 6,
+                                "active": true,
+                                "components": [
+                                    {
+                                        "type": "Transform",
+                                        "localPosition": "0.574,0,0",
+                                        "localRotation": "0,0,-0.7071072,0.7071064",
+                                        "localScale": "0.675,0.9609355,1"
+                                    },
+                                    {
+                                        "type": "Renderer",
+                                        "enabled": true,
+                                        "material": {
+                                            "name": "Part_Texture_0"
+                                        }
+                                    },
+                                    {
+                                        "type": "Sprite",
+                                        "name": "Part_SpotLight_0_2"
+                                    }
+                                ],
+                                "children": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "BottomLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,-0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "RightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "LeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.7071068,0.7071068",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-1,0",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopLeftAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.9238797,0.3826829",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,-0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "TopRightAttachment",
+                "layer": 6,
+                "active": false,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0.3826829,0.9238797",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "BottomAttachment",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,0.9,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Box",
+                        "enabled": true,
+                        "center": "0,-0.15625,0",
+                        "size": "0.5729167,0.6770833,0",
+                        "radius": 0.0,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Collider",
+                        "colliderType": "Sphere",
+                        "enabled": true,
+                        "center": "0,0,0",
+                        "size": "0,0,0",
+                        "radius": 0.25,
+                        "height": 0.0,
+                        "bounciness": 0.0,
+                        "dynamicFriction": 0.6,
+                        "staticFriction": 0.6,
+                        "bounceCombine": "Average",
+                        "frictionCombine": "Average"
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_SpotLight_3_3"
+                    }
+                ],
+                "children": []
+            }
+        ]
+    }
+]

@@ -1,0 +1,23 @@
+--- enter play
+{"ok":true,"result":"maximumDeltaTime=0.020 fixedDeltaTime=0.020"}
+=== 20k baseline, one step/frame
+[SpinPerf] [single w=0.00] frames=2 fps=1.95 ms avg/p50/p95/p99/max=515.27/592.35/592.35/592.35/592.35 min=438.19 slow=2 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=1.0
+[SpinPerf] [single w=0.00] frames=2 fps=1.98 ms avg/p50/p95/p99/max=508.77/600.03/600.03/600.03/600.03 min=417.51 slow=2 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+=== 20k, nocollide=1 (no part-part collision)
+[SpinPerf] [single w=0.00] frames=2 fps=1.98 ms avg/p50/p95/p99/max=508.77/600.03/600.03/600.03/600.03 min=417.51 slow=2 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=1.0;nocollide=1
+[SpinPerf] [single w=0.00] frames=3 fps=2.21 ms avg/p50/p95/p99/max=455.79/413.86/566.70/566.70/566.70 min=386.81 slow=3 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+=== 20k, solver=1
+[SpinPerf] [single w=0.00] frames=3 fps=2.21 ms avg/p50/p95/p99/max=455.79/413.86/566.70/566.70/566.70 min=386.81 slow=3 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=1.0;solver=1
+[SpinPerf] [single w=0.00] frames=3 fps=3.00 ms avg/p50/p95/p99/max=335.85/294.68/446.78/446.78/446.78 min=266.07 slow=3 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+=== 20k, no joints created (createjoints=0)
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=1.0;solver=1
+[SpinPerf] [single w=0.00] frames=3 fps=3.00 ms avg/p50/p95/p99/max=335.85/294.68/446.78/446.78/446.78 min=266.07 slow=3 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=1.0;createjoints=0
+=== regression: 1648-part save, w=32 sweep, fix ON
+[SpinPerf] [single w=0.00] frames=3 fps=3.00 ms avg/p50/p95/p99/max=335.85/294.68/446.78/446.78/446.78 min=266.07 slow=3 gc0=1 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
+[SpinPerf] spec: file=perf/angel.csv;sweep=0;bisect=0;mode=rigid;spin=0;gravity=0;dur=1.0;createjoints=0
+[SpinPerf] spec: file=perf/buhai.csv;dur=0.5;sweep=1;bisect=0;mode=rigid;gravity=0
+{"ok":true,"result":"maximumDeltaTime=0.333 fixedDeltaTime=0.020"}

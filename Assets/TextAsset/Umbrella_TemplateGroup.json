@@ -1,0 +1,800 @@
+[
+    {
+        "name": "Part_Umbrella_0",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Umbrella",
+                "partTier": "Regular",
+                "partIndex": 0
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.2,0.7,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "ShaftVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Umbrella_0_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "UmbrellaVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.2",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "OpenSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Collider",
+                                "colliderType": "Box",
+                                "enabled": true,
+                                "center": "0,0.25,0.2",
+                                "size": "1,0.4,1",
+                                "radius": 0.0,
+                                "height": 0.0,
+                                "bounciness": 0.0,
+                                "dynamicFriction": 0.6,
+                                "staticFriction": 0.6,
+                                "bounceCombine": "Average",
+                                "frictionCombine": "Average"
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Umbrella_0_1"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Umbrella_1",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Umbrella",
+                "partTier": "Common",
+                "partIndex": 1
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.2,0.7,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "ShaftVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Umbrella_0_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "UmbrellaVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.2",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "OpenSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Collider",
+                                "colliderType": "Box",
+                                "enabled": true,
+                                "center": "0,0.25,0.2",
+                                "size": "1,0.4,1",
+                                "radius": 0.0,
+                                "height": 0.0,
+                                "bounciness": 0.0,
+                                "dynamicFriction": 0.6,
+                                "staticFriction": 0.6,
+                                "bounceCombine": "Average",
+                                "frictionCombine": "Average"
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Umbrella_1_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Umbrella_2",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Umbrella",
+                "partTier": "Rare",
+                "partIndex": 2
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.2,0.7,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "ShaftVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.103,0.038,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Umbrella_2_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "UmbrellaVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.2",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "OpenSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Collider",
+                                "colliderType": "Box",
+                                "enabled": true,
+                                "center": "0,0.25,0.2",
+                                "size": "1,0.4,1",
+                                "radius": 0.0,
+                                "height": 0.0,
+                                "bounciness": 0.0,
+                                "dynamicFriction": 0.6,
+                                "staticFriction": 0.6,
+                                "bounceCombine": "Average",
+                                "frictionCombine": "Average"
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Umbrella_2_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Umbrella_3",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Umbrella",
+                "partTier": "Epic",
+                "partIndex": 3
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.2,0.7,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "ShaftVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.016,0.059,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Umbrella_3_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "UmbrellaVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.2",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "OpenSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Collider",
+                                "colliderType": "Box",
+                                "enabled": true,
+                                "center": "0,0.25,0.2",
+                                "size": "1,0.4,1",
+                                "radius": 0.0,
+                                "height": 0.0,
+                                "bounciness": 0.0,
+                                "dynamicFriction": 0.6,
+                                "staticFriction": 0.6,
+                                "bounceCombine": "Average",
+                                "frictionCombine": "Average"
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Umbrella_3_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Umbrella_4",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Umbrella",
+                "partTier": "Rare",
+                "partIndex": 4
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.2,0.7,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "ShaftVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.07,0.043,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Umbrella_4_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "UmbrellaVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.2",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "OpenSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "-0.01,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Collider",
+                                "colliderType": "Box",
+                                "enabled": true,
+                                "center": "0,0.25,0.2",
+                                "size": "1,0.4,1",
+                                "radius": 0.0,
+                                "height": 0.0,
+                                "bounciness": 0.0,
+                                "dynamicFriction": 0.6,
+                                "staticFriction": 0.6,
+                                "bounceCombine": "Average",
+                                "frictionCombine": "Average"
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Umbrella_4_2"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Umbrella_5",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Umbrella",
+                "partTier": "Epic",
+                "partIndex": 5
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.2,0.7,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "ShaftVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "-0.089,0.059,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Umbrella_5_2"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "UmbrellaVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0,-0.2",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "OpenSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Collider",
+                                "colliderType": "Box",
+                                "enabled": true,
+                                "center": "0,0.25,0.2",
+                                "size": "1,0.4,1",
+                                "radius": 0.0,
+                                "height": 0.0,
+                                "bounciness": 0.0,
+                                "dynamicFriction": 0.6,
+                                "staticFriction": 0.6,
+                                "bounceCombine": "Average",
+                                "frictionCombine": "Average"
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Umbrella_5_3"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Part_Umbrella_6",
+        "layer": 6,
+        "active": true,
+        "components": [
+            {
+                "type": "Transform",
+                "localPosition": "0,0,0",
+                "localRotation": "0,0,0,1",
+                "localScale": "1,1,1"
+            },
+            {
+                "type": "Part",
+                "partType": "Umbrella",
+                "partTier": "Common",
+                "partIndex": 6
+            },
+            {
+                "type": "Collider",
+                "colliderType": "Box",
+                "enabled": true,
+                "center": "0,-0.15,0",
+                "size": "0.2,0.7,1",
+                "radius": 0.0,
+                "height": 0.0,
+                "bounciness": 0.0,
+                "dynamicFriction": 0.6,
+                "staticFriction": 0.6,
+                "bounceCombine": "Average",
+                "frictionCombine": "Average"
+            }
+        ],
+        "children": [
+            {
+                "name": "ShaftVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0,0.021,-0.1",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    },
+                    {
+                        "type": "Renderer",
+                        "enabled": true,
+                        "material": {
+                            "name": "Part_Texture_0"
+                        }
+                    },
+                    {
+                        "type": "Sprite",
+                        "name": "Part_Umbrella_0_0"
+                    }
+                ],
+                "children": []
+            },
+            {
+                "name": "UmbrellaVisualization",
+                "layer": 6,
+                "active": true,
+                "components": [
+                    {
+                        "type": "Transform",
+                        "localPosition": "0.042,0.013,-0.2",
+                        "localRotation": "0,0,0,1",
+                        "localScale": "1,1,1"
+                    }
+                ],
+                "children": [
+                    {
+                        "name": "OpenSprite",
+                        "layer": 6,
+                        "active": true,
+                        "components": [
+                            {
+                                "type": "Transform",
+                                "localPosition": "0,0,0",
+                                "localRotation": "0,0,0,1",
+                                "localScale": "1,1,1"
+                            },
+                            {
+                                "type": "Renderer",
+                                "enabled": true,
+                                "material": {
+                                    "name": "Part_Texture_0"
+                                }
+                            },
+                            {
+                                "type": "Collider",
+                                "colliderType": "Box",
+                                "enabled": true,
+                                "center": "0,0.25,0.2",
+                                "size": "1,0.4,1",
+                                "radius": 0.0,
+                                "height": 0.0,
+                                "bounciness": 0.0,
+                                "dynamicFriction": 0.6,
+                                "staticFriction": 0.6,
+                                "bounceCombine": "Average",
+                                "frictionCombine": "Average"
+                            },
+                            {
+                                "type": "Sprite",
+                                "name": "Part_Umbrella_6_1"
+                            }
+                        ],
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    }
+]

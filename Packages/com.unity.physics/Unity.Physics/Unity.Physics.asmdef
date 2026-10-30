@@ -1,0 +1,60 @@
+{
+    "name": "Unity.Physics",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.Transforms",
+        "Unity.DataFlowGraph",
+        "Havok.Physics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Havok.Physics.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.havok.physics",
+            "expression": "0.0.0",
+            "define": "HAVOK_PHYSICS_EXISTS"
+        },
+        {
+            "name": "com.unity.dataflowgraph",
+            "expression": "0.0.0",
+            "define": "UNITY_DATAFLOWGRAPH_EXISTS"
+        },
+        {
+            "name": "com.unity.package-validation-suite",
+            "expression": "0.0.0",
+            "define": "UNITY_SKIP_UPDATES_WITH_VALIDATION_SUITE"
+        },
+        {
+            "name": "com.unity.cinemachine.dots",
+            "expression": "0.60.0-preview.81",
+            "define": "ENABLE_TRANSFORM_V1"
+        },
+        {
+            "name": "com.unity.stableid",
+            "expression": "0.60.0-preview.91",
+            "define": "ENABLE_TRANSFORM_V1"
+        },
+        {
+            "name": "com.unity.environment",
+            "expression": "0.2.0-preview.17",
+            "define": "ENABLE_TRANSFORM_V1"
+        },
+        {
+            "name": "com.unity.2d.entities.physics",
+            "expression": "0.5.0-preview.1",
+            "define": "ENABLE_TRANSFORM_V1"
+        }
+    ],
+    "noEngineReferences": false
+}

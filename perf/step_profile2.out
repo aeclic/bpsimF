@@ -1,0 +1,16 @@
+--- enter play
+=== 10k load (cache ON) + behaviour breakdown
+[SpinPerf] [single w=0.00] frames=1 fps=1.17 ms avg/p50/p95/p99/max=856.82/856.82/856.82/856.82/856.82 min=856.82 slow=1 gc0=1 joints=30472->30472 comp=242->242 avgW=0.00 maxW=2.28 avgV=0.00
+[BehaviorTiming] pass done: calls=1270 enabled=19 fails=0 totalMs=0.1 maxSingle=0.0ms@JetEngineBehavior/JetEngine
+  PoweredUmbrellaBehavior/PoweredUmbrella n=92 ms=0.0 (35.5%) avg=0.00 max=0.0
+  VoidLightBehavior/AutoControlLight n=78 ms=0.0 (17.7%) avg=0.00 max=0.0
+  ManualGunBehavior/ManualGun n=290 ms=0.0 (11.5%) avg=0.00 max=0.0
+  SpringBehavior/Spring n=327 ms=0.0 (8.8%) avg=0.00 max=0.0
+  JetEngineBehavior/JetEngine n=32 ms=0.0 (8.5%) avg=0.00 max=0.0
+  UmbrellaBehavior/Umbrella n=16 ms=0.0 (3.5%) avg=0.00 max=0.0
+  TimeBombBehavior/TimeBomb n=110 ms=0.0 (3.2%) avg=0.00 max=0.0
+  FuelBoxBehavior/FuelBox n=12 ms=0.0 (3.1%) avg=0.00 max=0.0
+=== full save (20405 parts, cache ON)
+[SpinPerf] start: StartSimulation 707.03ms
+[SpinPerf] simulation: parts=20405 joints=180832 components=1 jointEntities=180832
+[SpinPerf] [single w=0.00] frames=1 fps=0.12 ms avg/p50/p95/p99/max=8247.33/8247.33/8247.33/8247.33/8247.33 min=8247.33 slow=1 gc0=8 joints=180832->180832 comp=1->1 avgW=0.00 maxW=0.00 avgV=0.00
