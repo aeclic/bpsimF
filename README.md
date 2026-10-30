@@ -1,6 +1,6 @@
 # BpsimF
 
-**Bad piggies fan-made game--BPLE's simulator Flash version**
+**Bad piggies fan-made game--BPLE's simulator F version**
 
 > [!WARNING]
 > **本项目近乎全部由 AI 辅助开发，测试而来。**
@@ -14,7 +14,7 @@
 
 ## 这是什么
 
-BpsimF 是《Bad Piggies》（捣蛋猪）的粉丝向模拟器，目标是在 Unity 里还原 BPLE（Flash 版）的建造体验：无网格自由拼装、按章节组织的关卡、以及“部件堆成山也不卡”的物理沙盒。
+BpsimF 是《Bad Piggies》（捣蛋猪）的粉丝向模拟器，目标是在 Unity 里还原 BPLE的建造体验：无网格自由拼装、按章节组织的关卡、以及“部件堆成山也不卡”的物理沙盒。
 
 和“一个部件一个 GameObject”的常规做法不同，这里的部件是 ECS 实体，渲染走自绘的 BatchRendererGroup + DOTS Instancing 管线，物理走 Unity.Physics + 打过补丁的 Havok 运行时。因此一辆两万部件的载具仍然能以可交互的帧率跑起来（见[性能](#性能)）。
 
