@@ -1,0 +1,202 @@
+CC0 1.0 Universal
+https://creativecommons.org/publicdomain/zero/1.0/
+
+下文中文文本为非官方参考译文，仅供参考、无法律效力；
+唯一有法律效力的版本为文末所附英文原文（Creative Commons 官方 CC0 1.0 法律文本）。
+
+================================================================================
+非官方中文参考译文（无法律效力，以英文原文为准）
+================================================================================
+
+声明目的
+
+世界上大多数司法管辖区的法律都会自动将排他性的著作权及相关权利（定义见下文）
+赋予原创作品和/或数据库（各称一部"作品"）的创作者及其后继权利人（合称"权利人"）。
+
+某些权利人希望永久放弃其对作品的权利，以便向创作、文化和科学作品的公共资源库
+（"共用库"）做贡献，使公众能够可靠地、且不必担心日后被指控侵权地在这些作品之上
+进行构建、修改、并入其他作品、以任何形式尽可能自由地复用与再分发，并用于任何
+目的，包括但不限于商业目的。这些权利人向共用库做贡献，可以是为了促进自由文化
+理念和更多创作、文化与科学作品的产生，也可以是（部分地）借助他人的使用和努力
+为其作品赢得声誉或更广泛的传播。
+
+基于上述和/或其他目的与动机，且不期待任何额外对价或报酬，将 CC0 关联于某作品
+之人（"确认者"），在其就该作品拥有著作权及相关权利的范围内，自愿选择对该作品
+适用 CC0，并按其条款公开分发该作品，同时知晓其对该作品享有的著作权及相关权利，
+以及 CC0 对这些权利的法律含义与预期效果。
+
+1. 著作权及相关权利。按 CC0 提供的作品可能受著作权及相关/邻接权（"著作权及
+   相关权利"）保护。著作权及相关权利包括但不限于：
+
+  i. 复制、改编、发行、表演、展示、传播和翻译作品的权利；
+ ii. 原作者和/或表演者保留的精神权利；
+iii. 涉及作品中描绘的人物形象或肖像的公开权与隐私权；
+ iv. 就作品而言防止不正当竞争的权利，但受下文第 4(a) 条限制；
+  v. 保护作品中数据的提取、传播、使用与再利用的权利；
+ vi. 数据库权利（例如根据欧洲议会与欧盟理事会 1996 年 3 月 11 日关于数据库
+     法律保护的 96/9/EC 指令及其任何国内实施法，包括其修正或后续版本而产生
+     的权利）；以及
+vii. 世界上其他基于适用法律或条约的类似、等同或对应权利，及其任何国内实施。
+
+2. 放弃。在适用法律允许的最大限度内且不违反适用法律的前提下，确认者在此公开
+   地、完全地、永久地、不可撤销地且无条件地放弃、抛弃并交出其就作品享有的
+   一切著作权及相关权利及相关的请求权与诉因，无论现在已知或未知（包括现存及
+   未来的请求权与诉因）：(i) 于全世界所有领土；(ii) 于适用法律或条约规定的
+   最长期限（包括未来的期限延长）；(iii) 于任何现在或未来的媒介，且不限复制
+   数量；(iv) 为任何目的，包括但不限于商业、广告或宣传目的（"放弃"）。确认者
+   为社会公众每一成员的利益作出该放弃，并不利于其继承人与继受者，充分意图使
+   该放弃不受撤销、撤回、废止、终止或任何其他法律或衡平法上行为的约束，以免
+   扰乱公众按确认者明确的声明目的对作品的安宁享用。
+
+3. 公共许可兜底。如放弃的任何部分因任何原因依适用法律被认定为法律上无效或
+   无效力，则该放弃应在充分考虑确认者明确的声明目的的前提下，按允许的最大
+   限度予以保留。此外，在放弃被如此认定的范围内，确认者在此授予每位受影响人
+   一项免版税、不可转让、不得再许可、非排他、不可撤销且无条件的许可，以行使
+   确认者就作品享有的著作权及相关权利：(i) 于全世界所有领土；(ii) 于适用法律
+   或条约规定的最长期限（包括未来的期限延长）；(iii) 于任何现在或未来的媒介，
+   且不限复制数量；(iv) 为任何目的，包括但不限于商业、广告或宣传目的
+   （"许可"）。该许可视为自确认者将 CC0 适用于作品之日起生效。如许可的任何
+   部分因任何原因依适用法律被认定为法律上无效或无效力，该部分无效或无效力不
+   影响许可其余部分的效力；在此情形下，确认者在此确认其将不会：(i) 行使其就
+   作品保留的任何著作权及相关权利，或 (ii) 就作品主张任何相关的请求权与诉因
+   ——任何情形均不得违背其明确的声明目的。
+
+4. 限制与免责声明。
+
+ a. 确认者持有的任何商标权或专利权不因本文件而被放弃、抛弃、交出、许可或
+    以其他方式受到影响。
+ b. 确认者按"现状"提供作品，且不就作品作出任何种类的陈述或保证，无论明示、
+    默示、法定或其他，包括但不限于关于权属、适销性、特定用途适用性、不侵权、
+    无潜在或其他瑕疵、准确性、有无错误的保证，无论可否发现，均在适用法律
+    允许的最大限度内。
+ c. 确认者声明不对清理可能适用于作品或其任何使用的他人权利承担责任，包括
+    但不限于任何人对作品的著作权及相关权利。此外，确认者声明不对为作品的
+    任何使用获取任何必要的同意、许可或其他权利承担责任。
+ d. 确认者理解并确认，知识共享（Creative Commons）并非本文件的当事方，对
+    本 CC0 或作品的使用不承担任何义务。
+
+================================================================================
+英文原文（唯一有法律效力的版本）
+================================================================================
+
+Creative Commons Legal Code
+
+CC0 1.0 Universal
+
+    CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE
+    LEGAL SERVICES. DISTRIBUTION OF THIS DOCUMENT DOES NOT CREATE AN
+    ATTORNEY-CLIENT RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS
+    INFORMATION ON AN "AS-IS" BASIS. CREATIVE COMMONS MAKES NO WARRANTIES
+    REGARDING THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS
+    PROVIDED HEREUNDER, AND DISCLAIMS LIABILITY FOR DAMAGES RESULTING FROM
+    THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED
+    HEREUNDER.
+
+Statement of Purpose
+
+The laws of most jurisdictions throughout the world automatically confer
+exclusive Copyright and Related Rights (defined below) upon the creator
+and subsequent owner(s) (each and all, an "owner") of an original work of
+authorship and/or a database (each, a "Work").
+
+Certain owners wish to permanently relinquish those rights to a Work for
+the purpose of contributing to a commons of creative, cultural and
+scientific works ("Commons") that the public can reliably and without fear
+of later claims of infringement build upon, modify, incorporate in other
+works, reuse and redistribute as freely as possible in any form whatsoever
+and for any purposes, including without limitation commercial purposes.
+These owners may contribute to the Commons to promote the ideal of a free
+culture and the further production of creative, cultural and scientific
+works, or to gain reputation or greater distribution for their Work in
+part through the use and efforts of others.
+
+For these and/or other purposes and motivations, and without any
+expectation of additional consideration or compensation, the person
+associating CC0 with a Work (the "Affirmer"), to the extent that he or she
+is an owner of Copyright and Related Rights in the Work, voluntarily
+elects to apply CC0 to the Work and publicly distribute the Work under its
+terms, with knowledge of his or her Copyright and Related Rights in the
+Work and the meaning and intended legal effect of CC0 on those rights.
+
+1. Copyright and Related Rights. A Work made available under CC0 may be
+protected by copyright and related or neighboring rights ("Copyright and
+Related Rights"). Copyright and Related Rights include, but are not
+limited to, the following:
+
+  i. the right to reproduce, adapt, distribute, perform, display,
+     communicate, and translate a Work;
+ ii. moral rights retained by the original author(s) and/or performer(s);
+iii. publicity and privacy rights pertaining to a person's image or
+     likeness depicted in a Work;
+ iv. rights protecting against unfair competition in regards to a Work,
+     subject to the limitations in paragraph 4(a), below;
+  v. rights protecting the extraction, dissemination, use and reuse of data
+     in a Work;
+ vi. database rights (such as those arising under Directive 96/9/EC of the
+     European Parliament and of the Council of 11 March 1996 on the legal
+     protection of databases, and under any national implementation
+     thereof, including any amended or successor version of such
+     directive); and
+vii. other similar, equivalent or corresponding rights throughout the
+     world based on applicable law or treaty, and any national
+     implementations thereof.
+
+2. Waiver. To the greatest extent permitted by, but not in contravention
+of, applicable law, Affirmer hereby overtly, fully, permanently,
+irrevocably and unconditionally waives, abandons, and surrenders all of
+Affirmer's Copyright and Related Rights and associated claims and causes
+of action, whether now known or unknown (including existing as well as
+future claims and causes of action), in the Work (i) in all territories
+worldwide, (ii) for the maximum duration provided by applicable law or
+treaty (including future time extensions), (iii) in any current or future
+medium and for any number of copies, and (iv) for any purpose whatsoever,
+including without limitation commercial, advertising or promotional
+purposes (the "Waiver"). Affirmer makes the Waiver for the benefit of each
+member of the public at large and to the detriment of Affirmer's heirs and
+successors, fully intending that such Waiver shall not be subject to
+revocation, rescission, cancellation, termination, or any other legal or
+equitable action to disrupt the quiet enjoyment of the Work by the public
+as contemplated by Affirmer's express Statement of Purpose.
+
+3. Public License Fallback. Should any part of the Waiver for any reason
+be judged legally invalid or ineffective under applicable law, then the
+Waiver shall be preserved to the maximum extent permitted taking into
+account Affirmer's express Statement of Purpose. In addition, to the
+extent the Waiver is so judged Affirmer hereby grants to each affected
+person a royalty-free, non transferable, non sublicensable, non exclusive,
+irrevocable and unconditional license to exercise Affirmer's Copyright and
+Related Rights in the Work (i) in all territories worldwide, (ii) for the
+maximum duration provided by applicable law or treaty (including future
+time extensions), (iii) in any current or future medium and for any number
+of copies, and (iv) for any purpose whatsoever, including without
+limitation commercial, advertising or promotional purposes (the
+"License"). The License shall be deemed effective as of the date CC0 was
+applied by Affirmer to the Work. Should any part of the License for any
+reason be judged legally invalid or ineffective under applicable law, such
+partial invalidity or ineffectiveness shall not invalidate the remainder
+of the License, and in such case Affirmer hereby affirms that he or she
+will not (i) exercise any of his or her remaining Copyright and Related
+Rights in the Work or (ii) assert any associated claims and causes of
+action with respect to the Work, in either case contrary to Affirmer's
+express Statement of Purpose.
+
+4. Limitations and Disclaimers.
+
+ a. No trademark or patent rights held by Affirmer are waived, abandoned,
+    surrendered, licensed or otherwise affected by this document.
+ b. Affirmer offers the Work as-is and makes no representations or
+    warranties of any kind concerning the Work, express, implied,
+    statutory or otherwise, including without limitation warranties of
+    title, merchantability, fitness for a particular purpose, non
+    infringement, or the absence of latent or other defects, accuracy, or
+    the present or absence of errors, whether or not discoverable, all to
+    the greatest extent permissible under applicable law.
+ c. Affirmer disclaims responsibility for clearing rights of other persons
+    that may apply to the Work or any use thereof, including without
+    limitation any person's Copyright and Related Rights in the Work.
+    Further, Affirmer disclaims responsibility for obtaining any necessary
+    consents, permissions or other rights required for any use of the
+    Work.
+ d. Affirmer understands and acknowledges that Creative Commons is not a
+    party to this document and has no duty or obligation with respect to
+    this CC0 or use of the Work.
