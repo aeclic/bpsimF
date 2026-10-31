@@ -244,6 +244,11 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 - [`BPSIM_MODDING.md`](BPSIM_MODDING.md) — **Mod 系统规范**：`Mod.xml` 字段、`Modding.xml` 配置、`ModEntryPoint` 钩子、静态扫描规则、GUID 与存档绑定、迁移与已知限制。
 - [`BEPINEX_MODDING.md`](BEPINEX_MODDING.md) — BepInEx 通道移除说明与迁移指引（旧文档已废弃）。
 - [`UI_APPROACH_COMPARISON.md`](UI_APPROACH_COMPARISON.md) — RPG Maker U2U Demo 与 BPSim UI 方式对比。
+
+**协作规范**
+
+- [`SKILL.md`](SKILL.md) — discovery-ledger：来源不可信（反编译产物、遗留二进制、无文档 SDK）时按「假设 → 探测 → 事实 → 授权」推进，事实进 `docs/facts.md` 台账。
+  [`references/instruments.md`](references/instruments.md) 是仪器自证清单与判据口径，[`references/lessons.md`](references/lessons.md) 是个案库，[`references/difficulty.md`](references/difficulty.md) 是选任务口径，[`scripts/append-only-check.sh`](scripts/append-only-check.sh) 守台账只增不减。
 - [`bpsim_weekly.txt`](bpsim_weekly.txt) — 2023.0.1 / 0.2 的技术测试与周报（ECS 渲染、Havok、10 万铁框 100 ms 内加载、安卓锁 60 fps）。
 - [`Brand/README.md`](Brand/README.md) — bpsimF wordmark 的设计说明（字母 b 里雕出小猪、海面与琥珀色）。
 
