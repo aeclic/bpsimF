@@ -105,7 +105,7 @@ namespace Bpsim.Parts.Skin
 	/// <summary>构造默认蒙皮数据的工厂（部件烘焙与「恢复默认」共用）。</summary>
 	public static class SkinSheetDefaults
 	{
-		/// <summary>一格宽的白板蒙皮：四角是 ±0.5 的方框，没有弯曲。</summary>
+		/// <summary>一格宽的布面蒙皮：外观与部件列表中的蒙皮图标一致。</summary>
 		public static SkinSheet Create()
 		{
 			return new SkinSheet
@@ -121,7 +121,7 @@ namespace Bpsim.Parts.Skin
 				TileX = 1f,
 				TileY = 1f,
 				Color = new float4(1f, 1f, 1f, 1f),
-				TextureHandle = SkinSheetRegistry.NoTexture,
+				TextureHandle = SkinSheetRegistry.Instance.GetDefaultTextureHandle(),
 				Version = 1
 			};
 		}

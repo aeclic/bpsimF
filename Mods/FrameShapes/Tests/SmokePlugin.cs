@@ -47,7 +47,7 @@ namespace Bpsim.FrameShapesTests
 		{
 			if (Array.IndexOf(Environment.GetCommandLineArgs(), "--frame-shapes-smoke-test") < 0) yield break;
 			float until = Time.realtimeSinceStartup + 60;
-			while ((PartManager.Instance == null || !PartManager.Instance.IsReady || ModManager.Instance?.Find("bput.bpsim.frame-shapes") == null) && Time.realtimeSinceStartup < until)
+			while ((PartManager.Instance == null || !PartManager.Instance.IsReady || ModManager.Instance?.Find("bput.bpsim.bpreboot-frame-shapes") == null) && Time.realtimeSinceStartup < until)
 				yield return null;
 			try { Run(); }
 			catch (Exception ex) { m_log.AppendLine("FAILURES: 1\n" + ex); }
@@ -82,7 +82,7 @@ namespace Bpsim.FrameShapesTests
 					var em = scene.Unmanaged.EntityManager;
 					int before = em.GetComponentData<FrameShape>(scene.Unmanaged.Parts[3]).Value;
 					shapeButton.onClick.Invoke();
-					Check("property button changes selected part shape", em.GetComponentData<FrameShape>(scene.Unmanaged.Parts[3]).Value == (before + 1) % 4);
+					Check("property button changes selected part shape", em.GetComponentData<FrameShape>(scene.Unmanaged.Parts[3]).Value == (before + 1) % FrameShape.Count);
 					for (int i = 0; i < 3; i++) shapeButton.onClick.Invoke();
 				}
 				catch (Exception ex) { m_log.AppendLine("FAILURES: 1\n" + ex); }
@@ -154,7 +154,7 @@ namespace Bpsim.FrameShapesTests
 			var manager = PartManager.Instance;
 			Check("player ECS world ready", manager != null && manager.IsReady);
 			var mods = ModManager.Instance;
-			var pkg = mods.Find("bput.bpsim.frame-shapes");
+			var pkg = mods.Find("bput.bpsim.bpreboot-frame-shapes");
 			Check("BepInEx plugin in Mod list, default enabled and loaded", pkg != null && pkg.Source == ModSource.BepInEx && pkg.Enabled && pkg.IsLoaded && FrameShapeSystem.FeatureEnabled);
 			var ecs = World.DefaultGameObjectInjectionWorld.EntityManager;
 			using (var query = ecs.CreateEntityQuery(ComponentType.ReadOnly<ModEntityComponent>()))

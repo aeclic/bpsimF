@@ -17,6 +17,18 @@ namespace Bpsim.Modding
 		/// <summary>全局唯一 id（小写、连字符）。同时是安装目录名。</summary>
 		public string id;
 
+		/// <summary>
+		/// 稳定 GUID（来自 <c>Mod.xml</c> 的 <c>&lt;ID&gt;</c>）。存档/载具只认这个，不认 id，
+		/// 这样玩家改文件夹名或重装 Mod 不会让存档失效。老清单没有 GUID 时由 id 派生。
+		/// </summary>
+		public Guid guid;
+
+		/// <summary>图标文件名（相对 Mod 目录，可选）。</summary>
+		public string icon;
+
+		/// <summary>程序集清单（相对 Mod 目录）。第一个即 <see cref="entryAssembly"/>。</summary>
+		public List<string> assemblies = new List<string>();
+
 		/// <summary>显示名（可中文）。</summary>
 		public string name;
 
@@ -69,6 +81,18 @@ namespace Bpsim.Modding
 				id = "unnamed-mod";
 			}
 			id = id.Trim().ToLowerInvariant();
+			if (guid == Guid.Empty)
+			{
+				guid = ModGuid.Derive(id);
+			}
+			if (assemblies == null)
+			{
+				assemblies = new List<string>();
+			}
+			if (!string.IsNullOrWhiteSpace(entryAssembly) && !assemblies.Contains(entryAssembly))
+			{
+				assemblies.Insert(0, entryAssembly);
+			}
 			if (string.IsNullOrWhiteSpace(name))
 			{
 				name = id;

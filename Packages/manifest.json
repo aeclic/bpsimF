@@ -1,5 +1,6 @@
 ﻿{
   "dependencies": {
+	"com.xxhq.htmltougui": "https://github.com/jixinhaoqi/HtmlToUGUI.git",
     "com.unity.collections": "2.1.0-pre.11",
     "com.unity.entities": "1.0.0-pre.44",
     "com.unity.entities.graphics": "1.0.0-pre.44",

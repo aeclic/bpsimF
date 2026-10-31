@@ -55,9 +55,17 @@ namespace Bpsim.Rendering
 		{
 			if (m_dirty && !string.IsNullOrEmpty(m_name))
 			{
+				// Prefab preview scenes and other edit-mode loads run Awake/Update without a
+				// live SpriteManager; stay dirty and retry later instead of throwing an NRE.
+				SpriteManager manager = SpriteManager.Instance;
+				if (manager == null)
+				{
+					return;
+				}
+
 				m_dirty = false;
-				m_id = SpriteManager.Instance.GetID(m_name);
-				m_spriteRect = SpriteManager.Instance.GetSprite(m_id);
+				m_id = manager.GetID(m_name);
+				m_spriteRect = manager.GetSprite(m_id);
 				ApplySprite();
 			}
 		}

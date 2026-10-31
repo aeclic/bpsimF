@@ -38,10 +38,11 @@ namespace Bpsim.Mods.EditorTools
 
 			TestPaths();
 			TestSampleManifest();
+			TestModXml();
 			TestZipRoundTrip();
 			TestWorkshopIndex();
 			TestVersionCompare();
-			TestModSettings();
+			TestModdingConfig();
 
 			s_log.AppendLine();
 			s_log.AppendLine("FAILURES: " + s_failures);
@@ -162,19 +163,87 @@ namespace Bpsim.Mods.EditorTools
 			Check("2.0.0 > 1.9.9", ModManager.CompareVersion("2.0.0", "1.9.9") > 0);
 		}
 
-		private static void TestModSettings()
+		private static void TestModdingConfig()
 		{
-			Section("设置持久化");
-			var s = new ModSettings();
-			s.Set("a", true);
-			s.Set("b", false);
-			Check("a 启用", s.IsEnabled("a"));
-			Check("b 禁用", !s.IsEnabled("b"));
-			Check("未知默认禁用", !s.IsEnabled("zzz"));
-			string round = JsonConvert.SerializeObject(s, Formatting.Indented);
-			ModSettings back = JsonConvert.DeserializeObject<ModSettings>(round, ModPackageStore.Lenient);
-			Check("序列化往返保留 a", back.IsEnabled("a"));
-			Check("序列化往返保留 b 禁用", !back.IsEnabled("b"));
+			Section("Modding.xml 配置");
+			string path = Path.Combine(Path.GetTempPath(), "bpsim-modding-selftest.xml");
+			try
+			{
+				if (File.Exists(path))
+				{
+					File.Delete(path);
+				}
+				Guid a = ModGuid.Derive("mod-a");
+				Guid b = ModGuid.Derive("mod-b");
+				ModdingConfig cfg = new ModdingConfig();
+				cfg.SetEnabled(a, true);
+				cfg.SetEnabled(b, false);
+				cfg.LastGameVersion = "0.0.12";
+				cfg.Save(path);
+				Check("配置文件已写入", File.Exists(path));
+
+				ModdingConfig back = ModdingConfig.Load(path);
+				Check("a 启用", !back.IsDisabled(a, "mod-a"));
+				Check("b 禁用", back.IsDisabled(b, "mod-b"));
+				Check("版本号保留", back.LastGameVersion == "0.0.12");
+				Check("严格扫描默认关", !back.StrictScan);
+			}
+			catch (Exception ex)
+			{
+				Fail("配置读写异常：" + ex.Message);
+			}
+			finally
+			{
+				try { if (File.Exists(path)) File.Delete(path); } catch { }
+			}
+		}
+
+		private static void TestModXml()
+		{
+			Section("Mod.xml 解析");
+			string dir = Path.Combine(Path.GetTempPath(), "bpsim-modxml-selftest");
+			string file = Path.Combine(dir, ModXml.FileName);
+			try
+			{
+				Directory.CreateDirectory(dir);
+				File.WriteAllText(file,
+					"<Mod>\n"
+					+ "  <Name>Demo Addon</Name>\n"
+					+ "  <Author>tester</Author>\n"
+					+ "  <Version>1.2.3</Version>\n"
+					+ "  <MultiplayerCompatible>false</MultiplayerCompatible>\n"
+					+ "  <ID>bb7ba333-e72b-49a8-8c0d-011a3fcadaf3</ID>\n"
+					+ "  <EntryPoint type=\"Demo.Entry\" />\n"
+					+ "  <Assemblies><Assembly path=\"Demo.dll\" /></Assemblies>\n"
+					+ "  <Resources>\n"
+					+ "    <Panel id=\"p\" title=\"面板\" html=\"panel.html\" width=\"300\" />\n"
+					+ "  </Resources>\n"
+					+ "</Mod>\n");
+
+				bool ok = ModXml.TryParse(file, "demo-folder", out ModManifest m, out string error);
+				Check("解析成功", ok);
+				if (!ok)
+				{
+					Fail(error);
+					return;
+				}
+				Check("名字", m.name == "Demo Addon");
+				Check("版本", m.version == "1.2.3");
+				Check("GUID", m.guid == Guid.Parse("bb7ba333-e72b-49a8-8c0d-011a3fcadaf3"));
+				Check("入口类型", m.entryType == "Demo.Entry");
+				Check("入口程序集", m.entryAssembly == "Demo.dll");
+				Check("是插件类型", m.IsPlugin);
+				Check("有一个面板", m.panels.Count == 1 && m.panels[0].width == 300f);
+				Check("联机不安全", !m.multiplayerSafe);
+			}
+			catch (Exception ex)
+			{
+				Fail("Mod.xml 解析异常：" + ex.Message);
+			}
+			finally
+			{
+				try { if (Directory.Exists(dir)) Directory.Delete(dir, true); } catch { }
+			}
 		}
 
 		// ── 辅助 ──

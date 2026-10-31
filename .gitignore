@@ -140,8 +140,26 @@ InitTestScene*.unity*
 # Streaming assets completely gone
 /[Aa]ssets/StreamingAssets/
 /[Aa]ssets/StreamingAssets.meta
+# Keep the BPIR frame-shapes source mod (Mod.xml + Code/) in source control.
+# Other generated / user-provided streaming content remains ignored.
+!/Assets/StreamingAssets/
+/Assets/StreamingAssets/*
+!/Assets/StreamingAssets/Mods/
+/Assets/StreamingAssets/Mods/*
+!/Assets/StreamingAssets/Mods/bpir-frame-shapes/
+!/Assets/StreamingAssets/Mods/bpir-frame-shapes.meta
 
 # Editor files
 /.vscode/
 /.vs/
 /.idea/
+
+# Agent workspace artifacts (local scratch docs, memory, lock files)
+/SKILL.md
+/.workbuddy-ai/
+/.dsh-file-claim.lock
+
+# One-off prefab backup taken before the uGUI/TMP package migration; regenerable
+# from git history (see Tools/BPSim/ui-plugin-migration.md)
+/Tools/BPSim/backup/
+*.dshclaim

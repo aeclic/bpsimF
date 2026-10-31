@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using Bpsim.Modding;
-using Newtonsoft.Json;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,27 +10,27 @@ namespace Bpsim.Mods
 {
 	/// <summary>
 	/// Mod 框架的托管中枢（单例）。职责：
-	/// 文件层（扫描/安装/卸载）→ 装配层（Assembly.LoadFrom + 实例化 <see cref="IBpsimMod"/>）→
-	/// 同步到 ECS 注册表（<see cref="ModEcsBridge"/>）→ 驱动 UI（<see cref="ModManagerUI"/>、<see cref="ModPanelService"/>）。
+	/// 文件层（扫描/安装/卸载）→ 装配层（<see cref="ModLoader"/>：扫描 + Assembly.LoadFrom + 入口实例化）
+	/// → 同步到 ECS 注册表（<see cref="ModEcsBridge"/>）→ 驱动 UI（<see cref="ModManagerUI"/>、<see cref="ModPanelService"/>）。
 	/// </summary>
 	/// <remarks>
-	/// ECS 思想：这里只处理「无法放进 ECS 的东西」（文件 IO、托管程序集加载）；
-	/// 每个 Mod 的状态都会镜像成 <see cref="ModEntityComponent"/> 实体，供其它系统用 EntityQuery 查询。
-	/// 需要从 ECS 侧改变启停时，系统往命令缓冲写命令，本类每帧回读后执行实际的加载/卸载。
+	/// <para>这一版把 BepInEx 通道整个拆了：没有 <c>RegisterExternal</c>，没有「等插件来注册」的状态，
+	/// 所有 Mod 都从目录里发现、走同一条加载管线。设计对齐 Besiege 的官方加载器。</para>
+	/// <para>ECS 思想不变：这里只处理「无法放进 ECS 的东西」（文件 IO、托管程序集加载）；
+	/// 每个 Mod 的状态镜像成 <see cref="ModEntityComponent"/> 实体，供其它系统用 EntityQuery 查询。</para>
 	/// </remarks>
 	[DefaultExecutionOrder(-500)]
 	public sealed class ModManager : MonoBehaviour
 	{
 		public static ModManager Instance { get; private set; }
 
-		/// <summary>全部已发现的 Mod 包（Installed 优先于 BuiltIn）。</summary>
+		/// <summary>全部已发现的 Mod 包（Installed 优先于 Workshop / Additional / BuiltIn）。</summary>
 		public readonly List<ModPackage> Packages = new List<ModPackage>();
 
 		/// <summary>任何状态改变（加载/禁用/安装/删除）后触发，UI 订阅重绘。</summary>
 		public event Action Changed;
 
-		private ModSettings m_settings;
-		private readonly Dictionary<string, ModPackage> m_external = new Dictionary<string, ModPackage>(StringComparer.OrdinalIgnoreCase);
+		private ModdingConfig m_config;
 		private readonly Dictionary<string, List<QuickButton>> m_quickButtons =
 			new Dictionary<string, List<QuickButton>>(StringComparer.OrdinalIgnoreCase);
 
@@ -43,6 +41,9 @@ namespace Bpsim.Mods
 		private bool m_initialized;
 
 		public bool Initialized => m_initialized;
+
+		/// <summary>全局配置（禁用列表、维护版本、严格扫描）。</summary>
+		public ModdingConfig Config => m_config;
 
 		public static ModManager Ensure()
 		{
@@ -87,11 +88,24 @@ namespace Bpsim.Mods
 			}
 			m_initialized = true;
 			ModPaths.EnsureRoot();
-			m_settings = LoadSettings();
+			m_config = ModdingConfig.Load(ModPaths.ConfigPath);
 			Rescan();
-			ApplyDefaultEnabled();
+			// 迁移期状态必须先固化，否则玩家手动启用的 Mod 会被迁移规则重新判成禁用
+			m_config.MaterializeLegacy(Packages);
+			ApplyEnabled();
+
+			// 游戏版本变了 → 全禁用（Besiege 同款保守策略）
+			string previousVersion = m_config.LastGameVersion;
+			bool versionChanged = m_config.Maintenance(Application.version, Packages);
+			if (versionChanged)
+			{
+				ApplyEnabled();
+				Debug.LogWarning("[Mods] 检测到游戏版本变化（" + previousVersion + " → " + Application.version + "），已禁用全部 Mod。");
+			}
+			m_config.Save(ModPaths.ConfigPath);
+
 			AttachEcs();
-			// 加载玩家启用的 Mod
+
 			foreach (ModPackage pkg in Packages)
 			{
 				if (pkg.Enabled)
@@ -100,34 +114,40 @@ namespace Bpsim.Mods
 				}
 			}
 			ModEcsBridge.SyncAll(Packages);
+
+			if (versionChanged)
+			{
+				Toast("游戏已更新，Mod 已全部禁用，请逐个确认后再启用");
+			}
 			Debug.Log("[Mods] 初始化完成：发现 " + Packages.Count + " 个 Mod。root=" + ModPaths.ToDisplay(ModPaths.Root));
 		}
 
-		// ───────────────────────── 发现 & 默认启用 ─────────────────────────
+		// ───────────────────────── 发现 & 启用状态 ─────────────────────────
 
-		/// <summary>重新扫描磁盘，保留已加载对象的状态。</summary>
+		/// <summary>重新扫描磁盘，保留已加载对象（程序集与入口实例）。</summary>
 		public void Rescan()
 		{
-			List<ModPackage> fresh = ModPackageStore.Scan();
-			foreach (ModPackage external in m_external.Values)
-			{
-				fresh.RemoveAll(p => string.Equals(p.Id, external.Id, StringComparison.OrdinalIgnoreCase));
-				fresh.Add(external);
-			}
-			// 尽量复用旧对象（保留已加载的程序集/实例）
-			Dictionary<string, ModPackage> old = new Dictionary<string, ModPackage>(StringComparer.OrdinalIgnoreCase);
+			List<ModPackage> fresh = ModLoader.Discover(m_config);
+
+			// 复用旧对象，避免把已加载的入口丢掉
+			Dictionary<Guid, ModPackage> old = new Dictionary<Guid, ModPackage>();
 			foreach (ModPackage p in Packages)
 			{
-				old[p.Id] = p;
+				if (p != null && p.Manifest != null && p.Guid != Guid.Empty)
+				{
+					old[p.Guid] = p;
+				}
 			}
+
 			Packages.Clear();
 			foreach (ModPackage np in fresh)
 			{
-				if (old.TryGetValue(np.Id, out ModPackage op))
+				if (old.TryGetValue(np.Guid, out ModPackage op))
 				{
 					op.Directory = np.Directory;
 					op.Manifest = np.Manifest;
 					op.Source = np.Source;
+					op.WorkshopId = np.WorkshopId;
 					Packages.Add(op);
 				}
 				else
@@ -135,62 +155,32 @@ namespace Bpsim.Mods
 					Packages.Add(np);
 				}
 			}
-			foreach (ModPackage p in Packages)
-			{
-				p.Enabled = m_settings.IsEnabled(p.Id) || (!m_settings.disabled.Contains(p.Id) && DefaultEnabled(p));
-			}
+
+			ModRegistry.Rebuild(Packages);
+			ApplyEnabled();
 		}
 
-		private void ApplyDefaultEnabled()
+		private void ApplyEnabled()
 		{
 			foreach (ModPackage p in Packages)
 			{
-				p.Enabled = m_settings.IsEnabled(p.Id) || (!m_settings.disabled.Contains(p.Id) && DefaultEnabled(p));
+				if (p.Manifest == null)
+				{
+					continue;
+				}
+				p.Enabled = !m_config.IsDisabled(p.Manifest.guid, p.Id);
 			}
-		}
-
-		/// <summary>默认启用策略：纯内容包(panel)默认开；含代码(plugin/mixed)默认关（需玩家显式授权）。</summary>
-		private static bool DefaultEnabled(ModPackage p)
-		{
-			return p.Source == ModSource.BepInEx ? p.ExternalDefaultEnabled : p.Manifest != null && !p.Manifest.IsPlugin;
-		}
-
-		/// <summary>Register an already loaded BepInEx plugin. Never load its DLL a second time.</summary>
-		public void RegisterExternal(ModManifest manifest, IBpsimMod instance, string directory, bool defaultEnabled)
-		{
-			if (manifest == null || instance == null) throw new ArgumentNullException();
-			manifest.Normalize();
-			if (m_external.TryGetValue(manifest.id, out var previous))
-			{
-				if (ReferenceEquals(previous.ExternalInstance, instance)) return;
-				throw new InvalidOperationException("BepInEx Mod 重复注册：" + manifest.id);
-			}
-			var existing = Find(manifest.id);
-			if (existing != null) throw new InvalidOperationException("Mod id 已存在：" + manifest.id);
-			var pkg = new ModPackage { Manifest = manifest, Directory = directory, Source = ModSource.BepInEx,
-				ExternalInstance = instance, ExternalDefaultEnabled = defaultEnabled };
-			m_external.Add(pkg.Id, pkg);
-			Packages.Add(pkg);
-			pkg.Enabled = m_settings.IsEnabled(pkg.Id) || (!m_settings.disabled.Contains(pkg.Id) && defaultEnabled);
-			if (pkg.Enabled) LoadPackage(pkg);
-			ModEcsBridge.UpdateOne(pkg);
-			Changed?.Invoke();
-		}
-
-		public void UnregisterExternal(string id, IBpsimMod instance)
-		{
-			if (!m_external.TryGetValue(id, out var pkg) || !ReferenceEquals(pkg.ExternalInstance, instance)) return;
-			UnloadPackage(pkg);
-			m_external.Remove(id);
-			Packages.Remove(pkg);
-			ModEcsBridge.SyncAll(Packages);
-			Changed?.Invoke();
 		}
 
 		// ───────────────────────── 加载 / 卸载 ─────────────────────────
 
 		public ModPackage Find(string id)
 		{
+			ModPackage byRegistry = ModRegistry.GetModById(id);
+			if (byRegistry != null)
+			{
+				return byRegistry;
+			}
 			foreach (ModPackage p in Packages)
 			{
 				if (string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase))
@@ -201,7 +191,7 @@ namespace Bpsim.Mods
 			return null;
 		}
 
-		/// <summary>启用/禁用并持久化。</summary>
+		/// <summary>启用/禁用并持久化到 Modding.xml。</summary>
 		public void SetEnabled(string id, bool enabled)
 		{
 			ModPackage pkg = Find(id);
@@ -211,10 +201,10 @@ namespace Bpsim.Mods
 			}
 			if (enabled == pkg.Enabled && (enabled ? pkg.IsLoaded : true))
 			{
-				// 已经处于目标状态
+				return;
 			}
-			m_settings.Set(id, enabled);
-			SaveSettings();
+			m_config.SetEnabled(pkg.Guid, enabled);
+			m_config.Save(ModPaths.ConfigPath);
 			if (enabled)
 			{
 				pkg.Enabled = true;
@@ -240,74 +230,44 @@ namespace Bpsim.Mods
 			{
 				pkg.State = ModState.Incompatible;
 				pkg.Error = "需要游戏版本 ≥ " + pkg.Manifest.minGameVersion;
+				ModEcsBridge.UpdateOne(pkg);
 				return;
 			}
-			pkg.Error = null;
-			try
+
+			if (ModLoader.Load(pkg, m_config, this, out string error))
 			{
-				if (pkg.Manifest.IsPlugin)
-				{
-					LoadPlugin(pkg);
-				}
-				else
-				{
-					pkg.State = ModState.Loaded; // 纯内容包：面板按需打开
-				}
+				ModRegistry.InvokeLoaded(pkg.Guid);
+				NotifyWorld(pkg);
+				// Mod 通常晚于部件工厂初始化，这里补发一次「部件已就绪」。
+				ModHooks.NotifyPartsReady();
 			}
-			catch (Exception ex)
+			else if (!string.IsNullOrEmpty(error))
 			{
-				pkg.State = ModState.Error;
-				pkg.Error = ex.Message;
-				Debug.LogError("[Mods] 加载失败 " + pkg.Id + ": " + ex);
+				pkg.Error = error;
 			}
 			ModEcsBridge.UpdateOne(pkg);
 		}
 
-		private void LoadPlugin(ModPackage pkg)
+		/// <summary>世界已经存在时，补一次 <c>OnWorldCreated</c>（Mod 是在世界之后才加载的）。</summary>
+		private static void NotifyWorld(ModPackage pkg)
 		{
-			if (pkg.ExternalInstance != null)
+			if (pkg == null || pkg.EntryPoint == null)
 			{
-				pkg.Instance = pkg.ExternalInstance;
-				pkg.Instance.OnLoad(new ModContext(pkg, this));
-				pkg.State = ModState.Loaded;
 				return;
 			}
-			if (string.IsNullOrWhiteSpace(pkg.Manifest.entryAssembly))
+			World world = World.DefaultGameObjectInjectionWorld;
+			if (world == null || !world.IsCreated)
 			{
-				throw new InvalidOperationException("manifest 缺少 entryAssembly");
+				return;
 			}
-			string asmPath = Path.Combine(pkg.Directory, pkg.Manifest.entryAssembly);
-			if (!File.Exists(asmPath))
+			try
 			{
-				throw new FileNotFoundException("找不到入口程序集：" + pkg.Manifest.entryAssembly);
+				pkg.EntryPoint.OnWorldCreated(world);
 			}
-			pkg.Assembly = Assembly.LoadFrom(asmPath);
-			Type entryType = null;
-			if (!string.IsNullOrWhiteSpace(pkg.Manifest.entryType))
+			catch (Exception ex)
 			{
-				entryType = pkg.Assembly.GetType(pkg.Manifest.entryType);
+				Debug.LogWarning("[Mods] " + pkg.Id + " 的 OnWorldCreated 抛异常：" + ex.Message);
 			}
-			if (entryType == null)
-			{
-				// 兜底：找程序集里第一个 IBpsimMod 实现
-				foreach (Type t in pkg.Assembly.GetTypes())
-				{
-					if (typeof(IBpsimMod).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-					{
-						entryType = t;
-						break;
-					}
-				}
-			}
-			if (entryType == null)
-			{
-				throw new InvalidOperationException("程序集里找不到 IBpsimMod 入口");
-			}
-			IBpsimMod instance = (IBpsimMod)Activator.CreateInstance(entryType);
-			pkg.Instance = instance;
-			instance.OnLoad(new ModContext(pkg, this));
-			pkg.State = ModState.Loaded;
-			Debug.Log("[Mods] 已加载插件 " + pkg.Id + " (" + entryType.FullName + ")");
 		}
 
 		/// <summary>卸载/禁用单个包（不做持久化）。</summary>
@@ -317,27 +277,10 @@ namespace Bpsim.Mods
 			{
 				return;
 			}
-			try
-			{
-				if (pkg.Instance != null)
-				{
-					pkg.Instance.OnUnload();
-				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogWarning("[Mods] OnUnload 异常 " + pkg.Id + ": " + ex.Message);
-			}
-			finally
-			{
-				pkg.Instance = null;
-			}
+			ModLoader.Unload(pkg);
 			ModPanelService.ClosePackage(pkg);
 			m_quickButtons.Remove(pkg.Id);
-			if (pkg.State == ModState.Loaded)
-			{
-				pkg.State = ModState.Discovered;
-			}
+			ModEcsBridge.UpdateOne(pkg);
 		}
 
 		private static bool CheckVersion(ModPackage pkg)
@@ -347,13 +290,13 @@ namespace Bpsim.Mods
 			{
 				return true;
 			}
+			// 只在明确更旧时拒绝；解析不出来就放行
 			string game = Application.version;
-			if (CompareVersion(game, min) < 0)
+			if (string.IsNullOrEmpty(game))
 			{
-				// 无法比较时放行（只在明确更旧时拒绝）
 				return true;
 			}
-			return true;
+			return CompareVersion(game, min) >= 0;
 		}
 
 		/// <summary>比较 a/b 版本号，返回 -1/0/1。非数字段忽略。</summary>
@@ -398,12 +341,13 @@ namespace Bpsim.Mods
 		{
 			ModPackage pkg = ModPackageStore.InstallZip(zipPath);
 			Rescan();
-			ApplyDefaultEnabled();
 			ModEcsBridge.SyncAll(Packages);
-			// 新装的内容包默认直接加载
 			ModPackage found = Find(pkg.Id);
-			if (found != null && found.Enabled)
+			if (found != null)
 			{
+				m_config.SetEnabled(found.Guid, true);
+				m_config.Save(ModPaths.ConfigPath);
+				found.Enabled = true;
 				LoadPackage(found);
 				ModEcsBridge.UpdateOne(found);
 			}
@@ -421,7 +365,6 @@ namespace Bpsim.Mods
 			UnloadPackage(pkg);
 			bool ok = ModPackageStore.Uninstall(pkg);
 			Rescan();
-			ApplyDefaultEnabled();
 			ModEcsBridge.SyncAll(Packages);
 			Changed?.Invoke();
 			return ok;
@@ -556,40 +499,10 @@ namespace Bpsim.Mods
 
 		// ───────────────────────── 设置持久化 ─────────────────────────
 
-		private static ModSettings LoadSettings()
-		{
-			try
-			{
-				if (File.Exists(ModPaths.SettingsPath))
-				{
-					ModSettings s = JsonConvert.DeserializeObject<ModSettings>(
-						File.ReadAllText(ModPaths.SettingsPath), ModPackageStore.Lenient);
-					if (s != null)
-					{
-						s.enabled ??= new List<string>();
-						s.disabled ??= new List<string>();
-						return s;
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogWarning("[Mods] 读取设置失败：" + ex.Message);
-			}
-			return new ModSettings();
-		}
-
+		/// <summary>把当前状态写回 <c>Modding.xml</c>（旧名保留，避免外部调用断掉）。</summary>
 		public void SaveSettings()
 		{
-			try
-			{
-				ModPaths.EnsureRoot();
-				File.WriteAllText(ModPaths.SettingsPath, JsonConvert.SerializeObject(m_settings, Formatting.Indented));
-			}
-			catch (Exception ex)
-			{
-				Debug.LogWarning("[Mods] 写入设置失败：" + ex.Message);
-			}
+			m_config?.Save(ModPaths.ConfigPath);
 		}
 
 		/// <summary>打开 Mod 管理器界面。</summary>

@@ -50,6 +50,9 @@ namespace Bpsim.UI
 			/// <summary>顶部工具栏克隆按钮用的模板（加载场景按钮），保证新按钮与既有按钮完全同款。</summary>
 			public Button TemplateButton => m_loadButton;
 
+			/// <summary>用户设置面板预制体，供同一套界面风格的运行时面板复用。</summary>
+			public GameObject SettingsPanelTemplate => m_settingsPanelPrefab != null ? m_settingsPanelPrefab.gameObject : null;
+
 			/// <summary>
 			/// 原来的「模拟」按钮。它会被 <see cref="T:Bpsim.UI.BuildHud" /> 搬到 HUD 画布上
 			/// 变成 Besiege 式的大播放键，所以这里保留引用、不再参与 ActionBar 的排版。

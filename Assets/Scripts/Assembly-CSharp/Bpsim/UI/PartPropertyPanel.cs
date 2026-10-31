@@ -147,7 +147,7 @@ namespace Bpsim.UI
 			});
 			ActionRow("ResetTransform", "重置变换", () => m_scene.Unmanaged.TrySetPartFree(m_part, PartFreeTransform.Identity));
 			m_optionalTop = m_height;
-			m_shapeButton = ActionRow("FrameShape", "形状", () => FrameShapeSystem.SetShape(Manager, m_part, (Manager.GetComponentData<FrameShape>(m_part).Value + 1) % 4));
+			m_shapeButton = ActionRow("FrameShape", "形状", () => FrameShapeSystem.SetShape(Manager, m_part, (Manager.GetComponentData<FrameShape>(m_part).Value + 1) % FrameShape.Count));
 			m_skinButton = ActionRow("Skin", "编辑蒙皮…", () => { m_skinPart = m_part; SkinPanelHost.Instance.Open(m_part); });
 			Section("Physics", "部件物理信息", 1);
 			var physicsPlate = Rect("Values", m_section.Rect); Top(physicsPlate, 0, m_height, 0, 180); Image(physicsPlate, Field);

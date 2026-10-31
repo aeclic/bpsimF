@@ -1,13 +1,13 @@
-# BPIR 变形框 / BepInEx
+# bp-rebooted ECS 框形 / BepInEx
 
-来源：<https://gitee.com/yctf123123/bpir>，参考提交 `7394a5ff08af7fb5b5d97a92270f2fa3d4c16d21`。
-参考实现为 `Innovation/FrameShape.cs`、`PartPhysicsOverride.cs`：原版方框、直角三角框、半圆框。本移植额外提供完整圆框。
+来源：<https://github.com/Goggs77/bp-rebooted>。
+本 Mod 将其中的长方形框、直角三角框部件改写为 ECS 数据与系统；兼容原有的半圆框，并额外提供完整圆框。
 
 ## 使用
 
 Windows x64 构建自动安装 BepInEx 5.4.23.2 和 `BepInEx/plugins/Bpsim.FrameShapes/Bpsim.FrameShapes.dll`。
-启动后在 F10 的 Mod 列表中显示「BPIR 变形框」，首次默认开启，之后遵循玩家保存的启停选择。
-选择木框、铁框、彩色框、透明框等框架部件，在部件属性中点「形状」循环切换。
+启动后在 F10 的 Mod 列表中显示「bp-rebooted ECS 框形」，使用独立的 `bput.bpsim.bpreboot-frame-shapes` ID，可与 BPIR 的同类 Mod 并列显示；首次默认开启，之后遵循玩家保存的启停选择。
+选择木框、铁框、彩色框、透明框等框架部件，在部件属性中点「形状」循环切换长方形框、直角三角框、半圆框和圆框。
 木箱、铁箱不参与。旋转、翻转、自由缩放沿用原部件操作。模拟中禁止修改形状。
 停用 Mod 会停止当前模拟并恢复方框外观及碰撞；保留存档中的形状参数，重新启用后恢复。
 

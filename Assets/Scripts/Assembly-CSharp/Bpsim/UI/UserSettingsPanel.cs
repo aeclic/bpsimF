@@ -58,9 +58,43 @@ namespace Bpsim.UI
 
 		// ---- 自定义背景抽屉 ----
 
+		/// <summary>抽屉展开/收起的动画时长（秒）。用 unscaledTime 推进，暂停时也能播完。</summary>
+		private const float DrawerAnimationDuration = 0.22f;
+
+		/// <summary>收起时箭头的 Z 旋转角度：▾ 顺时针转 90° 变成 ▸。</summary>
+		private const float DrawerArrowClosedAngle = 90f;
+
+		/// <summary>
+		/// 抽屉里的小号行高：常规行是 90，抽屉里的从属选项压到 72，
+		/// 和保持原尺寸的标题行拉开层次（参考视频里标题大、内容行细）。
+		/// </summary>
+		private const float DrawerRowHeight = 72f;
+
+		/// <summary>小号行的等比缩放 0.8 = 72 / 90：行板、字号、开关、输入框一起缩，视觉高度正好等于分配的行高。</summary>
+		private const float DrawerRowScale = DrawerRowHeight / 90f;
+
 		private GameObject m_backgroundDrawer;
 
+		private RectTransform m_backgroundDrawerRect;
+
 		private Text m_backgroundDrawerArrow;
+
+		private RectTransform m_backgroundDrawerArrowRect;
+
+		/// <summary>箭头当前角度。动画被打断（连点）时从这里接着转，不会跳回原来的角度。</summary>
+		private float m_backgroundDrawerArrowAngle;
+
+		private float m_backgroundDrawerAnimationTime;
+
+		private float m_backgroundDrawerAnimationFromHeight;
+
+		private float m_backgroundDrawerAnimationToHeight;
+
+		private float m_backgroundDrawerAnimationFromAngle;
+
+		private float m_backgroundDrawerAnimationToAngle;
+
+		private bool m_backgroundDrawerAnimating;
 
 		private Transform m_rowParent;
 
@@ -84,6 +118,7 @@ namespace Bpsim.UI
 
 		private void Update()
 		{
+			UpdateBackgroundDrawerAnimation();
 			UpdateBackgroundPlayback();
 			if (m_backgroundDirty)
 			{
@@ -141,6 +176,7 @@ namespace Bpsim.UI
 			row.transform.Find("Value").GetComponent<ToggleSwitch>().Bind(property);
 			row.SetActive(value: true);
 			row.transform.SetParent(RowParent, worldPositionStays: false);
+			CompactDrawerRow(row);
 			row.transform.Find("Name").GetComponent<Text>().text = "启用 debug 控制台";
 			m_settingItems.Add(row);
 		}
@@ -233,6 +269,7 @@ namespace Bpsim.UI
 			m_backgroundProxy = new DependencyProxy<CustomBackgroundSettings>(settings);
 			settings.PropertyChanged += OnBackgroundSettingChanged;
 
+			m_backgroundDrawerOpen = s_backgroundDrawerOpen;
 			BuildBackgroundDrawer();
 
 			m_rowParent = m_backgroundDrawer.transform;
@@ -265,16 +302,20 @@ namespace Bpsim.UI
 			BuildBackgroundButtons();
 
 			m_rowParent = null;
-			SetBackgroundDrawerOpen(m_backgroundDrawerOpen);
+			SetBackgroundDrawerOpen(m_backgroundDrawerOpen, immediate: true);
 	}
 
 	/// <summary>抽屉默认是否展开。收起时整个自定义背景分组只占一行，不用滚半天。</summary>
 	private bool m_backgroundDrawerOpen;
 
+	/// <summary>同一个游戏会话里记住抽屉状态：关掉设置再打开，还是上次的样子。</summary>
+	private static bool s_backgroundDrawerOpen;
+
 	/// <summary>
-	/// 建「自定义背景」抽屉：一行可点的标题（带 ▸/▾ 箭头）+ 一个可折叠的容器。
-	/// 容器自带 VerticalLayoutGroup + ContentSizeFitter，展开后高度自动撑开，
-	/// 面板 Scroll View 也跟着变长。
+	/// 建「自定义背景」抽屉：一行可点的标题（带 ▾ 箭头）+ 一个可折叠的容器。
+	/// 容器上是 VerticalLayoutGroup（排行）和 RectMask2D（像卷轴一样裁剪），
+	/// 高度由 <see cref="UpdateBackgroundDrawerAnimation"/> 每帧按缓动曲线改，
+	/// 面板 Scroll View 的 Content 跟着重建，于是整个列表平滑地变长/变短。
 	/// </summary>
 	private void BuildBackgroundDrawer()
 	{
@@ -308,21 +349,27 @@ namespace Bpsim.UI
 		toggle.onClick.AddListener(ToggleBackgroundDrawer);
 
 		// 箭头：直接克隆 Name 的 Text，字体/字号/颜色都跟面板一致。
+		// 只用「▾」一个字形，靠 Z 轴旋转翻向（展开 0° 朝下，收起 90° 朝右）：
+		// 换字形（▾/▸）没法做动画，两个字形的字宽也不一样，换的时候会跳一下。
 		GameObject arrow = UnityEngine.Object.Instantiate(headerName.gameObject);
 		arrow.name = "Arrow";
 		RectTransform arrowRect = (RectTransform)arrow.transform;
 		arrowRect.SetParent(header.transform, worldPositionStays: false);
 		arrowRect.anchorMin = new Vector2(1f, 0.5f);
 		arrowRect.anchorMax = new Vector2(1f, 0.5f);
-		arrowRect.pivot = new Vector2(1f, 0.5f);
+		arrowRect.pivot = new Vector2(0.5f, 0.5f);
 		arrowRect.sizeDelta = new Vector2(60f, 60f);
-		arrowRect.anchoredPosition = new Vector2(-20f, 0f);
+		arrowRect.anchoredPosition = new Vector2(-50f, 0f);
+		m_backgroundDrawerArrowRect = arrowRect;
 		m_backgroundDrawerArrow = arrow.GetComponent<Text>();
 		if (m_backgroundDrawerArrow != null)
 		{
+			// Name 是 MiddleLeft 对齐，直接转会绕字的外接框转；先居中，才绕字心转。
+			m_backgroundDrawerArrow.alignment = TextAnchor.MiddleCenter;
 			m_backgroundDrawerArrow.text = "▾";
 			m_backgroundDrawerArrow.raycastTarget = false;
 		}
+		ApplyBackgroundDrawerArrowAngle(DrawerArrowClosedAngle);
 
 		GameObject drawer = new GameObject("BackgroundDrawer", typeof(RectTransform));
 		RectTransform drawerRect = (RectTransform)drawer.transform;
@@ -340,10 +387,12 @@ namespace Bpsim.UI
 		layout.childControlHeight = false;
 		layout.childForceExpandWidth = true;
 		layout.childForceExpandHeight = false;
-		ContentSizeFitter fitter = drawer.AddComponent<ContentSizeFitter>();
-		fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-		fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+		// 高度由动画直接驱动（不再挂 ContentSizeFitter，否则每次布局重建都会把
+		// 高度弹回自然高度，动画就只剩一跳）。RectMask2D 负责把超出的行裁掉，
+		// 看上去就是卷轴往下展开/往上收。
+		drawer.AddComponent<RectMask2D>();
 		m_backgroundDrawer = drawer;
+		m_backgroundDrawerRect = drawerRect;
 	}
 
 	private void ToggleBackgroundDrawer()
@@ -351,18 +400,173 @@ namespace Bpsim.UI
 		SetBackgroundDrawerOpen(!m_backgroundDrawerOpen);
 	}
 
-	/// <summary>展开/收起自定义背景抽屉。收起只是隐藏容器，行和绑定都还在，不会丢状态。</summary>
+	/// <summary>
+	/// 展开/收起自定义背景抽屉。收起只是把容器高度收到 0 再隐藏，行和绑定都还在，不会丢状态；
+	/// 展开时先把容器激活，再从当前高度缓动长到 Content 的自然高度。
+	/// </summary>
 	internal void SetBackgroundDrawerOpen(bool open)
 	{
+		SetBackgroundDrawerOpen(open, immediate: false);
+	}
+
+	/// <summary>
+	/// 同 <see cref="SetBackgroundDrawerOpen(bool)"/>，<paramref name="immediate"/> 为 true 时跳过动画：
+	/// 首次建面板时按记住的状态直接摆好，QA 也用它拿到确定的起点。
+	/// </summary>
+	internal void SetBackgroundDrawerOpen(bool open, bool immediate)
+	{
 		m_backgroundDrawerOpen = open;
-		if (m_backgroundDrawer != null)
+		s_backgroundDrawerOpen = open;
+		if (m_backgroundDrawer == null || m_backgroundDrawerRect == null)
 		{
-			m_backgroundDrawer.SetActive(open);
+			return;
 		}
-		if (m_backgroundDrawerArrow != null)
+		if (open)
 		{
-			m_backgroundDrawerArrow.text = open ? "▾" : "▸";
+			// 先激活再量高度：没激活时布局系统不会给行排位置。
+			m_backgroundDrawer.SetActive(value: true);
 		}
+		float toHeight = open ? MeasureBackgroundDrawerHeight() : 0f;
+		float toAngle = (open ? 0f : DrawerArrowClosedAngle);
+		if (immediate)
+		{
+			FinishBackgroundDrawerAnimation(toHeight, toAngle);
+			return;
+		}
+		m_backgroundDrawerAnimationTime = 0f;
+		m_backgroundDrawerAnimationFromHeight = m_backgroundDrawerRect.sizeDelta.y;
+		m_backgroundDrawerAnimationToHeight = toHeight;
+		m_backgroundDrawerAnimationFromAngle = m_backgroundDrawerArrowAngle;
+		m_backgroundDrawerAnimationToAngle = toAngle;
+		m_backgroundDrawerAnimating = !Mathf.Approximately(m_backgroundDrawerAnimationFromHeight, toHeight)
+			|| !Mathf.Approximately(m_backgroundDrawerAnimationFromAngle, toAngle);
+		if (!m_backgroundDrawerAnimating)
+		{
+			FinishBackgroundDrawerAnimation(toHeight, toAngle);
+		}
+	}
+
+	/// <summary>抽屉高度动画是否还在播（QA 用它等动画播完再断言最终状态）。</summary>
+	internal bool BackgroundDrawerAnimating
+	{
+		get
+		{
+			return m_backgroundDrawerAnimating;
+		}
+	}
+
+	/// <summary>每帧推进抽屉的高度/箭头动画。用 unscaledDeltaTime，暂停时也能播完。</summary>
+	private void UpdateBackgroundDrawerAnimation()
+	{
+		if (!m_backgroundDrawerAnimating || m_backgroundDrawerRect == null)
+		{
+			return;
+		}
+		m_backgroundDrawerAnimationTime += Time.unscaledDeltaTime;
+		float t = Mathf.Clamp01(m_backgroundDrawerAnimationTime / DrawerAnimationDuration);
+		float eased = EaseOutCubic(t);
+		ApplyBackgroundDrawerHeight(Mathf.Lerp(m_backgroundDrawerAnimationFromHeight, m_backgroundDrawerAnimationToHeight, eased));
+		ApplyBackgroundDrawerArrowAngle(Mathf.Lerp(m_backgroundDrawerAnimationFromAngle, m_backgroundDrawerAnimationToAngle, eased));
+		if (t >= 1f)
+		{
+			FinishBackgroundDrawerAnimation(m_backgroundDrawerAnimationToHeight, m_backgroundDrawerAnimationToAngle);
+		}
+	}
+
+	/// <summary>把抽屉高度写进 rect，并把面板 Content 标脏，让滚动列表同帧跟着变。</summary>
+	private void ApplyBackgroundDrawerHeight(float height)
+	{
+		Vector2 size = m_backgroundDrawerRect.sizeDelta;
+		size.y = Mathf.Max(0f, height);
+		m_backgroundDrawerRect.sizeDelta = size;
+		MarkContentLayoutDirty();
+	}
+
+	private void ApplyBackgroundDrawerArrowAngle(float angle)
+	{
+		m_backgroundDrawerArrowAngle = angle;
+		if (m_backgroundDrawerArrowRect != null)
+		{
+			m_backgroundDrawerArrowRect.localEulerAngles = new Vector3(0f, 0f, angle);
+		}
+	}
+
+	/// <summary>收尾：高度/角度落到终值，收起时把容器隐藏，再强制重排一次 Content。</summary>
+	private void FinishBackgroundDrawerAnimation(float height, float angle)
+	{
+		m_backgroundDrawerAnimating = false;
+		ApplyBackgroundDrawerHeight(height);
+		ApplyBackgroundDrawerArrowAngle(angle);
+		if (!m_backgroundDrawerOpen)
+		{
+			// 先隐藏再重排：否则布局会继续给这个 0 高度子物体留一份 spacing。
+			m_backgroundDrawer.SetActive(value: false);
+		}
+		RectTransform contentRect = (m_content != null) ? m_content.transform as RectTransform : null;
+		if (contentRect != null)
+		{
+			LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+		}
+	}
+
+	/// <summary>
+	/// 面板 Content 是 VerticalLayoutGroup + ContentSizeFitter，按子物体 rect 高度排布；
+	/// 只改子物体高度不会自动把父级标脏，所以手动标一次（帧末 Canvas 重建时生效）。
+	/// </summary>
+	private void MarkContentLayoutDirty()
+	{
+		if (m_content != null)
+		{
+			LayoutRebuilder.MarkLayoutForRebuild((RectTransform)m_content.transform);
+		}
+	}
+
+	/// <summary>抽屉的自然高度：行高 + 间距 + 内边距，也就是展开动画的目标高度。</summary>
+	private float MeasureBackgroundDrawerHeight()
+	{
+		LayoutRebuilder.ForceRebuildLayoutImmediate(m_backgroundDrawerRect);
+		float preferred = LayoutUtility.GetPreferredHeight(m_backgroundDrawerRect);
+		if (preferred <= 0f)
+		{
+			// 兜底：布局系统还没算出偏好高度时，按子物体实际高度累加。
+			preferred = 0f;
+			for (int i = 0; i < m_backgroundDrawerRect.childCount; i++)
+			{
+				RectTransform child = m_backgroundDrawerRect.GetChild(i) as RectTransform;
+				if (child != null)
+				{
+					preferred += child.rect.height;
+				}
+			}
+		}
+		return preferred;
+	}
+
+	/// <summary>先快后慢：展开时「啪」地弹出来，收尾不拖沓。</summary>
+	private static float EaseOutCubic(float t)
+	{
+		float inverse = 1f - t;
+		return 1f - inverse * inverse * inverse;
+	}
+
+	/// <summary>
+	/// 把抽屉里的行压成小号：行高 90 → 72，整行等比缩到 0.8。
+	/// 等比缩放的好处是字号、开关、输入框边框一起变小，不用逐个改模板子物体；
+	/// 行宽被 VerticalLayoutGroup 占满后再缩，视觉宽度也跟着窄一档，像嵌在标题行下面。
+	/// 只对挂在抽屉下的行生效，面板其它分组的行保持原尺寸。
+	/// </summary>
+	private void CompactDrawerRow(GameObject row)
+	{
+		if (row == null || m_backgroundDrawer == null || row.transform.parent != m_backgroundDrawer.transform)
+		{
+			return;
+		}
+		RectTransform rect = row.transform as RectTransform;
+		if (rect != null)
+		{
+			rect.sizeDelta = new Vector2(rect.sizeDelta.x, DrawerRowHeight);
+		}
+		row.transform.localScale = new Vector3(DrawerRowScale, DrawerRowScale, 1f);
 	}
 
 	/// <summary>抽屉容器（QA 按名字找行时用）。</summary>
@@ -386,6 +590,7 @@ namespace Bpsim.UI
 			GameObject row = UnityEngine.Object.Instantiate(m_inputFieldTemplate);
 			row.SetActive(value: true);
 			row.transform.SetParent(RowParent, worldPositionStays: false);
+			CompactDrawerRow(row);
 			Transform value = row.transform.Find("Value");
 			if (value != null)
 			{
@@ -413,6 +618,7 @@ namespace Bpsim.UI
 			}
 			row.SetActive(value: true);
 			row.transform.SetParent(RowParent, worldPositionStays: false);
+			CompactDrawerRow(row);
 			row.transform.Find("Name").GetComponent<Text>().text = label;
 			m_settingItems.Add(row);
 			return row;
@@ -432,6 +638,7 @@ namespace Bpsim.UI
 			GameObject row = UnityEngine.Object.Instantiate(m_inputFieldTemplate);
 			row.SetActive(value: true);
 			row.transform.SetParent(RowParent, worldPositionStays: false);
+			CompactDrawerRow(row);
 			row.transform.Find("Name").GetComponent<Text>().text = label;
 			InputField field = row.transform.Find("Value").GetComponent<InputField>();
 			field.readOnly = true;
@@ -450,6 +657,7 @@ namespace Bpsim.UI
 			GameObject row = UnityEngine.Object.Instantiate(m_inputFieldTemplate);
 			row.SetActive(value: true);
 			row.transform.SetParent(RowParent, worldPositionStays: false);
+			CompactDrawerRow(row);
 			row.transform.Find("Name").GetComponent<Text>().text = label;
 			m_settingItems.Add(row);
 			Transform value = row.transform.Find("Value");
@@ -519,6 +727,7 @@ namespace Bpsim.UI
 			GameObject statusRow = UnityEngine.Object.Instantiate(m_inputFieldTemplate);
 			statusRow.SetActive(value: true);
 			statusRow.transform.SetParent(RowParent, worldPositionStays: false);
+			CompactDrawerRow(statusRow);
 			statusRow.transform.Find("Name").GetComponent<Text>().text = "背景状态";
 			Transform statusValue = statusRow.transform.Find("Value");
 			InputField statusField = statusValue.GetComponent<InputField>();
@@ -553,6 +762,8 @@ namespace Bpsim.UI
 			Button button = clone.GetComponent<Button>();
 			button.onClick.RemoveAllListeners();
 			button.onClick.AddListener(action);
+			// 抽屉里的操作按钮也跟着行一起变小；面板上的「打开 Mod 管理器」保持常规尺寸。
+			CompactDrawerRow(clone);
 			Text caption = clone.transform.Find("Text")?.GetComponent<Text>();
 			if (caption != null)
 			{

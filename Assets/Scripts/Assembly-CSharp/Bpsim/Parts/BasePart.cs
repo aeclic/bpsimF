@@ -60,6 +60,25 @@ namespace Bpsim.Parts
 
 		public static PartRangeInfo EntityLightsB => new PartRangeInfo(PartType.SpotLight, 0, 3);
 
+		/// <summary>
+		/// 变体按它的基部件归类；原版部件原样返回。
+		/// </summary>
+		/// <remarks>
+		/// 下面这些「按索引区间/等值判断部件类别」的函数都先过一道这个，
+		/// 否则 Mod 变体（索引 9000+）会掉进所有区间的外面，被当成「不属于彩色框」
+		/// —— 实体缺 <c>ColoredFrame</c>、Z 偏移算错、质量查不到，见 <see cref="PartVariants"/>。
+		/// </remarks>
+		public static PartTypeInfo Resolve(PartTypeInfo info)
+		{
+			return PartVariants.Resolve(info);
+		}
+
+		/// <summary>变体按基部件判断是否落在某个索引区间内。</summary>
+		public static bool BelongsTo(PartTypeInfo info, PartRangeInfo range)
+		{
+			return PartVariants.Resolve(info).BelongsTo(range);
+		}
+
 		public static bool IsContainer(in PartAspect part)
 		{
 			return IsContainer(part.TypeInfo);
@@ -67,6 +86,7 @@ namespace Bpsim.Parts
 
 		public static bool IsContainer(PartTypeInfo info)
 		{
+			info = PartVariants.Resolve(info);
 			return info.PartType switch
 			{
 				PartType.WoodenFrame => info.PartIndex != WoodenBox.PartIndex, 
@@ -82,6 +102,7 @@ namespace Bpsim.Parts
 
 		public static bool CanBeContained(PartTypeInfo info)
 		{
+			info = PartVariants.Resolve(info);
 			return info.PartType switch
 			{
 				PartType.WoodenFrame => info.PartIndex == WoodenBox.PartIndex, 
@@ -97,6 +118,7 @@ namespace Bpsim.Parts
 
 		public static bool IsStructural(PartTypeInfo info)
 		{
+			info = PartVariants.Resolve(info);
 			switch (info.PartType)
 			{
 			case PartType.WoodenFrame:
@@ -133,6 +155,7 @@ namespace Bpsim.Parts
 
 		public static bool IsEightWay(PartTypeInfo info)
 		{
+			info = PartVariants.Resolve(info);
 			PartType partType = info.PartType;
 			if (partType == PartType.GrapplingHook || partType == PartType.SpotLight || partType == PartType.TNT)
 			{
@@ -225,7 +248,8 @@ namespace Bpsim.Parts
 
 		public static float GetZOffset(in PartAspect part)
 		{
-			PartTypeInfo partTypeInfo = new PartTypeInfo(part.PartType, part.PartIndex);
+			// 变体要按基部件算 Z：彩色框是 -0.45，别的才是 0/0.01。
+			PartTypeInfo partTypeInfo = PartVariants.Resolve(new PartTypeInfo(part.PartType, part.PartIndex));
 			float result;
 			switch (partTypeInfo.PartType)
 			{
@@ -360,6 +384,7 @@ namespace Bpsim.Parts
 
 		public static bool IsTriggerable(PartTypeInfo typeInfo)
 		{
+			typeInfo = PartVariants.Resolve(typeInfo);
 			switch (typeInfo.PartType)
 			{
 			case PartType.Fan:

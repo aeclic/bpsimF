@@ -80,7 +80,7 @@ namespace Bpsim.UI
 			});
 			m_toggleMap.Add(partIndex, component);
 			RectTransform rectTransform = (RectTransform)obj.transform.Find("PartIcon");
-			PartSelector.SetRenderedIcon(rectTransform, $"Part_{partType}_{partIndex}_Rendered", partType == PartType.SkinPart);
+			PartSelector.SetRenderedIcon(rectTransform, new PartTypeInfo(partType, partIndex), partType == PartType.SkinPart);
 			return obj;
 		}
 

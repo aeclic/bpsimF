@@ -26,7 +26,7 @@ namespace Bpsim.EditorTools
 			Log.Clear();
 			try
 			{
-				for (int shape = 0; shape <= 3; shape++)
+				for (int shape = FrameShape.Rectangle; shape < FrameShape.Count; shape++)
 				{
 					var unit = new Schematics.Unit(1, 2, (int)PartType.MetalFrame, 132, 3, true, .2f, -.3f, 15, 2, .5f, 2, shape);
 					Check("transform helpers preserve shape " + shape,
@@ -46,7 +46,7 @@ namespace Bpsim.EditorTools
 				var box = PartPhysics.CreateBox(float3.zero, new float3(1));
 				try
 				{
-					for (int shape = 1; shape <= 3; shape++)
+					for (int shape = FrameShape.Triangle; shape < FrameShape.Count; shape++)
 					{
 						var hull = FrameShapeSystem.BuildHull(shape, box);
 						var scaled = FrameShapeSystem.BuildHull(shape, box, new float2(2, .5f));
@@ -54,8 +54,8 @@ namespace Bpsim.EditorTools
 						{
 							var a = hull.Value.CalculateAabb(); var b = scaled.Value.CalculateAabb();
 							Check("convex + nonuniform scale " + shape, hull.Value.Type == Unity.Physics.ColliderType.Convex && math.abs(b.Extents.x / a.Extents.x - 2) < .01f && math.abs(b.Extents.y / a.Extents.y - .5f) < .01f);
-							Check("cut corner ray misses " + shape, !Ray(hull, .43f, shape == 2 ? .3f : -.43f));
-							Check("interior ray hits " + shape, Ray(hull, -.1f, shape == 2 ? -.3f : .1f));
+							Check("cut corner ray misses " + shape, !Ray(hull, .43f, shape == FrameShape.Semicircle ? .3f : -.43f));
+							Check("interior ray hits " + shape, Ray(hull, -.1f, shape == FrameShape.Semicircle ? -.3f : .1f));
 						}
 						finally { hull.Dispose(); scaled.Dispose(); }
 					}

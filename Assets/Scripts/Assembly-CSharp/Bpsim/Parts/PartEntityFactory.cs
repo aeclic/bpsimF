@@ -440,9 +440,10 @@ namespace Bpsim.Parts
 			});
 			context.EntityManager.SetComponentData(entity, new PartExtensionComponent
 			{
-				Value = PartManager.Instance.Factory.PartExtensionMap[partTypeInfo]
+				// 变体的索引不在 PartExtensionMap 的区间里，必须走 GetExtension 回退到基部件。
+				Value = PartManager.Instance.Factory.GetExtension(partTypeInfo)
 			});
-			if (partTypeInfo.BelongsTo(BasePart.ColoredFrames))
+			if (BasePart.BelongsTo(partTypeInfo, BasePart.ColoredFrames))
 			{
 				context.EntityManager.SetComponentData(entity, new ColoredFrame
 				{
@@ -451,7 +452,7 @@ namespace Bpsim.Parts
 					Color = ColoredFrame.GetColor(partTypeInfo)
 				});
 			}
-			else if (partTypeInfo.BelongsTo(BasePart.TransparentFrames))
+			else if (BasePart.BelongsTo(partTypeInfo, BasePart.TransparentFrames))
 			{
 				context.EntityManager.SetComponentData(entity, new ColoredFrame
 				{
@@ -549,11 +550,11 @@ namespace Bpsim.Parts
 				ComponentType.ReadWrite<PartBuildLayer>(),
 				ComponentType.ReadWrite<PartExtensionComponent>()
 			};
-			if (typeInfo.BelongsTo(BasePart.ColoredFrames))
+			if (BasePart.BelongsTo(typeInfo, BasePart.ColoredFrames))
 			{
 				types.Add(ComponentType.ReadWrite<ColoredFrame>());
 			}
-			else if (typeInfo.BelongsTo(BasePart.TransparentFrames))
+			else if (BasePart.BelongsTo(typeInfo, BasePart.TransparentFrames))
 			{
 				types.Add(ComponentType.ReadWrite<ColoredFrame>());
 				types.Add(ComponentType.ReadWrite<TransparentFrame>());

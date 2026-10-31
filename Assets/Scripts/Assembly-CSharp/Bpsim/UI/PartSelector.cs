@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Bpsim.Parts;
 using Bpsim.Rendering;
 using UnityEngine;
@@ -105,7 +106,7 @@ namespace Bpsim.UI
 			{
 				m_indexMap[(int)partType] = partIndex;
 				RectTransform rectTransform = (RectTransform)m_itemMap[(int)partType].transform.Find("PartIcon");
-				SetRenderedIcon(rectTransform, $"Part_{partType}_{partIndex}_Rendered", partType == PartType.SkinPart);
+				SetRenderedIcon(rectTransform, new PartTypeInfo(partType, partIndex), partType == PartType.SkinPart);
 			}
 		}
 
@@ -124,6 +125,12 @@ namespace Bpsim.UI
 			transform.sizeDelta = Math.Min(75f / num, 0.625f) * sizeDelta;
 		}
 
+		/// <summary><c>Part_&lt;Type&gt;_&lt;Index&gt;_Rendered</c> 图集条目名。</summary>
+		public static string RenderedName(PartTypeInfo info)
+		{
+			return "Part_" + info.PartType + "_" + info.PartIndex + "_Rendered";
+		}
+
 		/// <summary>
 		/// 给选择器按钮设置 "渲染图" 图标，找不到图集条目时安静跳过。
 		/// </summary>
@@ -136,6 +143,64 @@ namespace Bpsim.UI
 		public static void SetRenderedIcon(RectTransform icon, string spriteName)
 		{
 			SetRenderedIcon(icon, spriteName, skinFallback: false);
+		}
+
+		/// <summary>
+		/// 按 <c>(类型, 索引)</c> 设置图标，变体找不到自己的预制图时回退到基部件的图标。
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// Mod 变体（索引 ≥ <c>ModParts.CustomIndexBase</c>）是运行时克隆出来的，图集里
+		/// 不可能有 <c>Part_MetalFrame_9001_Rendered</c> 这一格。以前这里直接 return，
+		/// 而模板 <c>PartIcon</c> 的 <c>UISprite.m_name</c> 是空串、<c>Apply()</c> 遇到空名字
+		/// 立刻返回，<c>uvRect</c> 于是停在 (0,0,1,1) —— 变体按钮上会铺开<b>整张图集</b>。
+		/// </para>
+		/// <para>
+		/// 现在的回退顺序：自己的那格 → 基部件那格（<see cref="PartVariants.TryGetBase"/>）
+		/// → 程序生成的占位图。任何一步都不会把 <c>uvRect</c> 留在整张图集上。
+		/// </para>
+		/// </remarks>
+		public static void SetRenderedIcon(RectTransform icon, PartTypeInfo info, bool skinFallback)
+		{
+			if (icon == null)
+			{
+				return;
+			}
+			SpriteBase sprite = icon.GetComponent<SpriteBase>();
+			if (sprite == null)
+			{
+				return;
+			}
+			SpriteManager manager = SpriteManager.Instance;
+			if (manager == null)
+			{
+				return;
+			}
+
+			string exact = RenderedName(info);
+			if (manager.HasID(exact))
+			{
+				ApplySprite(icon, sprite, exact);
+				return;
+			}
+
+			// 变体没有自己的预制图：用基部件那一格，玩家一看就知道是「哪种框」。
+			if (PartVariants.TryGetBase(info, out PartTypeInfo baseInfo))
+			{
+				string fallback = RenderedName(baseInfo);
+				if (manager.HasID(fallback))
+				{
+					ApplySprite(icon, sprite, fallback);
+					return;
+				}
+			}
+
+			if (skinFallback)
+			{
+				ApplySkinIcon(icon);
+				return;
+			}
+			ApplyFallbackIcon(icon, exact);
 		}
 
 		/// <param name="skinFallback">
@@ -155,7 +220,12 @@ namespace Bpsim.UI
 			{
 				return;
 			}
-			if (!SpriteManager.Instance.HasID(spriteName))
+			SpriteManager manager = SpriteManager.Instance;
+			if (manager == null)
+			{
+				return;
+			}
+			if (!manager.HasID(spriteName))
 			{
 				if (skinFallback)
 				{
@@ -163,10 +233,15 @@ namespace Bpsim.UI
 				}
 				else
 				{
-					Debug.LogWarning("[PartSelector] no rendered icon '" + spriteName + "', keeping template sprite");
+					ApplyFallbackIcon(icon, spriteName);
 				}
 				return;
 			}
+			ApplySprite(icon, sprite, spriteName);
+		}
+
+		private static void ApplySprite(RectTransform icon, SpriteBase sprite, string spriteName)
+		{
 			sprite.SpriteName = spriteName;
 			if (sprite.IsDirty)
 			{
@@ -187,7 +262,35 @@ namespace Bpsim.UI
 			rawImage.texture = SkinPartIcon.Texture;
 			rawImage.uvRect = new Rect(0f, 0f, 1f, 1f);
 			rawImage.rectTransform.sizeDelta = new Vector2(75f, 75f);
-			Debug.Log("[PartSelector] skin part icon -> procedural (whole-atlas fallback avoided)");
 		}
+
+		/// <summary>
+		/// 图标彻底找不到时铺一张程序生成的占位图。
+		/// </summary>
+		/// <remarks>
+		/// 关键是必须显式写 <c>uvRect</c>：模板 RawImage 贴的是整张图集，
+		/// 只要 <c>uvRect</c> 停在 (0,0,1,1)，按钮上就是 4096×2048 的全图。
+		/// 占位图是独立的小贴图，写 (0,0,1,1) 才是「整张占位图」。
+		/// 警告按名字去重，否则每建一个按钮就刷一条。
+		/// </remarks>
+		private static void ApplyFallbackIcon(RectTransform icon, string spriteName)
+		{
+			RawImage rawImage = icon.GetComponent<RawImage>();
+			if (rawImage == null)
+			{
+				return;
+			}
+			rawImage.enabled = true;
+			rawImage.texture = PartFallbackIcon.Texture;
+			rawImage.uvRect = new Rect(0f, 0f, 1f, 1f);
+			rawImage.rectTransform.sizeDelta = new Vector2(75f, 75f);
+			if (s_missingIcons.Add(spriteName))
+			{
+				Debug.Log("[PartSelector] no rendered icon '" + spriteName + "'，改用程序生成的占位图");
+			}
+		}
+
+		/// <summary>已经报过的缺图名字，避免每次重建按钮都刷一条警告。</summary>
+		private static readonly HashSet<string> s_missingIcons = new HashSet<string>();
 	}
 }

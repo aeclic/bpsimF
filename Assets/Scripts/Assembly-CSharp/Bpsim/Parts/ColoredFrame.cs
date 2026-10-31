@@ -15,6 +15,9 @@ namespace Bpsim.Parts
 
 		public static float4 GetColor(PartTypeInfo info)
 		{
+			// 变体（Mod 加的 9000+ 索引）按基部件取色：不解析的话 num = 9001 - 12 会落进
+			// num >= 108 的灰度分支，得到一片近乎纯黑的颜色。
+			info = PartVariants.Resolve(info);
 			if (info.BelongsTo(BasePart.TransparentFrames))
 			{
 				return new float4(1f);

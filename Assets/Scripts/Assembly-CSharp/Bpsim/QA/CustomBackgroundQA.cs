@@ -619,15 +619,68 @@ namespace Bpsim.QA
 				{
 					yield break;
 				}
-				panel.SetBackgroundDrawerOpen(true);
-				yield return null;
 				Transform drawer = drawerObject.transform;
+				RectTransform drawerRect = (RectTransform)drawer;
+				Transform header = FindChild(content, "BackgroundDrawerHeader");
+				Check(header != null, "有「自定义背景」抽屉标题行（在 Content 顶层）");
+				Transform arrow = (header != null) ? header.Find("Arrow") : null;
+				Check(arrow != null, "标题行右侧有展开箭头");
+
+				// 从确定的收起状态起步（跳过动画），不受上次会话记住的状态影响。
+				panel.SetBackgroundDrawerOpen(false, immediate: true);
+				yield return null;
+				Check(!drawerObject.activeSelf, "抽屉默认是收起的");
+				Check(Near(drawerRect.rect.height, 0f), "收起时抽屉高度为 0（实际 " + F(drawerRect.rect.height) + "）");
+				Check(Near(EulerZ(arrow), 90f), "收起时箭头转向右侧（角度 " + F(EulerZ(arrow)) + "°）");
+
+				// ---- 展开：高度要逐帧长起来，动画播完才是最终高度（像卷轴拉开）
+				panel.SetBackgroundDrawerOpen(true);
+				Check(panel.BackgroundDrawerAnimating, "展开带缓动动画（不是瞬间弹开）");
 				Check(drawerObject.activeSelf, "抽屉可以展开");
+				Check(Near(drawerRect.rect.height, 0f), "展开动画从 0 高度开始（实际 " + F(drawerRect.rect.height) + "）");
+				float naturalHeight = UnityEngine.UI.LayoutUtility.GetPreferredHeight(drawerRect);
+				Check(naturalHeight > 0f, "抽屉的自然高度为正（" + F(naturalHeight) + "）");
+				yield return null;
+				float midHeight = drawerRect.rect.height;
+				Check(midHeight > 0f && midHeight < naturalHeight, "展开到一半时高度介于 0 和自然高度之间（" + F(midHeight) + "）");
+				int frames = 0;
+				while (panel.BackgroundDrawerAnimating && frames < 120)
+				{
+					frames++;
+					yield return null;
+				}
+				Check(!panel.BackgroundDrawerAnimating, "抽屉展开动画会自己播完（用了 " + frames + " 帧）");
+				Check(Mathf.Abs(drawerRect.rect.height - naturalHeight) <= 1f, "展开完成后高度等于自然高度（实际 " + F(drawerRect.rect.height) + " vs " + F(naturalHeight) + "）");
+				Check(Near(EulerZ(arrow), 0f), "展开后箭头朝下（角度 " + F(EulerZ(arrow)) + "°）");
 
 				int rowCount = drawer.childCount;
 				Check(rowCount >= 25, "抽屉里建出足够的行（实际 " + rowCount + " 行，含 19 个参数行 + 3 个按钮 + 进度/滑条/状态）");
 
-				Check(FindRow(content, "自定义背景") != null, "有「自定义背景」抽屉标题行（在 Content 顶层）");
+				// ---- 抽屉里的选项比标题行小一号：行高 90 → 72，整行等比缩到 0.8（标题大、内容行细）
+				float headerHeight = ((RectTransform)header).rect.height;
+				Check(Mathf.Abs(headerHeight - 90f) <= 0.5f, "标题行保持常规高度（实际 " + F(headerHeight) + "）");
+				float headerWidth = ((RectTransform)header).rect.width;
+				int compactRows = 0;
+				float tallestRow = 0f;
+				float widestRow = 0f;
+				for (int i = 0; i < drawer.childCount; i++)
+				{
+					RectTransform rowRect = drawer.GetChild(i) as RectTransform;
+					if (rowRect == null)
+					{
+						continue;
+					}
+					compactRows++;
+					tallestRow = Mathf.Max(tallestRow, rowRect.rect.height);
+					widestRow = Mathf.Max(widestRow, rowRect.rect.width * rowRect.localScale.x);
+				}
+				Check(compactRows == rowCount, "抽屉里的行都按小号样式建出来了（" + compactRows + " 行）");
+				Check(tallestRow <= 72.5f, "抽屉里的行高压到 72（最高 " + F(tallestRow) + "，常规行是 90）");
+				Check(widestRow <= headerWidth * 0.81f, "抽屉里的行视觉宽度也比标题行窄一档（" + F(widestRow) + " vs " + F(headerWidth) + "）");
+				Transform firstRow = drawer.GetChild(0);
+				Check(Mathf.Abs(firstRow.localScale.x - 0.8f) <= 0.001f, "抽屉里的行整体缩到 0.8（实际 " + F(firstRow.localScale.x) + "）");
+				Check(naturalHeight <= 2500f, "小号行让抽屉自然高度变矮（" + F(naturalHeight) + " < 2750）");
+
 				string[] labels = new string[]
 				{
 				"开启背景", "背景路径", "视频音量", "透明度", "自定义缩放", "摄像机自适应",
@@ -690,13 +743,34 @@ namespace Bpsim.QA
 					settings.Enabled = beforeEnabled;
 				}
 
-				// ---- 收起抽屉后，容器隐藏但行和绑定都还在
+				// ---- 收起抽屉：高度收回 0，动画播完容器才隐藏，行和绑定都还在
+				float heightBeforeClose = drawerRect.rect.height;
 				panel.SetBackgroundDrawerOpen(false);
+				Check(panel.BackgroundDrawerAnimating, "收起带缓动动画（不是瞬间消失）");
 				yield return null;
+				Check(drawerRect.rect.height < heightBeforeClose, "收起过程中高度在变小（" + F(heightBeforeClose) + " → " + F(drawerRect.rect.height) + "）");
+				frames = 0;
+				while (panel.BackgroundDrawerAnimating && frames < 120)
+				{
+					frames++;
+					yield return null;
+				}
+				Check(!panel.BackgroundDrawerAnimating, "抽屉收起动画会自己播完（用了 " + frames + " 帧）");
 				Check(!drawerObject.activeSelf, "抽屉可以收起");
+				Check(Near(drawerRect.rect.height, 0f), "收起后高度归零（实际 " + F(drawerRect.rect.height) + "）");
+				Check(Near(EulerZ(arrow), 90f), "收起后箭头转向右侧（角度 " + F(EulerZ(arrow)) + "°）");
 				Check(FindRow(drawer, "Z 轴距离") != null, "收起后行仍然存在（只是隐藏）");
+
+				// 再展开一次：动画从 0 起播，用来确认状态机可以反复开关。
 				panel.SetBackgroundDrawerOpen(true);
-				yield return null;
+				Check(panel.BackgroundDrawerAnimating, "再次展开仍有动画");
+				frames = 0;
+				while (panel.BackgroundDrawerAnimating && frames < 120)
+				{
+					frames++;
+					yield return null;
+				}
+				Check(drawerObject.activeSelf && !panel.BackgroundDrawerAnimating, "抽屉可以重新展开");
 			}
 			finally
 			{
@@ -765,6 +839,16 @@ namespace Bpsim.QA
 				return SceneCamera.Instance.Camera;
 			}
 			return Camera.main;
+		}
+
+		/// <summary>读一个物体的 Z 轴欧拉角，归一到 [-180, 180]（读回值可能是 270 这种写法）。</summary>
+		private static float EulerZ(Transform target)
+		{
+			if (target == null)
+			{
+				return 0f;
+			}
+			return Mathf.Repeat(target.localEulerAngles.z + 180f, 360f) - 180f;
 		}
 
 		private static bool Near(float a, float b)

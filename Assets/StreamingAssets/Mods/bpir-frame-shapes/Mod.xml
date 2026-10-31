@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BPIR 变形框：移植自 https://gitee.com/yctf123123/bpir 的逐件框形状。
+
+  它不新增任何部件 —— 建造列表和原版完全一致。作用只是把宿主的「框形状」特性打开，
+  于是木框 / 铁框 / 彩色框 / 透明框的部件属性面板里会多出「形状」一行。
+
+  没有 <Assemblies>：源码在 Code/ 下，由宿主在运行时编译成 dll。
+-->
+<Mod>
+  <Name>BPIR 变形框</Name>
+  <Author>yctf123123 / bpsim 移植</Author>
+  <Version>1.1.0</Version>
+  <Description>给容器框（木框 / 铁框 / 彩色框 / 透明框）的部件属性面板加上「形状」切换：长方形、直角三角、半圆、圆。外形由 shader 程序化裁剪，碰撞体按形状重建凸包。不新增部件，建造列表保持原版。</Description>
+  <MultiplayerCompatible>false</MultiplayerCompatible>
+  <MinGameVersion>0.0.12</MinGameVersion>
+
+  <ID>36e821d4-479b-4704-a6f2-72c9e92446b2</ID>
+
+  <EntryPoint type="BpirFrameShapes.Entry" />
+</Mod>

@@ -331,7 +331,9 @@ namespace Bpsim.Parts.Simulation
 			PartSceneSystem system = PartManager.Instance.System;
 			EntityManager entityManager = (m_entityManager = partScene.Value.EntityManager);
 			CreatePhysicsStep(entityManager);
-			using NativeParallelHashMap<PartTypeInfo, PartExtensionData> extensionMap = PartManager.Instance.Factory.PartExtensionMap.ToNative(Allocator.TempJob);
+			// 用 PartFactory.ToNativeExtensionMap：它会把 Mod 变体按基部件参数补进表里，
+			// 否则变体在 ApplyPartsJob 里 ExtensionMap[value] 会抛 KeyNotFoundException。
+			using NativeParallelHashMap<PartTypeInfo, PartExtensionData> extensionMap = PartManager.Instance.Factory.ToNativeExtensionMap(Allocator.TempJob);
 			entityManager.CompleteAllTrackedJobs();
 			IJobExtensions.Run(new InstantiatePartsJob
 			{

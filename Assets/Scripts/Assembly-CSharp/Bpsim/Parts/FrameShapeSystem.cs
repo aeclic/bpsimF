@@ -40,8 +40,8 @@ namespace Bpsim.Parts
 
 		protected override void OnCreate()
 		{
-			m_all = GetEntityQuery(ComponentType.ReadOnly<FrameShape>(), ComponentType.ReadOnly<FrameShapeOriginalCollider>());
-			m_dirty = GetEntityQuery(ComponentType.ReadOnly<FrameShape>(), ComponentType.ReadOnly<FrameShapeOriginalCollider>(), ComponentType.ReadWrite<FrameShapeDirty>());
+			m_all = GetEntityQuery(ComponentType.ReadOnly<FrameShape>(), ComponentType.ReadOnly<FrameShapeOriginalCollider>(), ComponentType.ReadWrite<PhysicsCollider>());
+			m_dirty = GetEntityQuery(ComponentType.ReadOnly<FrameShape>(), ComponentType.ReadOnly<FrameShapeOriginalCollider>(), ComponentType.ReadWrite<PhysicsCollider>(), ComponentType.ReadWrite<FrameShapeDirty>());
 		}
 		protected override void OnUpdate() => ApplyPending();
 
@@ -74,6 +74,11 @@ namespace Bpsim.Parts
 					}
 				}
 				em.SetComponentData(entity, new PhysicsCollider { Value = collider });
+				if (!em.HasBuffer<LinkedEntityGroup>(entity))
+				{
+					em.SetComponentEnabled<FrameShapeDirty>(entity, false);
+					continue;
+				}
 				var linked = em.GetBuffer<LinkedEntityGroup>(entity);
 				for (int i = 0; i < linked.Length; i++)
 				{
@@ -100,8 +105,10 @@ namespace Bpsim.Parts
 			using var points = new NativeList<float3>(70, Allocator.Temp);
 			foreach (var p in Outline(shape))
 			{
-				points.Add(new float3((center.xy + p * half.xy) * scale, center.z - half.z));
-				points.Add(new float3((center.xy + p * half.xy) * scale, center.z + half.z));
+				// Scale the extents around the collider centre. Scaling the whole
+				// position would move frames whose prefab collider is not centred at 0.
+				points.Add(new float3(center.xy + p * half.xy * scale, center.z - half.z));
+				points.Add(new float3(center.xy + p * half.xy * scale, center.z + half.z));
 			}
 			var material = Material.Default;
 			material.Friction = original.Value.GetFriction();
@@ -114,16 +121,16 @@ namespace Bpsim.Parts
 
 		public static IEnumerable<float2> Outline(int shape)
 		{
-			if (shape == 1)
+			if (shape == FrameShape.Triangle)
 			{
 				yield return new float2(-1, -1); yield return new float2(1, 1); yield return new float2(-1, 1);
 				yield break;
 			}
-			int segments = shape == 2 ? 32 : 64;
-			for (int i = 0; i < (shape == 2 ? segments + 1 : segments); i++)
+			int segments = shape == FrameShape.Semicircle ? 32 : 64;
+			for (int i = 0; i < (shape == FrameShape.Semicircle ? segments + 1 : segments); i++)
 			{
-				float angle = (shape == 2 ? math.PI : 2 * math.PI) * i / segments;
-				yield return new float2(math.cos(angle), math.sin(angle) + (shape == 2 ? -1 : 0));
+				float angle = (shape == FrameShape.Semicircle ? math.PI : 2 * math.PI) * i / segments;
+				yield return new float2(math.cos(angle), math.sin(angle) + (shape == FrameShape.Semicircle ? -1 : 0));
 			}
 		}
 

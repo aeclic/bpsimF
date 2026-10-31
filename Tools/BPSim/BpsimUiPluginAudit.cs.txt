@@ -1,0 +1,139 @@
+// BpsimUiPluginAudit.cs - TEMPORARY diagnostic helper (safe to delete).
+// Companion to the parent project's _codex_work/DshPluginConflictAudit.cs.txt.
+// Used to finish the uGUI / TextMeshPro plugin -> package migration in this project:
+//   * dump every MonoScript inside the decompiled plugin DLLs together with the
+//     matching package (.cs.meta) script, so prefab m_Script refs can be rewritten offline
+//   * audit missing-script counts before/after the rewrite and before/after deleting the DLLs
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using UnityEditor;
+using UnityEngine;
+
+public static class BpsimUiPluginAudit
+{
+    const string UguiDll = "Assets/Plugins/UnityEngine.UI.dll";
+    const string TmpDll = "Assets/Plugins/Unity.TextMeshPro.dll";
+    const string UguiPkg = "Packages/com.unity.ugui/";
+    const string TmpPkg = "Packages/com.unity.textmeshpro/";
+
+    public static string DumpMap()
+    {
+        var sb = new StringBuilder();
+        sb.Append("ugui=").Append(DumpOne(UguiDll, UguiPkg)).Append('\n');
+        sb.Append("tmp=").Append(DumpOne(TmpDll, TmpPkg)).Append('\n');
+        return sb.ToString();
+    }
+
+    static string DumpOne(string dllPath, string pkgPrefix)
+    {
+        if (AssetDatabase.LoadAssetAtPath<Object>(dllPath) == null) return "missing:" + dllPath;
+        Dictionary<string, string> byFullName = PackageScripts(pkgPrefix);
+
+        var lines = new List<string>();
+        lines.Add("# localId|class|packagePath|packageGuid");
+        int mapped = 0, total = 0;
+        var unmapped = new List<string>();
+        foreach (var o in AssetDatabase.LoadAllAssetsAtPath(dllPath))
+        {
+            var ms = o as MonoScript;
+            if (ms == null) continue;
+            string guid; long id;
+            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(o, out guid, out id)) continue;
+            total++;
+            var cls = ms.GetClass();
+            string full = cls != null ? cls.FullName : "<null>";
+            string target = null;
+            if (cls != null)
+            {
+                string pg;
+                if (byFullName.TryGetValue(full, out pg)) target = AssetDatabase.GUIDToAssetPath(pg) + "|" + pg;
+            }
+            if (target == null)
+            {
+                unmapped.Add(id + "|" + full);
+                lines.Add(id + "|" + full + "|<unmapped>|");
+            }
+            else
+            {
+                mapped++;
+                lines.Add(id + "|" + full + "|" + target);
+            }
+        }
+        string outPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Logs", Path.GetFileName(dllPath) + ".map.txt");
+        Directory.CreateDirectory(Path.GetDirectoryName(outPath));
+        File.WriteAllText(outPath, string.Join("\n", lines.ToArray()));
+        return string.Format("total={0} mapped={1} unmapped=[{2}] file={3}",
+            total, mapped, string.Join(", ", unmapped.ToArray()), outPath);
+    }
+
+    /// <summary>full class name (e.g. UnityEngine.UI.Image) -> package script guid</summary>
+    static Dictionary<string, string> PackageScripts(string pkgPrefix)
+    {
+        var map = new Dictionary<string, string>(System.StringComparer.Ordinal);
+        foreach (var g in AssetDatabase.FindAssets("t:MonoScript", new[] { pkgPrefix.TrimEnd('/') }))
+        {
+            string p = AssetDatabase.GUIDToAssetPath(g);
+            if (!p.StartsWith(pkgPrefix, System.StringComparison.OrdinalIgnoreCase)) continue;
+            var ms = AssetDatabase.LoadAssetAtPath<MonoScript>(p);
+            if (ms == null) continue;
+            var cls = ms.GetClass();
+            if (cls == null) continue;
+            if (!map.ContainsKey(cls.FullName)) map[cls.FullName] = g;
+        }
+        return map;
+    }
+
+    public static string MissingScripts(string folderCsv)
+    {
+        var folders = new List<string>();
+        foreach (var f in folderCsv.Split(','))
+            if (!string.IsNullOrEmpty(f.Trim())) folders.Add(f.Trim());
+        if (folders.Count == 0) folders.Add("Assets");
+
+        var found = new HashSet<string>(AssetDatabase.FindAssets("t:Prefab", folders.ToArray()));
+        int files = 0, missing = 0, total = 0;
+        var worst = new List<string>();
+        foreach (var g in found)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(g);
+            if (string.IsNullOrEmpty(path)) continue;
+            GameObject root = null;
+            try { root = PrefabUtility.LoadPrefabContents(path); } catch { continue; }
+            if (root == null) continue;
+            files++;
+            int m = CountMissing(root);
+            total += CountAll(root);
+            if (m > 0)
+            {
+                missing += m;
+                if (worst.Count < 12) worst.Add(Path.GetFileName(path) + "=" + m);
+            }
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+        return string.Format("prefabs={0} components={1} missingScripts={2}{3}",
+            files, total, missing, worst.Count > 0 ? " | " + string.Join(", ", worst.ToArray()) : "");
+    }
+
+    static int CountMissing(GameObject go)
+    {
+        int n = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
+        for (int i = 0; i < go.transform.childCount; i++) n += CountMissing(go.transform.GetChild(i).gameObject);
+        return n;
+    }
+
+    static int CountAll(GameObject go)
+    {
+        int n = go.GetComponents<Component>().Length;
+        for (int i = 0; i < go.transform.childCount; i++) n += CountAll(go.transform.GetChild(i).gameObject);
+        return n;
+    }
+
+    /// <summary>Deletes one of the decompiled plugin DLLs (and its .meta). Name: "ugui" or "tmp".</summary>
+    public static string DeletePlugin(string which)
+    {
+        string path = which == "ugui" ? UguiDll : TmpDll;
+        bool ok = AssetDatabase.DeleteAsset(path);
+        return path + " deleted=" + ok;
+    }
+}

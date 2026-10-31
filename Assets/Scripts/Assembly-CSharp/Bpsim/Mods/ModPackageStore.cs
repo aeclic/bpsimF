@@ -59,34 +59,23 @@ namespace Bpsim.Mods
 			}
 		}
 
-		/// <summary>读取单个已解压目录里的 manifest.json。失败返回 null（并带 Error）。</summary>
+		/// <summary>
+		/// 读取单个已解压目录里的清单：优先 <c>Mod.xml</c>，回退旧的 <c>manifest.json</c>。
+		/// 失败返回 null。
+		/// </summary>
 		public static ModPackage TryLoadPackage(string dir, ModSource source)
 		{
-			string manifestPath = Path.Combine(dir, BpsimModApi.ManifestFileName);
-			if (!File.Exists(manifestPath))
+			ModManifest manifest = ModLoader.ReadManifest(dir, out string error);
+			if (manifest == null)
 			{
 				return null;
 			}
-			try
+			return new ModPackage
 			{
-				string text = File.ReadAllText(manifestPath, Encoding.UTF8);
-				ModManifest manifest = JsonConvert.DeserializeObject<ModManifest>(text, Lenient);
-				if (manifest == null)
-				{
-					return null;
-				}
-				manifest.Normalize();
-				return new ModPackage
-				{
-					Directory = dir,
-					Manifest = manifest,
-					Source = source
-				};
-			}
-			catch (Exception)
-			{
-				return null;
-			}
+				Directory = dir,
+				Manifest = manifest,
+				Source = source
+			};
 		}
 
 		/// <summary>
@@ -105,13 +94,13 @@ namespace Bpsim.Mods
 				string packageRoot = FindPackageRoot(work);
 				if (packageRoot == null)
 				{
-					throw new InvalidDataException("压缩包里找不到 manifest.json");
+					throw new InvalidDataException("压缩包里找不到 Mod.xml 或 manifest.json");
 				}
 
 				ModPackage probe = TryLoadPackage(packageRoot, ModSource.Installed);
 				if (probe == null || probe.Manifest == null)
 				{
-					throw new InvalidDataException("manifest.json 解析失败");
+					throw new InvalidDataException("清单解析失败（Mod.xml / manifest.json）");
 				}
 
 				string target = Path.Combine(ModPaths.Root, probe.Manifest.id);
@@ -158,26 +147,33 @@ namespace Bpsim.Mods
 
 		private static string FindPackageRoot(string extracted)
 		{
-			if (File.Exists(Path.Combine(extracted, BpsimModApi.ManifestFileName)))
+			if (HasManifest(extracted))
 			{
 				return extracted;
 			}
 			foreach (string dir in Directory.GetDirectories(extracted))
 			{
-				if (File.Exists(Path.Combine(dir, BpsimModApi.ManifestFileName)))
+				if (HasManifest(dir))
 				{
 					return dir;
 				}
 				// 再深一层（有些打包工具会多套一层）
 				foreach (string sub in Directory.GetDirectories(dir))
 				{
-					if (File.Exists(Path.Combine(sub, BpsimModApi.ManifestFileName)))
+					if (HasManifest(sub))
 					{
 						return sub;
 					}
 				}
 			}
 			return null;
+		}
+
+		/// <summary>目录里有没有可识别的清单（<c>Mod.xml</c> 或 <c>manifest.json</c>）。</summary>
+		private static bool HasManifest(string dir)
+		{
+			return File.Exists(Path.Combine(dir, Bpsim.Modding.ModXml.FileName))
+				|| File.Exists(Path.Combine(dir, BpsimModApi.ManifestFileName));
 		}
 
 		public static void CopyDirectory(string source, string target)

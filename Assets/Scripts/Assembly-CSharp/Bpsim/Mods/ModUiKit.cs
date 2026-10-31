@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Bpsim.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,6 +26,21 @@ namespace Bpsim.Mods
 		private static Font s_font;
 		private static readonly Dictionary<int, Sprite> s_roundCache = new Dictionary<int, Sprite>();
 
+		private static GameObject NativeSettingsPanelTemplate
+		{
+			get
+			{
+				UserInterface ui = UserInterface.Instance;
+				return ui != null && ui.ActionBar != null ? ui.ActionBar.SettingsPanelTemplate : null;
+			}
+		}
+
+		private static Transform NativeTemplate(string path)
+		{
+			GameObject root = NativeSettingsPanelTemplate;
+			return root == null ? null : root.transform.Find(path);
+		}
+
 		/// <summary>UI 字体：优先系统中文字体（保证中文名可显示），否则退回内置字体。</summary>
 		public static Font UiFont
 		{
@@ -32,6 +48,21 @@ namespace Bpsim.Mods
 			{
 				if (s_font == null)
 				{
+					try
+					{
+						UserInterface ui = UserInterface.Instance;
+						Text native = ui != null && ui.ActionBar != null && ui.ActionBar.TemplateButton != null
+							? ui.ActionBar.TemplateButton.GetComponentInChildren<Text>(true) : null;
+						if (native != null && native.font != null)
+						{
+							s_font = native.font;
+						}
+					}
+					catch (Exception)
+					{
+						// The manager can be opened before the main UI has finished binding.
+					}
+					if (s_font != null) return s_font;
 					string[] names =
 					{
 						"Microsoft YaHei", "微软雅黑", "PingFang SC", "Noto Sans CJK SC",
@@ -107,9 +138,50 @@ namespace Bpsim.Mods
 			CanvasScaler scaler = go.GetComponent<CanvasScaler>();
 			scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 			scaler.referenceResolution = new Vector2(1920f, 1080f);
-			scaler.matchWidthOrHeight = 0.5f;
+			// UserSettingsPanel is authored at 1600x900 and the game's SubCanvas
+			// matches the height. Use the same scale so text has the same physical size.
+			scaler.matchWidthOrHeight = 1f;
 			return canvas;
 		}
+
+		/// <summary>克隆用户设置面板的主体，复用其背景、标题栏和滚动条资源。</summary>
+		public static RectTransform NativePanel(Transform parent)
+		{
+			Transform source = NativeTemplate("Panel");
+			if (source == null) return null;
+			GameObject clone = UnityEngine.Object.Instantiate(source.gameObject, parent, false);
+			clone.name = "Panel";
+			return clone.GetComponent<RectTransform>();
+		}
+
+		/// <summary>克隆用户设置面板的原生按钮，保留其字体、过渡和颜色风格。</summary>
+		public static Button NativeButton(Transform parent, string text, Action onClick)
+		{
+			Transform source = NativeTemplate("Panel/ButtonGroup/CloseButton");
+			if (source == null)
+			{
+				return ProceduralButton(parent, text, Primary, onClick, 24);
+			}
+			Button button = UnityEngine.Object.Instantiate(source.gameObject, parent, false).GetComponent<Button>();
+			button.name = "Button_" + text;
+			button.onClick.RemoveAllListeners();
+			if (onClick != null) button.onClick.AddListener(() => onClick());
+			Text label = button.GetComponentInChildren<Text>(true);
+			if (label != null)
+			{
+				label.text = text;
+				label.font = UiFont;
+				label.fontSize = 24;
+				label.resizeTextForBestFit = true;
+				label.resizeTextMinSize = 12;
+				label.resizeTextMaxSize = 24;
+				label.horizontalOverflow = HorizontalWrapMode.Wrap;
+				label.verticalOverflow = VerticalWrapMode.Truncate;
+			}
+			return button;
+		}
+
+		public static Font NativeFont => UiFont;
 
 		/// <summary>一个带圆角底色的容器（返回其 RectTransform，已按 stretch 填满父级；可再改）。</summary>
 		public static RectTransform Panel(Transform parent, Color color, int radius)
@@ -121,6 +193,15 @@ namespace Bpsim.Mods
 			img.sprite = Rounded(radius);
 			img.type = Image.Type.Sliced;
 			img.color = color;
+			return rt;
+		}
+
+		/// <summary>用户设置列表行使用的无装饰容器，间距和高度由父级布局控制。</summary>
+		public static RectTransform Row(Transform parent)
+		{
+			GameObject go = new GameObject("Row", typeof(RectTransform));
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.SetParent(parent, false);
 			return rt;
 		}
 
@@ -142,6 +223,16 @@ namespace Bpsim.Mods
 		}
 
 		public static Button Button(Transform parent, string text, Color bg, Action onClick, int fontSize = 20)
+		{
+			Button button = NativeButton(parent, text, onClick);
+			Image image = button.GetComponent<Image>();
+			if (image != null) image.color = bg;
+			Text label = button.GetComponentInChildren<Text>(true);
+			if (label != null && fontSize > 0) label.fontSize = fontSize;
+			return button;
+		}
+
+		private static Button ProceduralButton(Transform parent, string text, Color bg, Action onClick, int fontSize = 20)
 		{
 			GameObject go = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
 			RectTransform rt = go.GetComponent<RectTransform>();
@@ -169,6 +260,9 @@ namespace Bpsim.Mods
 			lrt.anchorMax = Vector2.one;
 			lrt.offsetMin = new Vector2(8f, 2f);
 			lrt.offsetMax = new Vector2(-8f, -2f);
+			label.horizontalOverflow = HorizontalWrapMode.Wrap;
+			label.resizeTextForBestFit = true;
+			label.resizeTextMinSize = 10;
 			return btn;
 		}
 
@@ -182,6 +276,9 @@ namespace Bpsim.Mods
 			Image bg = viewportGo.GetComponent<Image>();
 			bg.color = new Color(0f, 0f, 0f, 0.12f);
 			bg.raycastTarget = true;
+			// ScrollRect does not clip its children by itself. Without a mask, a
+			// long action row can paint over the frame on both sides of the list.
+			viewportGo.AddComponent<RectMask2D>();
 
 			GameObject contentGo = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup),
 				typeof(ContentSizeFitter));

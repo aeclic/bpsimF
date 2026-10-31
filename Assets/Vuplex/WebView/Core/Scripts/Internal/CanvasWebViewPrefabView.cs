@@ -19,7 +19,7 @@ namespace Vuplex.WebView.Internal {
     /// RawImage that displays the webview texture in CanvasWebViewPrefab.prefab.
     /// </summary>
     /// <remarks>
-    /// This type is referenced by CanvasWebViewPrefab.prefab (guid 1344c3c82d62a2a41a3576d8abb8e3ea).
+    /// This type is referenced by CanvasWebViewPrefab.prefab (guid f9b5f2fe5fa80138288d92faddde33a7).
     /// The copy of the package in this project was missing this file, so the prefab's child object
     /// reported "The referenced script on this Behaviour is missing!" and
     /// CanvasViewportMaterialView.Material threw a NullReferenceException because

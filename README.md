@@ -35,7 +35,7 @@ BpsimF 是《Bad Piggies》（捣蛋猪）的粉丝向模拟器，目标是在 U
 | 输入 | Input System `1.7.0`（键鼠 + 触屏） |
 | 模组面板 | Vuplex WebView（HTML/CSS/JS 面板） |
 | 序列化 / 异步 | Newtonsoft.Json / UniTask |
-| 模组 | 内置 Mod 体系（manifest + 可选 DLL），可选接入 BepInEx 5.4.x |
+| 模组 | 内置 Mod 体系（Besiege 式 `Mod.xml` 清单 + GUID + 入口钩子），**不依赖 BepInEx** |
 
 `Packages/` 下是**内嵌**（`file:` / `source: embedded`）的 DOTS、URP、Burst 包，以及一个只负责定义 `HAVOK_PHYSICS_EXISTS` 的 Havok 占位包；真正的 Havok 运行时是 `Assets/Plugins/` 里的 `Havok.Physics.dll` 与 `x86_64/HavokNative.dll`。
 
@@ -50,7 +50,7 @@ BpsimF 是《Bad Piggies》（捣蛋猪）的粉丝向模拟器，目标是在 U
 | 关卡 | ✅ 274 关 | 按 BPLE 索引加载；地形由 2D 三角挤出为有厚度棱柱；自动恢复上次关卡与存档 |
 | 选关 | ✅ | BPLE 风格方形数字格，8 列一章 |
 | 物理 | ✅ | Unity.Physics + Havok；可选 MegaStructure 整车刚体化 |
-| 模组 | ✅ | 内置 / 外部网页面板、托管插件、BepInEx 插件 |
+| 模组 | ✅ | `Mod.xml` 清单、网页面板、托管插件、程序集静态扫描、GUID 存档绑定、工坊安装 |
 | Android | ✅ | Mono2x + ARMv7 + GLES3，minSdk 22，可出 APK |
 | 玩法目标 / 关卡机关 | 🚧 | sandbox、race、剧情章节仍在补 |
 | 联机 | ❌ | 无 |
@@ -85,7 +85,7 @@ Assets/
 │  ├─ UI/                          建造 HUD、工具栏、图层面板、属性面板、选关…
 │  ├─ Rendering/                   BatchRendererGroup 部件渲染、Sprite / 材质
 │  ├─ Levels/                      关卡索引、导入、会话
-│  ├─ Mods/ + Modding/             模组加载、面板、工坊、BepInEx 胶水
+│  ├─ Mods/ + Modding/             模组加载（Mod.xml / 扫描器 / 入口钩子）、面板、工坊
 │  ├─ QA/                          运行时探针与自测
 │  ├─ Templates/ Physics/ Background/ Collections/ Serialization/…
 ├─ Editor/Bpsim/                   Windows / Android 构建脚本
@@ -96,7 +96,7 @@ Assets/
 └─ Resources/ Texture2D/ Material/ Shader/…
 Packages/                          内嵌的 DOTS / URP / Burst 包与 Havok 占位包
 Tools/                             二进制补丁、品牌烘焙、unity-batch.bat
-Mods/FrameShapes/                  BepInEx 变形框示例插件（源码 + 运行时缓存）
+Mods/FrameShapes/                  变形框插件源码（旧 BepInEx 工程，已不再被构建步骤部署）
 perf/                              性能测试脚本、载具 CSV、采样日志
 Brand/                             品牌 wordmark / 图标 / 启动页素材
 README-assets/                     README 截图
@@ -168,15 +168,17 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 
 ## 模组开发
 
-本项目的 Mod 体系**不依赖 BepInEx**：一个 Mod 就是 `persistentDataPath/Mods/<id>/` 下的一个目录（Windows 上是 `%USERPROFILE%\AppData\LocalLow\bprc\bpsimF\Mods\`），放 `manifest.json`，再按类型附带 `panel.html/css/js` 和/或托管 DLL。
+本项目的 Mod 体系**不依赖 BepInEx**（旧的 BepInEx 通道已移除，见 [`BEPINEX_MODDING.md`](BEPINEX_MODDING.md)）。一个 Mod 就是 `persistentDataPath/Mods/<任意目录>/`（Windows 上是 `%USERPROFILE%\AppData\LocalLow\bprc\bpsimF\Mods\`）下的一个目录，放 `Mod.xml`，再按类型附带 `panel.html/css/js` 和/或托管 DLL。
 
-- `panel`：纯网页面板，Vuplex 加载，可拖动；页面通过 `window.vuplex` 与 C# 通信。
-- `plugin`：托管程序集，`entryType` 指向实现 `Bpsim.Modding.IBpsimMod` 的类。
-- `mixed`：两者都有。
+- 清单：`Mod.xml`（旧 `manifest.json` 仍兼容），带 `<ID>` GUID —— 存档只认 GUID，改文件夹名不会让存档失效。
+- 纯内容包：只声明 `<Resources><Panel …/></Resources>`，Vuplex 加载，可拖动。
+- 代码包：`<EntryPoint type="…" />` + `<Assemblies><Assembly path="…" /></Assemblies>`，入口类继承 `Bpsim.Modding.ModEntryPoint`；不写 `<Assemblies>` 而把 `.cs` 放进 `Code/` 时，宿主会运行时编译（CodeDom）。
+- 加部件：`ModParts.TryAddVariant(PartType.MetalFrame, 12, 9001, "直角三角框", out error)` —— 克隆基部件换索引，选择器的变体列表里就会出现。
+- 加载前会跑程序集静态扫描：引用 `Steamworks` / `Mono.Cecil` / Roslyn、用 `PInvoke`、碰 `System.Reflection.Emit` 之类的直接拒绝。
 
-游戏内按 **F10**（或设置里的“打开 Mod 管理器”）打开列表。内置样板是 `Assets/StreamingAssets/Mods/netease-music/`（网易云音乐网页面板，该目录同样未入库）；完整清单字段、目录结构、工坊缓存与 BepInEx 胶水层见 [`BEPINEX_MODDING.md`](BEPINEX_MODDING.md)。
+游戏内按 **F10**（或设置里的“打开 Mod 管理器”）打开列表。内置样板有三个：`example-addon/`（`Mod.xml` 纯面板）、`netease-music/`（旧 `manifest.json`，验证兼容）、`bpir-frame-shapes/`（**源码 Mod**，注册三个变形框变体，用来实测整条管线）。完整字段、`Modding.xml` 配置、钩子列表、扫描规则与迁移说明见 [`BPSIM_MODDING.md`](BPSIM_MODDING.md)。
 
-`Mods/FrameShapes/` 是一个可选的 **BepInEx 5.4.23.2** 示例插件“BPIR 变形框”：给木/铁/彩色/透明框加 `FrameShape`，存档时写进 XML 的 `shape` 属性 / CSV 第 13 列；Windows 打包后由 `FrameShapesBuildPostprocessor` 自动调用 `deploy.ps1` 部署。
+`Mods/FrameShapes/` 保留着旧的 **BepInEx 5.4.23.2** 插件源码（“bp-rebooted ECS 框形”），但 `FrameShapesBuildPostprocessor` 与 BepInEx 胶水层已删除，它不再被任何构建步骤部署；要用请按 `ModEntryPoint` 重写成普通 Mod 包。
 
 ## 已知限制
 
@@ -239,7 +241,8 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 
 **模组与其他**
 
-- [`BEPINEX_MODDING.md`](BEPINEX_MODDING.md) — 内建 Mod 框架、manifest、网页面板、工坊、BepInEx 胶水。
+- [`BPSIM_MODDING.md`](BPSIM_MODDING.md) — **Mod 系统规范**：`Mod.xml` 字段、`Modding.xml` 配置、`ModEntryPoint` 钩子、静态扫描规则、GUID 与存档绑定、迁移与已知限制。
+- [`BEPINEX_MODDING.md`](BEPINEX_MODDING.md) — BepInEx 通道移除说明与迁移指引（旧文档已废弃）。
 - [`UI_APPROACH_COMPARISON.md`](UI_APPROACH_COMPARISON.md) — RPG Maker U2U Demo 与 BPSim UI 方式对比。
 - [`bpsim_weekly.txt`](bpsim_weekly.txt) — 2023.0.1 / 0.2 的技术测试与周报（ECS 渲染、Havok、10 万铁框 100 ms 内加载、安卓锁 60 fps）。
 - [`Brand/README.md`](Brand/README.md) — bpsimF wordmark 的设计说明（字母 b 里雕出小猪、海面与琥珀色）。

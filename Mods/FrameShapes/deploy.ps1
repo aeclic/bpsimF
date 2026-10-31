@@ -5,8 +5,13 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $gameRoot = [IO.Path]::GetFullPath($GameDir)
-$managed = Join-Path $gameRoot 'bpsim_Data\Managed'
-if (!(Test-Path -LiteralPath $managed)) { throw "Not a bpsim Mono player: $gameRoot" }
+$dataRoots = @(Get-ChildItem -LiteralPath $gameRoot -Directory -Filter '*_Data' -ErrorAction SilentlyContinue |
+    Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'Managed\Assembly-CSharp.dll') })
+if ($dataRoots.Count -eq 0) { throw "Not a bpsim Mono player: $gameRoot" }
+# Some distributions ship both bpsim.exe and bpsimF.exe. Deploy the catalog to
+# every matching data folder so the Mod list is identical whichever executable
+# the user starts.
+$managed = Join-Path $dataRoots[0].FullName 'Managed'
 $runtime = Join-Path $PSScriptRoot 'Runtime'
 if (!(Test-Path -LiteralPath (Join-Path $runtime 'BepInEx\core\BepInEx.dll'))) {
     $archive = Join-Path $PSScriptRoot 'BepInEx_win_x64_5.4.23.2.zip'
@@ -46,4 +51,13 @@ $compilerArgs += Join-Path $PSScriptRoot 'FrameShapesPlugin.cs'
 & (Join-Path $UnityEditor 'Data\NetCoreRuntime\dotnet.exe') @compilerArgs
 if ($LASTEXITCODE -ne 0) { throw 'FrameShapes plugin compilation failed' }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'README.md') -Destination $pluginDir -Force
+# The DLL is discovered by BepInEx, while the in-game Mod list is populated
+# from the built-in catalog. Keep both deployment paths in sync.
+$manifestSource = Join-Path $PSScriptRoot '..\..\Assets\StreamingAssets\Mods\bpir-frame-shapes\manifest.json'
+if (!(Test-Path -LiteralPath $manifestSource)) { throw "Missing built-in Mod manifest: $manifestSource" }
+foreach ($dataRoot in $dataRoots) {
+    $catalogDir = Join-Path $dataRoot.FullName 'StreamingAssets\Mods\bpir-frame-shapes'
+    New-Item -ItemType Directory -Force -Path $catalogDir | Out-Null
+    Copy-Item -LiteralPath $manifestSource -Destination (Join-Path $catalogDir 'manifest.json') -Force
+}
 Write-Output "Installed: $pluginDll"

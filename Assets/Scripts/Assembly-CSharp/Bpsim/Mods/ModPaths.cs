@@ -15,6 +15,12 @@ namespace Bpsim.Mods
 
 		public static string SettingsPath => Path.Combine(Root, "mods.settings.json");
 
+		/// <summary>全局配置 <c>Mods/Modding.xml</c>（禁用列表、维护版本、严格扫描）。</summary>
+		public static string ConfigPath => Path.Combine(Root, ModdingConfig.FileName);
+
+		/// <summary>工坊安装目录（每个子目录是一个已下载的 Mod）。</summary>
+		public static string WorkshopInstalledRoot => Path.Combine(WorkshopRoot, "installed");
+
 		public static string TmpDir => Path.Combine(Root, ".tmp");
 
 		/// <summary>工坊下载与缓存目录（与 Mods 并列，便于整体清理）。</summary>

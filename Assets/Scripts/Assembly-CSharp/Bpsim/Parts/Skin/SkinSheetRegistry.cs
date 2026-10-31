@@ -47,6 +47,8 @@ namespace Bpsim.Parts.Skin
 
 		private Texture2D m_white;
 
+		private int m_defaultTextureHandle = NoTexture;
+
 		private int m_nextHandle = 1;
 
 		public static SkinSheetRegistry Instance => (s_instance ?? (s_instance = new SkinSheetRegistry()));
@@ -265,6 +267,67 @@ namespace Bpsim.Parts.Skin
 			return m_textures[handle];
 		}
 
+		/// <summary>
+		/// 默认蒙皮布面。颜色和编织纹理与部件列表的 SkinPartIcon 保持一致，
+		/// 让刚放置的部件在场景中和列表里的预览有相同的视觉语义。
+		/// </summary>
+		public int GetDefaultTextureHandle()
+		{
+			if (m_defaultTextureHandle >= 0 && GetTexture(m_defaultTextureHandle) != null)
+			{
+				return m_defaultTextureHandle;
+			}
+			const int size = 64;
+			Color32 clear = new Color32(0, 0, 0, 0);
+			Color32 frame = new Color32(206, 172, 122, 255);
+			Color32 cloth = new Color32(240, 227, 203, 255);
+			Color32 weave = new Color32(203, 178, 138, 255);
+			Color32 handle = new Color32(146, 109, 68, 255);
+			Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+			{
+				name = "SkinSheetDefaultCloth",
+				filterMode = FilterMode.Bilinear,
+				wrapMode = TextureWrapMode.Clamp,
+				hideFlags = HideFlags.DontSave
+			};
+			Color32[] pixels = new Color32[size * size];
+			for (int y = 0; y < size; y++)
+			{
+				for (int x = 0; x < size; x++)
+				{
+					Color32 pixel = clear;
+					if (RoundBox(x, y, 31.5f, 31.5f, 27f, 27f, 11f) <= 0f)
+					{
+						pixel = frame;
+						if (RoundBox(x, y, 31.5f, 31.5f, 21f, 21f, 7f) <= 0f) pixel = ((x + y) & 7) == 0 ? weave : cloth;
+					}
+					if (Dot(x, y, 12f, 12f) || Dot(x, y, 51f, 12f) || Dot(x, y, 12f, 51f) || Dot(x, y, 51f, 51f)) pixel = handle;
+					pixels[y * size + x] = pixel;
+				}
+			}
+			texture.SetPixels32(pixels);
+			texture.Apply(false, false);
+			m_defaultTextureHandle = m_textures.Count;
+			m_textures.Add(texture);
+			return m_defaultTextureHandle;
+		}
+
+		private static float RoundBox(float x, float y, float cx, float cy, float halfX, float halfY, float radius)
+		{
+			float dx = Mathf.Abs(x - cx) - (halfX - radius);
+			float dy = Mathf.Abs(y - cy) - (halfY - radius);
+			float ax = Mathf.Max(dx, 0f);
+			float ay = Mathf.Max(dy, 0f);
+			return Mathf.Sqrt(ax * ax + ay * ay) + Mathf.Min(Mathf.Max(dx, dy), 0f) - radius;
+		}
+
+		private static bool Dot(float x, float y, float cx, float cy)
+		{
+			float dx = x - cx;
+			float dy = y - cy;
+			return dx * dx + dy * dy <= 10f;
+		}
+
 		/// <summary>句柄反查内容哈希；面板要显示「当前用的是哪张」时用。</summary>
 		public string GetTextureId(int handle)
 		{
@@ -379,6 +442,7 @@ namespace Bpsim.Parts.Skin
 			}
 			m_textures.Clear();
 			m_textureHandles.Clear();
+			m_defaultTextureHandle = NoTexture;
 		}
 
 		// 编辑模式下 Object.Destroy 会报错（"Destroy may not be called from edit mode"），
