@@ -155,7 +155,7 @@ InitTestScene*.unity*
 /.idea/
 
 # Agent workspace artifacts (local scratch docs, memory, lock files)
-/SKILL.md
+# SKILL.md + references/ + scripts/ are the tracked discovery-ledger skill.
 /.workbuddy-ai/
 /.dsh-file-claim.lock
 
