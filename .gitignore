@@ -163,3 +163,23 @@ InitTestScene*.unity*
 # from git history (see Tools/BPSim/ui-plugin-migration.md)
 /Tools/BPSim/backup/
 *.dshclaim
+# Unity 给认领标记一并生成了 .meta；两个都要忽略，否则 source control 里全是噪声。
+*.dshclaim.meta
+# 一次性 batch/QA 辅助脚本与注册表备份，不进仓库。
+/.runtime/
+
+# Python 工具链缓存（Tools/*.py 的 __pycache__）
+__pycache__/
+
+# 关卡编辑器的两个构建产物目录：都能由
+#   Tools/LevelEditor/sync_editor.py + LevelEditorModBuild.BuildWaterAssets() 重建，
+# 13 MB 的 asset bundle 与 3.6 MB 的 staging 贴图不该进仓库。
+/Assets/Editor/LevelEditorModAssets/
+/Assets/Editor/LevelEditorModAssets.meta
+/Mods/LevelEditor/Assets/
+
+# 与本项目无关的静态页面（README 里未声明，误入工作区）
+/peacock-motorcycle.html
+
+# discovery-ledger skill 的旧副本，与根目录 SKILL.md/references/scripts 逐字节相同
+/archive/
