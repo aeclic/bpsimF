@@ -37,6 +37,7 @@ namespace Bpsim.Mods
 		private GameObject m_toastRoot;
 		private RectTransform m_toastRect;
 		private CanvasGroup m_toastGroup;
+		private Text m_toastText;
 		private float m_toastUntil;
 		private bool m_initialized;
 
@@ -424,6 +425,7 @@ namespace Bpsim.Mods
 					m_toastRoot = null;
 					m_toastGroup = null;
 					m_toastRect = null;
+					m_toastText = null;
 				}
 			}
 			else if (m_toastGroup != null)
@@ -483,15 +485,13 @@ namespace Bpsim.Mods
 				m_toastRect.pivot = new Vector2(0.5f, 0f);
 				m_toastRect.anchoredPosition = new Vector2(0f, 120f);
 				m_toastRect.sizeDelta = new Vector2(560f, 56f);
-				Text t = ModUiKit.Label(m_toastRect, "", 22, ModUiKit.TextMain, TextAnchor.MiddleCenter);
-				ModUiKit.SetRect(t.rectTransform, Vector2.zero, Vector2.one, new Vector2(12f, 4f), new Vector2(-12f, -4f));
-				t.name = "ToastText";
+				m_toastText = ModUiKit.Label(m_toastRect, "", 22, ModUiKit.TextMain, TextAnchor.MiddleCenter);
+				ModUiKit.SetRect(m_toastText.rectTransform, Vector2.zero, Vector2.one, new Vector2(12f, 4f), new Vector2(-12f, -4f));
+				m_toastText.name = "ToastText";
+				m_toastText.supportRichText = false;
 			}
-			Transform txt = m_toastRoot.transform.Find("Panel/Label");
-			if (txt != null)
-			{
-				txt.GetComponent<Text>().text = message;
-			}
+			if (m_toastText == null) m_toastText = m_toastRoot.GetComponentInChildren<Text>(true);
+			if (m_toastText != null) m_toastText.text = message;
 			m_toastGroup.alpha = 1f;
 			m_toastUntil = Time.unscaledTime + 2.4f;
 			m_toastRoot.SetActive(true);
