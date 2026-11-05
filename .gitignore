@@ -171,12 +171,14 @@ InitTestScene*.unity*
 # Python 工具链缓存（Tools/*.py 的 __pycache__）
 __pycache__/
 
-# 关卡编辑器的两个构建产物目录：都能由
-#   Tools/LevelEditor/sync_editor.py + LevelEditorModBuild.BuildWaterAssets() 重建，
-# 13 MB 的 asset bundle 与 3.6 MB 的 staging 贴图不该进仓库。
+# Mods 已拆到独立仓库 aeclic/badpiggies-editor-sim-mod。要用关卡编辑器就把那个仓库
+# clone 到本工程的 Mods/ 下，本仓库不再跟踪它，也不再跟踪它克隆进来的 .git。
+/Mods/
+
+# 关卡编辑器的 asset bundle staging：LevelEditorModBuild.BuildWaterAssets() 每次重建，
+# 13 MB 的 bundle 与 3.6 MB 的贴图 staging 不该进仓库。
 /Assets/Editor/LevelEditorModAssets/
 /Assets/Editor/LevelEditorModAssets.meta
-/Mods/LevelEditor/Assets/
 
 # 与本项目无关的静态页面（README 里未声明，误入工作区）
 /peacock-motorcycle.html

@@ -96,7 +96,7 @@ Assets/
 └─ Resources/ Texture2D/ Material/ Shader/…
 Packages/                          内嵌的 DOTS / URP / Burst 包与 Havok 占位包
 Tools/                             二进制补丁、品牌烘焙、unity-batch.bat
-Mods/FrameShapes/                  变形框插件源码（旧 BepInEx 工程，已不再被构建步骤部署）
+Mods/                              已拆到独立仓库 aeclic/badpiggies-editor-sim-mod（见「Mods 仓库」）
 perf/                              性能测试脚本、载具 CSV、采样日志
 Brand/                             品牌 wordmark / 图标 / 启动页素材
 README-assets/                     README 截图
@@ -178,7 +178,21 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 
 游戏内按 **F10**（或设置里的“打开 Mod 管理器”）打开列表。内置样板有三个：`example-addon/`（`Mod.xml` 纯面板）、`netease-music/`（旧 `manifest.json`，验证兼容）、`bpir-frame-shapes/`（**源码 Mod**，注册三个变形框变体，用来实测整条管线）。完整字段、`Modding.xml` 配置、钩子列表、扫描规则与迁移说明见 [`BPSIM_MODDING.md`](BPSIM_MODDING.md)。
 
-`Mods/FrameShapes/` 保留着旧的 **BepInEx 5.4.23.2** 插件源码（“bp-rebooted ECS 框形”），但 `FrameShapesBuildPostprocessor` 与 BepInEx 胶水层已删除，它不再被任何构建步骤部署；要用请按 `ModEntryPoint` 重写成普通 Mod 包。
+`Mods/FrameShapes/` 保留着旧的 **BepInEx 5.4.23.2** 插件源码（“bp-rebooted ECS 框形”），但 `FrameShapesBuildPostprocessor` 与 BepInEx 胶水层已删除，它不再被任何构建步骤部署；要用请按 `ModEntryPoint` 重写成普通 Mod 包。源码现在位于独立仓库 `aeclic/badpiggies-editor-sim-mod` 的 `Mods/FrameShapes/`。
+
+## Mods 仓库
+
+两个 Mod（关卡编辑器与 bp-rebooted 框形）连同 vendored 的 Rust 编辑器、水域素材和生成脚本，已拆到独立仓库
+[`aeclic/badpiggies-editor-sim-mod`](https://github.com/aeclic/badpiggies-editor-sim-mod)（上游
+`LambdaEd1th/badpiggies-editor` 的 fork，沿用同一份 **AGPL-3.0-or-later** 许可证）。
+`Mods/LevelEditor/`、`Mods/LevelEditor/ThirdParty/`、`Mods/FrameShapes/` 与 `Tools/LevelEditor/` 现在都只在那个仓库里维护，
+本仓库不再跟踪它们。
+
+构建流程没有变，只是路径要从那个仓库取：`LevelEditorModBuild.BuildMod()` 用 `mcs.exe` 编
+`Mods/LevelEditor/Code/*.cs` 出 `BpsimLevelEditor.dll`，`BuildWaterAssets()` 把 `Shaders/`、`Textures/` 与
+`Web/bpsim/ultimate-water/` 复制进 `Assets/Editor/LevelEditorModAssets/` 再打包成
+`Mods/LevelEditor/Assets/water-windows.bundle`；两个产物目录仍在 `.gitignore` 里，因为它们能重建。
+把独立仓库克隆到本工程的 `Mods/`，或给 `Tools/LevelEditor/*.py` 传 `--project <那个仓库>`，两种用法都成立。
 
 ## 已知限制
 
@@ -264,9 +278,10 @@ CC0 只覆盖作者自己创作的部分，**不改变**仓库内第三方内容
 | Havok Physics | `Assets/Plugins/Havok.Physics.dll`、`x86_64/HavokNative.dll`、Android `.so` | Havok / Microsoft 专有；此处仅作技术研究 |
 | Vuplex WebView | `Assets/Vuplex/` | 商业授权 |
 | Unity 包、DOTS、URP、TextMeshPro | `Packages/`、`Assets/Plugins/` | Unity Companion License（另有若干 MIT 依赖） |
-| BepInEx 5.4.x | `Mods/FrameShapes/Runtime/` | LGPL-2.1 |
+| BepInEx 5.4.x | 独立 Mods 仓库的 `Mods/FrameShapes/Runtime/` | LGPL-2.1 |
 | UniTask、Newtonsoft.Json、IngameDebugConsole 等 | `Assets/Plugins/` | 各自 MIT / 开源许可证，见上游仓库 |
 | ShaderRipper、besiege、bple、bpir、bpss、bprc | 参考项目 | 仅作思路与接口对照，未整体搬运 |
+| Bad Piggies Editor（Rust/WASM 关卡编辑器） | 独立 Mods 仓库的 `Mods/LevelEditor/` | AGPL-3.0-or-later；见该仓库的 `THIRD-PARTY-LICENSES/` |
 
 **CC0 不等于“整包可商用”**：上面的第三方组件仍受各自许可证约束；`Assets/StreamingAssets/` 未入库也意味着仓库不包含 BPLE 的原始关卡与美术。本地运行请使用你合法持有的游戏副本，并自行承担相应责任。
 
