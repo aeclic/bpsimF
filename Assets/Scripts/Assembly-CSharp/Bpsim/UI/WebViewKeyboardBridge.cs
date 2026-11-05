@@ -46,6 +46,9 @@ namespace Bpsim.UI
 
 		public bool IsFocused => m_focused;
 
+		/// <summary>Opt-in for canvas editors; existing audio/content panels keep their original behavior.</summary>
+		public bool ForwardEditorShortcuts { get; set; }
+
 		public IWebView View => m_view != null ? m_view : (m_prefab != null ? m_prefab.WebView : null);
 
 		/// <summary>给 <paramref name="prefab"/> 挂上键盘桥（同物体上只有一个）。</summary>
@@ -241,6 +244,11 @@ namespace Bpsim.UI
 			{
 				return;
 			}
+			if (ForwardEditorShortcuts && Keyboard.current != null &&
+				(Keyboard.current.ctrlKey.isPressed || Keyboard.current.altKey.isPressed))
+			{
+				return;
+			}
 			// 输入法提交后的一两帧里 onTextInput 可能把同一段文字再送一遍，丢掉。
 			if (Time.frameCount <= m_commitFrame + 1)
 			{
@@ -293,8 +301,25 @@ namespace Bpsim.UI
 			}
 			bool ctrl = keyboard.ctrlKey.isPressed || keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
 			bool alt = keyboard.altKey.isPressed || keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed;
+			if (ForwardEditorShortcuts && ctrl && !alt)
+			{
+				KeyModifier modifiers = KeyModifier.Control;
+				if (keyboard.shiftKey.isPressed) modifiers |= KeyModifier.Shift;
+				Key[] editorKeys = { Key.A, Key.C, Key.X, Key.V, Key.D, Key.Z, Key.Y, Key.S, Key.O, Key.N };
+				foreach (Key key in editorKeys)
+				{
+					if (!keyboard[key].wasPressedThisFrame) continue;
+					if (m_keyDownUp != null)
+					{
+						string name = key.ToString().ToLowerInvariant();
+						m_keyDownUp.KeyDown(name, modifiers);
+						m_keyDownUp.KeyUp(name, modifiers);
+					}
+					return;
+				}
+			}
 			// 快捷键走原生编辑命令，别注入按键（CEF 的剪贴板命令更稳）。
-			if (ctrl && !alt)
+			if (ctrl && !alt && !ForwardEditorShortcuts)
 			{
 				if (keyboard.aKey.wasPressedThisFrame) { m_view.SelectAll(); return; }
 				if (keyboard.cKey.wasPressedThisFrame) { m_view.Copy(); return; }

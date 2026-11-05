@@ -7,7 +7,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.UI;
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
 using Vuplex.WebView;
+#endif
 using Bpsim.Mods;
 using Bpsim.UI;
 
@@ -73,10 +75,17 @@ namespace Bpsim.QA
 		/// <summary>建一个最小 webview + 输入框，用 InputSystem 排队文本/按键事件，看页面是否收到。</summary>
 		public static string RunKeyboard()
 		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			// 移动端网页面板走 UniWebView，键盘由原生 IME 直接喂给页面，没有 Vuplex 的 SendKey 链路可测。
+			KeyboardResult = "skipped: 移动端用 UniWebView 原生 IME，Vuplex 键盘探针不适用";
+			Debug.Log("[KeyProbe] " + KeyboardResult);
+			return KeyboardResult;
+#else
 			KeyboardResult = "(运行中)";
 			GameObject go = new GameObject("WebPanelProbe_Keyboard");
 			go.AddComponent<KeyboardProbeRunner>();
 			return "started";
+#endif
 		}
 
 		/// <summary>建一个 uGUI InputField，用 InputSystem 排队文本事件，看它能不能收到字符。</summary>
@@ -200,6 +209,7 @@ namespace Bpsim.QA
 		}
 	}
 
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
 	/// <summary>键盘链路：InputSystem 文本/按键事件 → WebViewKeyboardBridge → CEF → 页面输入框。</summary>
 	public sealed class KeyboardProbeRunner : MonoBehaviour
 	{
@@ -310,6 +320,7 @@ namespace Bpsim.QA
 			Destroy(gameObject);
 		}
 	}
+#endif
 
 	/// <summary>uGUI 链路：InputField 的文本输入是否还活着（取决于 legacy Input 是否可用）。</summary>
 	public sealed class UguiProbeRunner : MonoBehaviour

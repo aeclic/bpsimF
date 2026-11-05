@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -30,6 +30,7 @@ namespace Bpsim.QA
     {
         private const string FlagArg = "-bpsimSelfTest";
         private const string LogArg = "-bpsimSelfTestLog";
+        private const string MarkerFile = "bpsim-selftest.marker";
 
         private static PlayerSelfTest s_instance;
         private static readonly StringBuilder s_report = new StringBuilder();
@@ -39,8 +40,14 @@ namespace Bpsim.QA
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoStart()
         {
-            string[] args = Environment.GetCommandLineArgs();
-            bool enabled = false;
+            string[] args = GetEffectiveArgs();
+            bool marker = HasMarker();
+            // Emit the resolved argv unconditionally: on Unity 2022 Android the "unity"
+            // intent extra is not reliably surfaced through Environment.GetCommandLineArgs(),
+            // so a missed trigger has to be diagnosable straight from logcat.
+            Debug.Log("[SelfTest] argv=" + string.Join(" ", args) + " marker=" + marker);
+
+            bool enabled = marker;
             foreach (string a in args)
             {
                 if (string.Equals(a, FlagArg, StringComparison.OrdinalIgnoreCase))
@@ -57,6 +64,80 @@ namespace Bpsim.QA
             go.hideFlags = HideFlags.DontSave;
             UnityEngine.Object.DontDestroyOnLoad(go);
             s_instance = go.AddComponent<PlayerSelfTest>();
+        }
+
+        /// <summary>
+        /// Resolve the effective argument list. On Android the flag is delivered through
+        /// the "unity" intent extra; read it back from the Activity intent and split it
+        /// into tokens so both the flag and -bpsimSelfTestLog work in a Player build.
+        /// </summary>
+        private static string[] GetEffectiveArgs()
+        {
+            List<string> list = new List<string>(Environment.GetCommandLineArgs());
+            string extra = ReadAndroidUnityExtra();
+            if (!string.IsNullOrEmpty(extra))
+            {
+                foreach (string tok in extra.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    list.Add(tok);
+                }
+            }
+            return list.ToArray();
+        }
+
+        private static string ReadAndroidUnityExtra()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                using (AndroidJavaClass player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                {
+                    using (AndroidJavaObject activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+                    {
+                        if (activity == null)
+                        {
+                            return null;
+                        }
+                        using (AndroidJavaObject intent = activity.Call<AndroidJavaObject>("getIntent"))
+                        {
+                            if (intent == null)
+                            {
+                                return null;
+                            }
+                            return intent.Call<string>("getStringExtra", "unity");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.Log("[SelfTest] android intent extra read failed: " + e.Message);
+            }
+#endif
+            return null;
+        }
+
+        /// <summary>
+        /// Last-resort trigger: `adb shell touch /sdcard/bpsim-selftest.marker` works even
+        /// when the launcher drops the intent extra entirely.
+        /// </summary>
+        private static bool HasMarker()
+        {
+            try
+            {
+                if (File.Exists(Path.Combine(Application.persistentDataPath, MarkerFile)))
+                {
+                    return true;
+                }
+                if (File.Exists("/sdcard/" + MarkerFile))
+                {
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return false;
         }
 
         private void Awake()
@@ -83,7 +164,7 @@ namespace Bpsim.QA
 
         private static string LogPath()
         {
-            string[] args = Environment.GetCommandLineArgs();
+            string[] args = GetEffectiveArgs();
             for (int i = 0; i < args.Length - 1; i++)
             {
                 if (string.Equals(args[i], LogArg, StringComparison.OrdinalIgnoreCase))

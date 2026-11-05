@@ -444,6 +444,8 @@ namespace Vuplex.WebView {
                 // Catch any exceptions that occur during initialization because
                 // some applications terminate the application on uncaught exceptions.
                 Debug.LogException(exception);
+                // Without this, the prefab stays on its white initial texture (a full white board).
+                gameObject.SetActive(false);
             }
         }
 
@@ -521,7 +523,20 @@ namespace Vuplex.WebView {
 
         bool _sizeIsInvalid(Vector2 size) => !(size.x > 0f && size.y > 0f);
 
-        void Start() => _initCanvasPrefab();
+        void Start() {
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+            // This project ships 3D WebView for Windows/macOS only. Any caller that still
+            // instantiates CanvasWebViewPrefab directly (legacy mods, stray scene objects) is
+            // short-circuited here so Web.CreateWebView() is never reached in mobile players:
+            // no WebViewUnavailableException and no white initial texture left on screen.
+            // Mobile web panels must go through Bpsim.UI.HtmlPanelView (UniWebView) instead.
+            Debug.LogWarning("[Vuplex] 3D WebView is unavailable on this mobile player; disabled a bare CanvasWebViewPrefab. Use HtmlPanelView instead.");
+            gameObject.SetActive(false);
+            return;
+#else
+            _initCanvasPrefab();
+#endif
+        }
 
         protected override void Update() {
 
