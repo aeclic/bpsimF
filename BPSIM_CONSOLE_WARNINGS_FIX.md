@@ -140,9 +140,13 @@ python Tools/PatchUrpCoreUtils.py --restore
 
 ## 安卓侧（与 Havok 闪退同一个任务的产物，一并记录）
 
-- `Assets/Plugins/Android/libs/armeabi-v7a/libhavoknative.so`（4 003 124 B，stripped）+ 对应 `.meta`
+- `Assets/Plugins/Android/libs/armeabi-v7a/libHavokNative.so`（4 003 124 B，stripped）+ 对应 `.meta`
   （`Any/Editor/Windows/Linux/OSX` 全关，只开 `Android/ARMv7`）。托管侧是 `DllImport("HavokNative")`，
-  所以文件名必须以 `lib` 开头，实际使用名为 `libhavoknative.so`（Android 文件名区分大小写）。
+  在 Android 上 Unity/Mono 会把它解析成 `libHavokNative.so`；`lib` 前缀和**大小写都必须精确匹配**，
+  Android 文件系统区分大小写。2026-11-04 修复前的 `libhavoknative.so`（全小写）让 APK 里库文件
+  明明已解压到 `nativeLibraryDir`，却仍刷 `E Unity : Unable to load plugin 'HavokNative'` ×42，
+  `/proc/<pid>/maps` 里完全没有映射，七个 step 入口不生效。改名后雷电实测
+  `I Havok : Found 4 Cpu Cores (sysconf says 4)` 回来、`Unable to load plugin` 归零。
 - 该 .so 由 `Tools/PatchHavokNativeAndroid.py` 从旧安卓包里的原始库打补丁得到：
   `HP_CheckCompatibility` 改成 `movs r0,#1; bx lr`，并把 `UnityPluginLoad` 里写 `s_Unlocked` 的那三指令
   改成恒 1（`s_Unlocked` 是 `HP_SyncWorldIn` / `HP_SyncMotionsOut` / `HP_SyncSecondaryMotionsOut` /

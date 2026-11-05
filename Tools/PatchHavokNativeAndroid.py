@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Patch the Android (armeabi-v7a) HavokNative.so so the Havok solver actually steps.
+"""Patch the Android (armeabi-v7a) libHavokNative.so so the Havok solver actually steps.
+
+IMPORTANT: the file name must be exactly libHavokNative.so. DllImport("HavokNative")
+resolves to libHavokNative.so on Android, whose filesystem is case-sensitive. A
+lowercase libhavoknative.so silently produces "Unable to load plugin 'HavokNative'"
+even though the .so is present in the APK and extracted into nativeLibraryDir.
 
 The Android build of Havok Physics for Unity ships the same two gates as the Windows
 dll (see Tools/PatchHavokNative.py):
