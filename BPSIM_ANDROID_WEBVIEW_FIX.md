@@ -30,7 +30,8 @@ Vuplex.WebView.WebViewUnavailableException: The build platform is set to Android
 **移动分支**（`CreateMobileBackend` + `LoadHTMLString`），桌面分支 `CanvasWebViewPrefab.Instantiate()`
 已被条件编译裁掉，门面自身不会抛异常。
 
-真正来源是**运行时加载的可选 Mod**：`Mods/LevelEditor/Code/EditorWindow.cs` 的关卡编辑器窗口
+真正来源是**运行时加载的可选 Mod**：关卡编辑器 Mod 的 `Code/EditorWindow.cs`（源码在独立仓库
+`aeclic/badpiggies-editor-sim-mod` 的 `Mods/LevelEditor/` 下）里的关卡编辑器窗口
 （1820×1000、`sortingOrder=32500` 的全屏框）里仍直接 `CanvasWebViewPrefab.Instantiate()`，
 完全绕过门面。该 Mod 由 `Mod.xml` 描述、`BpsimLevelEditor.dll` 承载，点「打开关卡编辑器」快捷按钮
 时才创建 WebView；`Start()` 的异步初始化异常被 Vuplex 的 try/catch 吞掉（`Debug.LogException`），
@@ -101,7 +102,7 @@ window.vuplex = {
 
 修改：
 
-- `Mods/LevelEditor/Code/EditorWindow.cs` —— 整文件重写：删 `using Vuplex.WebView;` 与
+- `Code/EditorWindow.cs` —— 整文件重写：删 `using Vuplex.WebView;` 与
   `CanvasWebViewPrefab` 字段，改 `HtmlPanelView.Attach(gameObject, host, true, ...)`；订阅
   `Ready/MessageReceived/PageLoaded/Failed`，`Ready` 后 `LoadUrl(EditorUrl)`，
   `Failed` 显示错误文案；`OnMessage(string)` 用 `JObject.Parse` 解析 `bpsim.capabilities`；
@@ -129,7 +130,7 @@ window.vuplex = {
 
 重建产物：
 
-- `Mods/LevelEditor/BpsimLevelEditor.dll` —— 经 `Bpsim.EditorTools.LevelEditorModBuild.BuildMod()`
+- `BpsimLevelEditor.dll` —— 经 `Bpsim.EditorTools.LevelEditorModBuild.BuildMod()`
   用 mcs 重编（依赖新门面 `LoadUrl`）；验证 DLL 含 `HtmlPanelView/LoadUrl/OnReady/OnMessage`、
   **不含** `CanvasWebViewPrefab`/`Vuplex.WebView`。
 - `Builds/Mods/BpsimLevelEditor-0.3.0.zip` —— 替换包内 `BpsimLevelEditor.dll` 与

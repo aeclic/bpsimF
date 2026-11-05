@@ -371,7 +371,7 @@ ModParts.TryAddSkinVariant(PartType.WoodenFrame, 0, 9000, "异形木框",
 
 **BepInEx**：整条通道已删。
 - `Bpsim.Mods.BepInExHost.BpsimModHost` 不存在了，插件里调它的代码要删掉。
-- `Mods/FrameShapes/` 里的插件工程不再被部署，`FrameShapesBuildPostprocessor` 已删除。
+- 框形插件工程（现在在独立仓库 `aeclic/badpiggies-editor-sim-mod` 的 `Mods/FrameShapes/`）不再被部署，`FrameShapesBuildPostprocessor` 已删除。
 - 内置占位包 `bpir-frame-shapes` 已移除（它原本只是等 BepInEx 插件注册的壳）。
 
 ---

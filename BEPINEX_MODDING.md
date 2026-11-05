@@ -8,7 +8,7 @@
 | 文件 / 符号 | 状态 | 说明 |
 |---|---|---|
 | `Assets/Scripts/Assembly-CSharp/Bpsim/Mods/BepInExGlue.cs` | 已删除 | `BpsimModHost` 门面，供插件调 `Register/Unregister` |
-| `Assets/Editor/Bpsim/FrameShapesBuildPostprocessor.cs` | 已删除 | 构建后跑 `Mods/FrameShapes/deploy.ps1` 部署插件 |
+| `Assets/Editor/Bpsim/FrameShapesBuildPostprocessor.cs` | 已删除 | 构建后跑 Mods 仓库的 `Mods/FrameShapes/deploy.ps1` 部署插件 |
 | `ModManager.RegisterExternal` / `UnregisterExternal` | 已删除 | 外部注册通道 |
 | `ModPackage.ExternalInstance` / `ModSource.BepInEx` | 已删除 | 「等待插件注册」的状态 |
 | `Assets/StreamingAssets/Mods/bpir-frame-shapes/` | 已删除 | 只是等 BepInEx 插件注册的元数据壳 |
@@ -31,7 +31,7 @@ Besiege 式官方加载器：`Mod.xml` 清单 + `ModEntryPoint` 钩子 + 静态�
 - 插件里调 `BpsimModHost.Register(...)` 的代码删掉即可 —— 现在把同一个 DLL 放进
   `<persistentDataPath>/Mods/<你的 Mod>/`，配一个 `Mod.xml`，就会走正常加载。
 - 插件用 Harmony 打的补丁要重写成 `ModEntryPoint` 的钩子（`OnWorldCreated` / `OnPartRegistered` / `OnMachineLoaded`）。
-- `Mods/FrameShapes/` 目录保留着源码，但不再被任何构建步骤部署；要用请自行转成 Mod 包。
+- 框形插件的源码在独立仓库 `aeclic/badpiggies-editor-sim-mod` 的 `Mods/FrameShapes/`，本仓库不再跟踪；它不再被任何构建步骤部署，要用请自行转成 Mod 包。
 
 ## 目录结构（现状）
 
