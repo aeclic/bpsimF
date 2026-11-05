@@ -182,17 +182,18 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 
 ## Mods 仓库
 
-两个 Mod（关卡编辑器与 bp-rebooted 框形）连同 vendored 的 Rust 编辑器、水域素材和生成脚本，已拆到独立仓库
+两个 Mod（关卡编辑器与 bp-rebooted 框形）连同 vendored 的 Rust 编辑器与水域素材，已拆到独立仓库
 [`aeclic/badpiggies-editor-sim-mod`](https://github.com/aeclic/badpiggies-editor-sim-mod)（上游
 `LambdaEd1th/badpiggies-editor` 的 fork，沿用同一份 **AGPL-3.0-or-later** 许可证）。
-`Mods/LevelEditor/`、`Mods/LevelEditor/ThirdParty/`、`Mods/FrameShapes/` 与 `Tools/LevelEditor/` 现在都只在那个仓库里维护，
-本仓库不再跟踪它们。
+`Mods/LevelEditor/`、`Mods/LevelEditor/ThirdParty/` 与 `Mods/FrameShapes/` 现在只在那个仓库里维护，本仓库不再跟踪。
+`Tools/LevelEditor/` 的生成器留在这里，因为它们要靠这个工程的 Unity 编辑器才能跑。
 
 构建流程没有变，只是路径要从那个仓库取：`LevelEditorModBuild.BuildMod()` 用 `mcs.exe` 编
 `Mods/LevelEditor/Code/*.cs` 出 `BpsimLevelEditor.dll`，`BuildWaterAssets()` 把 `Shaders/`、`Textures/` 与
 `Web/bpsim/ultimate-water/` 复制进 `Assets/Editor/LevelEditorModAssets/` 再打包成
 `Mods/LevelEditor/Assets/water-windows.bundle`；两个产物目录仍在 `.gitignore` 里，因为它们能重建。
-把独立仓库克隆到本工程的 `Mods/`，或给 `Tools/LevelEditor/*.py` 传 `--project <那个仓库>`，两种用法都成立。
+要用的时候把独立仓库 clone 成本工程的 `Mods/`：生成器多数按 `Path(__file__).parents[2] / "Mods" / "LevelEditor"`
+解析路径（`sync_editor.py` 与 `extract_ultimate_water.py` 另收 `--project`），`LevelEditorModBuild` 也写死 `Mods/LevelEditor`。
 
 ## 已知限制
 
