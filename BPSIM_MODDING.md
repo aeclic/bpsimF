@@ -152,7 +152,7 @@ namespace MyMod
 4. 程序集引用 `Assembly-CSharp.dll` 即可（和旧 Mod 一样）。
 5. 老 Mod 不用改：实现 `IBpsimMod` 会被自动包进适配器，行为与以前一致。
 
-### 5.1 源码 Mod（不用自己编译）
+### 5.1 源码 Mod（编辑器里方便，出包必须预编译）
 
 把 `.cs` 放进 `Code/` 目录，清单里**不写** `<Assemblies>`，宿主会在加载时编译：
 
@@ -163,9 +163,43 @@ bpir-frame-shapes/
 ```
 
 - 产物落在 `<persistentDataPath>/Mods/.compiled/<id>.dll`，按源码时间戳缓存，没改就不重编。
-- 依赖 Mono 运行时的 CodeDom（`Microsoft.CSharp` / `System.CodeDom`）。取不到时会给出明确报错，
-  不会让游戏编译失败 —— 这时改用预编译 DLL + `<Assemblies>` 即可。
+- 依赖 Mono 运行时的 CodeDom（`Microsoft.CSharp` / `System.CodeDom`）与 `mcs.exe`。
+  取不到时会给出明确报错，不会让游戏编译失败。
 - 编译是**主线程同步**的，第一次加载会卡一下（通常 < 1s）。
+
+> **出包必读：玩家包里没有编译器。**
+> Standalone Mono 构建只带 `MonoBleedingEdge/EmbedRuntime` 和 `etc/mono` 配置，
+> **不带 `mcs.exe`，也不带 `Microsoft.CSharp.dll` / `System.CodeDom.dll`**。
+> 因此 `Code/*.cs` 的运行时编译在 exe 里**必然失败**，Player.log 里是：
+>
+> ```
+> [Mods] bpreboot-specials 加载失败：源码编译异常：
+>   Error running ...\mono\mini\mono.exe: 系统找不到指定的文件。
+> ```
+>
+> 所以**要随包发布的 Mod 必须先预编译成 DLL**，并在 `Mod.xml` 里用 `<Assemblies>` 声明：
+>
+> ```
+> my-mod/
+>   Mod.xml                  ← <EntryPoint …/> + <Assemblies><Assembly path="MyMod.dll"/></Assemblies>
+>   MyMod.dll                ← 预编译产物
+>   Code/MyMod.cs            ← 源码留着备查，有 DLL 后不再被编译
+> ```
+>
+> 仓库里的 `Tools/Mods/build-mod-dll.bat` 就是干这个的：
+>
+> ```
+> Tools\Mods\build-mod-dll.bat bpreboot-specials BprebootSpecials.dll
+> ```
+>
+> 它用 Unity 编辑器的 `mcs` 编译，引用取自 `Builds/ModSpecials/bpsim_Data/Managed/`
+> （`mscorlib` / `netstandard` / `System` / `System.Core` / `Unity.Entities` /
+> `UnityEngine.CoreModule` / `UnityEngine` / `Assembly-CSharp`）。
+> **出包顺序**：先跑一次构建拿到 Managed 程序集 → 编译各 Mod 的 DLL → 再构建一次
+> （第二次会把新 DLL 一起带进 StreamingAssets）。改了宿主 API 后 DLL 要重编。
+>
+> 有 `<Assemblies>` 时 `HasCode` 为真，宿主直接 `Assembly.LoadFrom` 那个 DLL，
+> `Code/` 目录会被完全忽略。
 
 ### 5.2 加部件：`ModParts`
 
@@ -183,6 +217,7 @@ ModParts.TryAddVariant(PartType.MetalFrame, 12, 9001, "直角三角框（BPIR）
 
 - 索引从 `ModParts.CustomIndexBase`（9000）起，避开原版占用区间。
 - 卸载用 `ModParts.RemoveVariant(type, index)`。
+- **变体默认共用基部件的贴图与图标**；要换皮肤/图标见 5.5（`ModSprites` + `TryAddSkinVariant`）。
 - 形状本身仍走 `FrameShapeSystem`：`FrameShape` 只有 4 个值（长方形/直角三角/半圆/圆），
   因为着色器按 `_BlendFactor.z` 分支裁剪，**加新形状需要改 shader**，Mod 只能在这 4 种里选。
 - 变体的颜色/图标一律继承基部件：`ColoredFrame.GetColor` 会经 `PartVariants.Resolve` 取基部件色，
@@ -246,6 +281,56 @@ private void Update()
 `OnPartRegistered` 由 `ModHooks.NotifyPartsReady()` 触发，两个时机：
 部件工厂建完时、以及每个 Mod 加载完成后补发一次（Mod 通常晚于工厂初始化）。
 
+### 5.5 换皮肤与图标：`ModSprites`
+
+部件贴图不是 per-instance 的 —— 整场景的部件都由 `SceneRenderSystem` 用 BatchRendererGroup
+画同一张 `Part_Texture_0` 图集。要让变体用别的贴图，得走「额外图集」这条通道：
+
+```csharp
+// 1. 注册一张 Mod 自带图集（PNG 放 Mod 目录里，用 ModAssets.LoadTexture 读）
+Texture2D texture = ModAssets.LoadTexture(ModDirectory, "Atlas/mine.png");
+ModSprites.RegisterAtlas("My_Skins", texture, 1024, 512, 0.01302083f, out string error);
+
+// 2. 往图集里登记精灵条目（像素坐标，格式与 Assets/TextAsset/Part_SpriteMap_*.txt 一致）
+var entry = new SpriteMap.MapEntry(x: 2, y: 2, width: 105, height: 105,
+                                   pivotX: 0, pivotY: 0, scaleX: 0.4f, scaleY: 0.4f);
+ModSprites.RegisterSprite("my/AlienWoodenFrame", "My_Skins", entry, out error);
+
+// 3. 建变体并换皮肤 —— 换皮必须发生在建 ECS 预制体之前，所以用带 skins 的重载
+ModParts.TryAddSkinVariant(PartType.WoodenFrame, 0, 9000, "异形木框",
+                           spriteKey: null,
+                           skins: new Dictionary<string, string> {
+                               { "异形木框", "my/AlienWoodenFrame" },   // 键可以是子物体名，也可以是原 SpriteName
+                           },
+                           iconSpriteKey: "Part_5_9000_Rendered",
+                           out string variantError);
+```
+
+要点：
+
+- **`RegisterAtlas` 的 `scale` 决定整个世界尺寸。** 它对应精灵表首行的 `Scale`，
+  `SpriteManager.GetSpriteRect` 用它算 `VertexW/VertexH`。要跟原版图集一致的尺寸，
+  图集 scale 用 `0.01302083`、每条 `scaleX/scaleY` 用 `0.4`。
+  图标是 UGUI 的 `RawImage`，`VertexW/VertexH` 会直接进 `sizeDelta`，
+  所以图标图集要用大一点的 scale（`0.4` 左右），否则图标只有几像素。
+- **皮肤必须在建 ECS 预制体之前改。** `PartEntityFactory.CreateSprite` 在 `spawner.AddPrefab()`
+  那一刻就把 `SpriteName` 烤成 `SpriteID` + `PartAtlasIndex`；先建预制体再改 `m_name` 只改到了
+  托管侧对象，ECS 实体还停在基部件图集上。`TryAddSkinVariant` 为此加了 `prepare` 回调。
+- **`skins` 的键是「子物体名」或「原 SpriteName」**，不是新键名。部件上的精灵组件是
+  `MaterialSprite`（写 `_Rect` / `_UVRect` 的那种），不是 `MeshSprite`。
+  引擎/弹簧/拳套箱/TNT 的贴图挂在 `EngineVisualization` / `SpringVisualization` /
+  `Visualization` 这类子物体上，只改根节点什么都不会变。
+- **抓钩这类多段精灵不要用单键换皮。** `GrapplingHook` 每个变体有 10 个子精灵
+  （8 个 `XxxAttachment` + `SpringVisualization` + `Visualization`），单键会把它们全叠成一张图。
+  用 `skins` 精确指定要换的那个，其余保持在基部件键上。
+- 图标键名固定是 `Part_{PartType}_{index}_Rendered`，`PartSelector` 命中即用，不需要额外注册。
+  `ModParts.RegisterVariantIcon(info, spriteKey)` 可以把某个皮肤条目直接注册成变体图标。
+- 图集材质由 `PartAtlasRegistry` 统一管理（每张图集一份 `Material`，
+  从 `Part_Texture_0` 复制并换 `mainTexture`），`SceneRenderSystem` 按实体的 `PartAtlasIndex`
+  分成不同的 `BatchDrawCommand`。原版部件没有这个组件，走的仍是 0 号图集，不受影响。
+
+> 这套通道是给 `bpreboot-specials` 加进来的，之前宿主只能「变体共用基部件贴图」。
+
 
 ---
 
@@ -300,9 +385,11 @@ private void Update()
 4. **工坊没有验签**。`Modding.xml` 只记录，不校验；工坊分发要做完整性校验得另外加。
 5. **加不了新形状**。`FrameShape` 的 4 个值写死在着色器的裁剪分支里（`_BlendFactor.z`），
    Mod 只能在这 4 种里选；要加梯形/六边形得先改 shader。
-6. **变体部件共用基部件的贴图与图标**。图标走 `Part_{type}_{index}_Rendered`，Mod 索引没有这张图，
-   选择器里会回退到基部件那一格（`PartSelector.SetRenderedIcon(PartTypeInfo)` 的解析链就是
-   自己 → 基部件 → 皮肤占位图）。**变体的颜色也继承基部件**，克隆红色框得到的变体就是红的。
+6. **变体部件默认共用基部件的贴图与图标**，但宿主提供了「换皮肤 / 换图标」的 API（见 5.6）。
+   不调那些 API 时，变体的颜色与图标都继承基部件：图标走 `Part_{type}_{index}_Rendered`，
+   Mod 索引没有这张图，选择器里会回退到基部件那一格
+   （`PartSelector.SetRenderedIcon(PartTypeInfo)` 的解析链就是 自己 → 基部件 → 皮肤占位图）；
+   `ColoredFrame.GetColor` 经 `PartVariants.Resolve` 取基部件色，克隆红色框得到的变体就是红的。
 7. **建造列表没有过滤机制**。`CustomPartSelector.Initialize` 遍历整个 `PartCollection` 建列表，
    宿主没有给「某个索引不显示」的开关键；不想让变体出现在列表里，只能不注册变体（见 5.2 开头）。
 8. **源码 Mod 的编译引用集不能显式挂 `mscorlib`**。宿主用的是 Mono 的 `mcs`，它总是隐式引用
@@ -348,4 +435,31 @@ method=Run`，再 `method=Status` 取报告）：覆盖「建造列表里没有 
 
 形状与凸包生成沿用 bpsim 已有的 `FrameShapeSystem`，几何来自 BPIR 的逐件框形状
 （<https://gitee.com/yctf123123/bpir>）。
+
+## 11. 样例：bpreboot 特殊部件
+
+`Assets/StreamingAssets/Mods/bpreboot-specials/` 是另一个源码 Mod，演示 5.5 的换皮肤通道：
+
+```
+bpreboot-specials/
+  Mod.xml
+  Code/BprebootSpecials.cs
+  Atlas/bpreboot_skins.png      # 1024x318，21 张皮肤
+  Atlas/bpreboot_skins.txt      # 皮肤图集条目表
+  Atlas/bpreboot_icons.txt      # 图标图集条目表（共用同一张 PNG）
+  Tools/pack_atlas.py           # 从 bp-rebooted 上游图集裁切打包的脚本
+```
+
+它把 <https://github.com/Goggs77/bp-rebooted> 里 BPLE 没有的皮肤变体做成**额外**部件
+（索引 9000 起，原版索引一个不动），17 件：木框 2（异形木框 / 玻璃框）、铁框 4
+（半高护栏 / 60° / 45° 三角 / 钨方块）、中型发动机 1、大型发动机 1、拳套箱 1（活塞）、
+吸盘轮 1、抓钩 5（异形速射枪 / 加长速射枪 / 闪电钩 / 磁轨炮 / 加特林）、螺旋桨 1、
+弹簧 1、TNT 1。物理参数（质量 / 引擎功率）按上游 `part-params.csv` 写进 `PartExtensionMap`。
+
+验收用 `Bpsim.QA.ModBprebootSpecialsQA`（`method=Run` → `method=Status`，23 项全过）：
+覆盖「17 件都进 PartCollection」「预制体都在 spawner 里」「图集材质有独立贴图」
+「变体精灵实体带 Mod 图集序号」「皮肤/图标键可查」「物理参数覆写生效」
+「原版各家族索引数一个没变」「17 件都能真的放到场上」。
+`method=DumpSkins` 打印每件变体每个子精灵的键名，用来核对皮肤落在哪个节点；
+`method=ShowAll` + `method=Capture` 把 17 件摆成网格并截图到 `Logs/bpsim-bprebootspecials.png`。
 

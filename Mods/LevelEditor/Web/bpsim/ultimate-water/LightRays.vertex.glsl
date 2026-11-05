@@ -1,0 +1,64 @@
+#version 300 es
+
+uniform 	vec4 _Time;
+uniform 	vec4 hlslcc_mtx4x4unity_ObjectToWorld[4];
+uniform 	vec4 hlslcc_mtx4x4unity_MatrixVP[4];
+uniform 	float _RandomMovement;
+uniform 	float _RandomMovementSpeed;
+uniform 	float _RandomAngleTilt;
+uniform 	float _RandomAngleTiltSpeed;
+uniform 	vec4 _LocalZBounds;
+in highp vec4 in_POSITION0;
+in highp vec2 in_TEXCOORD0;
+in highp vec2 in_TEXCOORD1;
+in highp vec2 in_TEXCOORD2;
+in mediump vec4 in_COLOR0;
+out highp vec2 vs_TEXCOORD0;
+out highp vec2 vs_TEXCOORD1;
+out highp vec3 vs_TEXCOORD2;
+out mediump vec4 vs_COLOR0;
+vec4 u_xlat0;
+vec4 u_xlat1;
+float u_xlat2;
+float u_xlat3;
+float u_xlat6;
+float u_xlat9;
+void main()
+{
+    u_xlat0.xy = in_TEXCOORD1.yx * vec2(6.28318548, 6.28318548);
+    u_xlat0.y = _Time.y * _RandomAngleTiltSpeed + u_xlat0.y;
+    u_xlat0.x = _Time.y * _RandomMovementSpeed + u_xlat0.x;
+    u_xlat0.xy = sin(u_xlat0.xy);
+    u_xlat3 = u_xlat0.y * _RandomAngleTilt;
+    u_xlat3 = u_xlat3 * 0.0174532924;
+    u_xlat1.x = sin(u_xlat3);
+    u_xlat2 = cos(u_xlat3);
+    u_xlat3 = u_xlat1.x / u_xlat2;
+    u_xlat3 = u_xlat3 * in_TEXCOORD2.y;
+    u_xlat6 = (-in_TEXCOORD0.y) + 1.0;
+    u_xlat6 = clamp(u_xlat6, 0.0, 1.0);
+    u_xlat3 = u_xlat6 * u_xlat3;
+    u_xlat0.x = u_xlat0.x * _RandomMovement + u_xlat3;
+    u_xlat9 = _Time.y * _RandomMovementSpeed;
+    u_xlat1.x = in_TEXCOORD2.x * 6.28318548;
+    u_xlat9 = u_xlat9 * 0.730000019 + u_xlat1.x;
+    u_xlat9 = sin(u_xlat9);
+    u_xlat0.z = u_xlat9 * _RandomMovement;
+    u_xlat0.y = 0.0;
+    u_xlat0.xyz = u_xlat0.xyz + in_POSITION0.xyz;
+    u_xlat1 = u_xlat0.yyyy * hlslcc_mtx4x4unity_ObjectToWorld[1];
+    u_xlat1 = hlslcc_mtx4x4unity_ObjectToWorld[0] * u_xlat0.xxxx + u_xlat1;
+    u_xlat6 = max(u_xlat0.z, _LocalZBounds.x);
+    u_xlat0.w = min(u_xlat6, _LocalZBounds.y);
+    u_xlat1 = hlslcc_mtx4x4unity_ObjectToWorld[2] * u_xlat0.wwww + u_xlat1;
+    vs_TEXCOORD2.xyz = u_xlat0.xyw;
+    u_xlat0 = u_xlat1 + hlslcc_mtx4x4unity_ObjectToWorld[3];
+    u_xlat1 = u_xlat0.yyyy * hlslcc_mtx4x4unity_MatrixVP[1];
+    u_xlat1 = hlslcc_mtx4x4unity_MatrixVP[0] * u_xlat0.xxxx + u_xlat1;
+    u_xlat1 = hlslcc_mtx4x4unity_MatrixVP[2] * u_xlat0.zzzz + u_xlat1;
+    gl_Position = hlslcc_mtx4x4unity_MatrixVP[3] * u_xlat0.wwww + u_xlat1;
+    vs_TEXCOORD0.xy = in_TEXCOORD0.xy;
+    vs_TEXCOORD1.xy = in_TEXCOORD1.xy;
+    vs_COLOR0 = in_COLOR0;
+    return;
+}

@@ -138,6 +138,7 @@ namespace Bpsim.Mods
 			{
 				error = "OnLoad 抛出异常：" + ex.Message;
 				Debug.LogException(ex);
+				ModHostResources.Release(pkg.Guid);
 				Fail(pkg, error);
 				return false;
 			}
@@ -165,6 +166,7 @@ namespace Bpsim.Mods
 			}
 			finally
 			{
+				ModHostResources.Release(pkg.Guid);
 				pkg.EntryPoint = null;
 				pkg.LegacyInstance = null;
 				if (pkg.State == ModState.Loaded)

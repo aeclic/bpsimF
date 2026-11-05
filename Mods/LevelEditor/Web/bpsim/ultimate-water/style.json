@@ -1,0 +1,40 @@
+{
+  "source": "Ultimate Water 2D / DW Demo Scene",
+  "textures": {
+    "normal": "WaterNormals_01.png",
+    "foam": "Foam_01.png",
+    "caustics": "Foam_02.png",
+    "surfaceFoam": "Foam_03.png"
+  },
+  "surface": {
+    "waterColor": [0.0, 0.6634375453, 0.9921568036, 1.0],
+    "baseFarColor": [0.0, 0.806797266, 1.0, 1.0],
+    "normalStrength": 0.251,
+    "normalsTiling": [6.9, 32.27],
+    "normalTextureScale": [1.0, -0.98],
+    "waterSpeed": [0.04, 0.0],
+    "reflectivity": 0.663,
+    "baseGradientDistance": 1.18,
+    "baseGradientFade": 0.16,
+    "foamSharpness": 5.35,
+    "foamTextureOpacity": 1.83,
+    "foamTextureSize": [1.23, 2.96],
+    "foamTextureScrollSpeed": [0.04, 0.0],
+    "foamTextureDistortionTiling": [2.1, 0.65],
+    "foamTextureDistortionOffset": [0.49, 0.0],
+    "foamTextureDistortion": 0.71,
+    "foamVoronoiSize": [36.0, 34.1],
+    "foamVoronoiOpacity": 0.598,
+    "rippleFoamWidth": 0.86,
+    "rippleFoamTextureTiling": [3.0, 2.0]
+  },
+  "underwater": {
+    "topColor": [0.0, 1.0, 0.7019608021, 1.0],
+    "bottomColor": [0.0, 0.1927058697, 1.0, 1.0],
+    "planeColor": [0.3920806944, 0.7088049054, 0.8396226168, 1.0],
+    "gradientHeight": 5.08,
+    "distortionSize": [0.08, 0.15],
+    "distortionScrollSpeed": [-0.02, 0.02],
+    "distortionStrength": 0.13
+  }
+}

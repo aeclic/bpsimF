@@ -1,0 +1,9 @@
+Bad Piggies Editor: https://github.com/LambdaEd1th/badpiggies-editor
+Revision: 8697da72181ea1c7770c0b356c93d58678911e0a
+Upstream editor code and published binaries: AGPL-3.0-or-later.
+See BadPiggiesEditor.LICENSE and BadPiggiesEditor-Sources.zip.
+The independent bpsim companion adapter observes the pinned editor's canvas host
+and imports files through its supported drag-and-drop file path; upstream WASM is unchanged.
+Game assets remain the property of Rovio and are NOT licensed under the AGPL.
+Vuplex is supplied by the game host and is not redistributed in this Mod.
+InteractiveWaterSystem source/assets are NOT included: author licensing is unresolved.

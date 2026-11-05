@@ -1,0 +1,951 @@
+{
+  "WaterSurface": {
+    "source_sha256": "3403bbeec587ea7ae913b9f8b9e35d36c6ddfc61fa0f27eec8d2ec87e1bdc9e0",
+    "uniforms": {
+      "_ScaledScreenParams": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_GlobalMipBias": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_Time": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_TimeParameters": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_ProjectionParams": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_SplashHeightMultiplier": {
+        "type": "float",
+        "array": ""
+      },
+      "_SplashEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamWidthScale": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamOpacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamTextureSize": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamTextureAssigned": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamTextureScrollSpeed": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_WakeFoamTextureDistortion": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamTextureCutoff": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamTextureContrast": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamFastMode": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamMaskDebug": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamMaskDebugSize": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamMaskDelay": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamMaskOffset": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_WakeFoamMaskDimensions": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_WakeFoamMaskDebugFeather": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFoamMaskDebugOpacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFrequency": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeTravelSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeDamping": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFastCalculation": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterInteractionsEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_ImpactRippleDeformationEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_ImpactRippleVisualEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeRippleDeformationEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeRippleVisualEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_ShapeLightBlendFactors0": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_ShapeLightMaskFilter0": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_ShapeLightInvertedFilter0": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_HDREmulationScale": {
+        "type": "float",
+        "array": ""
+      },
+      "hlslcc_mtx4x4unity_ObjectToWorld": {
+        "type": "vec4",
+        "array": "[4]"
+      },
+      "hlslcc_mtx4x4unity_WorldToObject": {
+        "type": "vec4",
+        "array": "[4]"
+      },
+      "unity_SpriteColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "unity_SpriteProps": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_WaterColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_WaterSpeed": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_NormalStrength": {
+        "type": "float",
+        "array": ""
+      },
+      "_NormalsTiling": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_Reflectivity": {
+        "type": "float",
+        "array": ""
+      },
+      "_RipplesNormalStrength": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleCount": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleImpactRadius": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveAmplitude": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveFrequency": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceDistortionFadeDistance": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceDistortionFadeFeather": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceDistortionFadeFlip": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamFadeDistance": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamFadeFeather": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamFadeFlip": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterPlaneColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_UnderwaterOpacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamBlend": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiOpacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiSize": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiDistortionTiling": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiDistortionOffset": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiDistortion": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiScrollSpeed": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamSharpness": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamTextureOpacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamTextureColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_SurfaceFoamTextureSize": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamTextureDistortionTiling": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamTextureDistortionOffset": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamTextureDistortion": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamTextureScrollSpeed": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_UnderwaterCaptureDistortionTiling": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_UnderwaterCaptureDistortionStrength": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamDistortionSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_WakeFoamMaskDebugColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_RippleFoamOpacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamWidth": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamSoftness": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamBreakup": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamTextureTiling": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_RippleFoamTextureDistortion": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamMaskMode": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamProceduralScale": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamProceduralContrast": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamProceduralCutoff": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamTextureContrast": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleFoamTextureCutoff": {
+        "type": "float",
+        "array": ""
+      },
+      "_ReflectionFadeDistance": {
+        "type": "float",
+        "array": ""
+      },
+      "_ReflectionFadeFeather": {
+        "type": "float",
+        "array": ""
+      },
+      "_ReflectionFadeFlip": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveMode": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_RippleColorOpacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_BaseFarColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_BaseGradientDistance": {
+        "type": "float",
+        "array": ""
+      },
+      "_BaseGradientFade": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiDistortionScrollSpeed": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_SurfaceFoamTextureDistortionScrollSpeed": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_LocalReflectionMap": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_LocalUnderwaterSurfaceMap": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_NormalTexture": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleCentersTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleParamsTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_SurfaceFoamVoronoiDistortionMap": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_SurfaceFoamTexture": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_SurfaceFoamTextureDistortionMap": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_UnderwaterCaptureDistortionMap": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleFoamTexture": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleExtraParamsTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_WakeFoamTexture": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_ShapeLightTexture0": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RendererColor": {
+        "type": "vec4",
+        "array": ""
+      }
+    },
+    "inputs": [
+      [
+        "vec4",
+        "vs_INTERP0"
+      ],
+      [
+        "vec4",
+        "vs_INTERP1"
+      ],
+      [
+        "vec4",
+        "vs_INTERP2"
+      ],
+      [
+        "vec4",
+        "vs_INTERP3"
+      ],
+      [
+        "vec3",
+        "vs_INTERP4"
+      ]
+    ]
+  },
+  "Underwater": {
+    "source_sha256": "2f23c1beff4d4881c626c14ef09ccfa1a48895af859638d89304c1c43ec33cdc",
+    "uniforms": {
+      "_ScaledScreenParams": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_GlobalMipBias": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_Time": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_TimeParameters": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_ProjectionParams": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_ShapeLightBlendFactors0": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_ShapeLightMaskFilter0": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_ShapeLightInvertedFilter0": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_HDREmulationScale": {
+        "type": "float",
+        "array": ""
+      },
+      "hlslcc_mtx4x4unity_ObjectToWorld": {
+        "type": "vec4",
+        "array": "[4]"
+      },
+      "hlslcc_mtx4x4unity_WorldToObject": {
+        "type": "vec4",
+        "array": "[4]"
+      },
+      "unity_SpriteColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "unity_SpriteProps": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_UnderwaterTopColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_ColorContribution": {
+        "type": "float",
+        "array": ""
+      },
+      "_Smoothness": {
+        "type": "float",
+        "array": ""
+      },
+      "_Thickness": {
+        "type": "float",
+        "array": ""
+      },
+      "_MeniscusColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_noiseSize": {
+        "type": "float",
+        "array": ""
+      },
+      "_MeniscusSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleCount": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleImpactRadius": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveAmplitude": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveFrequency": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderWaterBottomColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_GradientSmoothness": {
+        "type": "float",
+        "array": ""
+      },
+      "_GradientHeight": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterlineDisturbanceStrength": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveMode": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterEdgeFadeEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterEdgeFadeHorizontal": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterEdgeFadeBottom": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterlineEdgeFadeLeftDistance": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterlineEdgeFadeLeftFeather": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterlineEdgeFadeRightDistance": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterlineEdgeFadeRightFeather": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterDistortionSize": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_UnderwaterDistortionStrength": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterDistortionFadeDistance": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterDistortionFadeFeather": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterDistortionFadeFlip": {
+        "type": "float",
+        "array": ""
+      },
+      "_UnderwaterDistortionScrollSpeed": {
+        "type": "vec2",
+        "array": ""
+      },
+      "_CameraSortingLayerTexture": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_UnderwaterDistortionMap": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_ShapeLightTexture0": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_SplashHeightMultiplier": {
+        "type": "float",
+        "array": ""
+      },
+      "_SplashEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFrequency": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeTravelSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeDamping": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFastCalculation": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterInteractionsEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_ImpactRippleDeformationEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeRippleDeformationEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_RendererColor": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_RippleCentersTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleParamsTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleExtraParamsTex": {
+        "type": "sampler2D",
+        "array": ""
+      }
+    },
+    "inputs": [
+      [
+        "vec4",
+        "vs_INTERP0"
+      ],
+      [
+        "vec4",
+        "vs_INTERP1"
+      ],
+      [
+        "vec4",
+        "vs_INTERP2"
+      ],
+      [
+        "vec4",
+        "vs_INTERP3"
+      ],
+      [
+        "vec3",
+        "vs_INTERP4"
+      ]
+    ]
+  },
+  "LightRays": {
+    "source_sha256": "e235805555c8bbcbb39da0f25c8b7d034fc96dd5369d43b366fe751400cbdce0",
+    "uniforms": {
+      "_Time": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_SplashHeightMultiplier": {
+        "type": "float",
+        "array": ""
+      },
+      "_SplashEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFrequency": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeTravelSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeDamping": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeFastCalculation": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaterInteractionsEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_ImpactRippleDeformationEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_WakeRippleDeformationEnabled": {
+        "type": "float",
+        "array": ""
+      },
+      "_Color": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_Opacity": {
+        "type": "float",
+        "array": ""
+      },
+      "_Brightness": {
+        "type": "float",
+        "array": ""
+      },
+      "_Softness": {
+        "type": "float",
+        "array": ""
+      },
+      "_SurfaceFade": {
+        "type": "float",
+        "array": ""
+      },
+      "_SourceFadeOffset": {
+        "type": "float",
+        "array": ""
+      },
+      "_DepthFadePower": {
+        "type": "float",
+        "array": ""
+      },
+      "_OpacityAnimationStrength": {
+        "type": "float",
+        "array": ""
+      },
+      "_OpacityAnimationSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_FlickerStrength": {
+        "type": "float",
+        "array": ""
+      },
+      "_FlickerSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_LocalXYBounds": {
+        "type": "vec4",
+        "array": ""
+      },
+      "_ClipToWaterBounds": {
+        "type": "float",
+        "array": ""
+      },
+      "_PreviewSolid": {
+        "type": "float",
+        "array": ""
+      },
+      "_ClipTo2DWaterline": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveAmplitude": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveFrequency": {
+        "type": "float",
+        "array": ""
+      },
+      "_WaveMode": {
+        "type": "float",
+        "array": ""
+      },
+      "_MultiplyBlend": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleCount": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleImpactRadius": {
+        "type": "float",
+        "array": ""
+      },
+      "_RippleExtraParamsTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleCentersTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RippleParamsTex": {
+        "type": "sampler2D",
+        "array": ""
+      },
+      "_RandomMovement": {
+        "type": "float",
+        "array": ""
+      },
+      "_RandomMovementSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_RandomAngleTilt": {
+        "type": "float",
+        "array": ""
+      },
+      "_RandomAngleTiltSpeed": {
+        "type": "float",
+        "array": ""
+      },
+      "_LocalZBounds": {
+        "type": "vec4",
+        "array": ""
+      }
+    },
+    "inputs": [
+      [
+        "vec2",
+        "vs_TEXCOORD0"
+      ],
+      [
+        "vec2",
+        "vs_TEXCOORD1"
+      ],
+      [
+        "vec3",
+        "vs_TEXCOORD2"
+      ],
+      [
+        "vec4",
+        "vs_COLOR0"
+      ]
+    ]
+  }
+}

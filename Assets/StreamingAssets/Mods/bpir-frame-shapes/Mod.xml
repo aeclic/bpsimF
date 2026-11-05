@@ -18,4 +18,10 @@
   <ID>36e821d4-479b-4704-a6f2-72c9e92446b2</ID>
 
   <EntryPoint type="BpirFrameShapes.Entry" />
+
+  <!-- 预编译产物：玩家包里没有 C# 编译器，运行时编译 Code/*.cs 会失败。
+       这里直接加载预编译的 DLL；改源码后需重新编译并覆盖同名 dll。 -->
+  <Assemblies>
+  	<Assembly path="BpirFrameShapes.dll" />
+  </Assemblies>
 </Mod>

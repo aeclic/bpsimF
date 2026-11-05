@@ -1,0 +1,43 @@
+{
+  "repository": "https://github.com/LambdaEd1th/badpiggies-editor",
+  "revision": "8697da72181ea1c7770c0b356c93d58678911e0a",
+  "deployment_revision": "8697da72181ea1c7770c0b356c93d58678911e0a",
+  "artifacts": [
+    {
+      "path": "/badpiggies-editor/assets/badpiggies-editor-dxh90577879dbc2cb6.js",
+      "sha256": "32d79ff258c4064fb2089a18e6578c3e7b18efcf41f8799148d10c397916edc6",
+      "bytes": 52589
+    },
+    {
+      "path": "/badpiggies-editor/assets/badpiggies-editor_bg-dxh11dcd55fe904f.wasm",
+      "sha256": "57a8ea08c520dcc696e3c1f9bd2574da804c7e829d4717169f56f7b815254b7f",
+      "bytes": 3305642
+    },
+    {
+      "path": "/badpiggies-editor/assets/dioxus-dxh54f6888ca7d3af6e.css",
+      "sha256": "932630b9204d826ae94c8cc9d746a808632090a4d0b11233d3bb0ce0549c5fa2",
+      "bytes": 72991
+    },
+    {
+      "path": "/badpiggies-editor/assets/assets/worker/pkg/badpiggies_editor_worker.js",
+      "sha256": "d619a5c8ebc3167b5e929bf0520417e66a031156642d31de5ed1fe8e0679ff94",
+      "bytes": 8589
+    },
+    {
+      "path": "/badpiggies-editor/assets/assets/worker/pkg/badpiggies_editor_worker_bg.wasm",
+      "sha256": "a41fffbe223b0251bfac41d1a41d4ffd24edfd83977f9da63cc3945e5c224a1b",
+      "bytes": 3280318
+    },
+    {
+      "path": "/badpiggies-editor/assets/assets/renderer/pkg/badpiggies_editor_renderer.js",
+      "sha256": "cd64a8fcb3515110036f6f85532923834a0f9c4703bcae517a1049965f64f279",
+      "bytes": 42109
+    },
+    {
+      "path": "/badpiggies-editor/assets/assets/renderer/pkg/badpiggies_editor_renderer_bg.wasm",
+      "sha256": "79f998bb26822a418af9fd8846cd1c3f6d31e0df066346c10341aa447383dbf2",
+      "bytes": 3062664
+    }
+  ],
+  "adapter_contract": "bpEditorCanvas.render(ScenePayload), supported file-drop import"
+}

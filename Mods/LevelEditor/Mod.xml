@@ -1,0 +1,13 @@
+<Mod>
+  <Name>关卡编辑器</Name>
+  <Author>bpsim</Author>
+  <Version>0.3.0</Version>
+  <Description>可选关卡编辑器：主关卡画布直接编辑水域，支持浮力、阻力、水流、接触涟漪、纹理水波法线、Beer-Lambert 水深吸收、纹理焦散、光柱、水线泡沫与 2D 平面反射，以及多层背景视差。只有安装并启用后才提供入口与效果。</Description>
+  <ID>e47b018a-61a6-4e79-a789-c5f627a00aa4</ID>
+  <MultiplayerCompatible>false</MultiplayerCompatible>
+  <MinGameVersion>0.0.12</MinGameVersion>
+  <EntryPoint type="Bpsim.LevelEditor.LevelEditorEntryPoint" />
+  <Assemblies>
+    <Assembly path="BpsimLevelEditor.dll" />
+  </Assemblies>
+</Mod>

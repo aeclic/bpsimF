@@ -1,0 +1,74 @@
+/* The Mod has no bar of its own: level actions live in the pinned editor's command bar. */
+#bpsim-doc-actions { margin-left: 2px; }
+#bpsim-doc-actions .rton-toolbar-group { gap: 6px; }
+#bpsim-doc-actions .bpsim-title,
+#bpsim-doc-actions .bpsim-select {
+    font: inherit; height: 30px; min-height: 30px; box-sizing: border-box; padding: 0 12px;
+    border: 1px solid var(--wb-border); border-radius: 15px; outline: none;
+    background: color-mix(in srgb, var(--color-control) 76%, transparent); color: var(--color-text);
+}
+#bpsim-doc-actions .bpsim-title { width: 118px; }
+#bpsim-doc-actions .bpsim-title::placeholder { color: var(--color-text-subtle); }
+#bpsim-doc-actions .bpsim-select { width: 170px; padding-right: 8px; }
+#bpsim-doc-actions .bpsim-text {
+    font: inherit; height: 30px; padding: 0 12px; box-sizing: border-box; white-space: nowrap;
+    border: 1px solid var(--wb-border); border-radius: 15px; cursor: pointer;
+    background: color-mix(in srgb, var(--color-control) 76%, transparent); color: var(--color-text);
+}
+#bpsim-doc-actions .bpsim-icon {
+    width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; padding: 0;
+    border: 1px solid var(--wb-border); border-radius: 15px; cursor: pointer;
+    background: color-mix(in srgb, var(--color-control) 76%, transparent); color: var(--color-text);
+}
+#bpsim-doc-actions .bpsim-text:hover,
+#bpsim-doc-actions .bpsim-icon:hover { background: var(--color-control-hover); }
+#bpsim-doc-actions button:disabled { opacity: .42; cursor: default; }
+#bpsim-doc-actions .bpsim-icon.is-selected {
+    border-color: var(--color-accent-border); background: var(--wb-accent-soft); color: var(--color-accent-text);
+}
+#bpsim-doc-actions svg, #bpsim-water-tool svg {
+    width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* Water editing is a canvas tool, so it joins the drawing tool row. */
+.bpsim-water-tool { color: var(--color-text-muted); }
+.bpsim-water-tool.active {
+    border-color: var(--color-accent-border); background: var(--wb-accent-soft); color: var(--color-accent-text);
+}
+
+#bpsim-water-canvas {
+    position: absolute; z-index: 3; pointer-events: none; touch-action: none;
+    border: 0; background: transparent; padding: 0; margin: 0;
+}
+body.bpsim-water-mode #main .rton-side-panel-right { visibility: hidden; }
+#bpsim-water-properties {
+    display: none; position: fixed; z-index: 2147483500; box-sizing: border-box;
+    color: #e5edf0; background: #202b30; border: 1px solid #405259; border-radius: 12px;
+    font: 13px "Microsoft YaHei", system-ui, sans-serif; overflow-y: auto; padding: 13px;
+    box-shadow: 0 6px 22px #0006;
+}
+body.bpsim-water-mode #bpsim-water-properties { display: block; }
+#bpsim-water-properties h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
+#bpsim-water-properties p { font-size: 11px; line-height: 1.6; color: #afc3cb; margin: 10px 0; }
+#bpsim-water-properties label { display: grid; grid-template-columns: 94px minmax(0, 1fr); align-items: center; gap: 6px; margin: 8px 0; }
+#bpsim-water-properties button, #bpsim-water-properties input, #bpsim-water-properties select {
+    font: inherit; color: #edf5ee; background: #284431; border: 1px solid #5b7862;
+    border-radius: 5px; padding: 6px 8px; min-height: 30px; box-sizing: border-box;
+}
+#bpsim-water-properties button { cursor: pointer; white-space: nowrap; }
+#bpsim-water-properties button:disabled { opacity: .45; cursor: default; }
+#bpsim-water-properties button.is-selected { background: #527c3b; }
+#bpsim-water-properties input, #bpsim-water-properties select { width: 100%; min-width: 0; background: #182328; }
+#bpsim-water-properties input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color: #85bc8c; justify-self: end; }
+#bpsim-water-properties input[data-invalid="true"] { border-color: #ed8c82; outline-color: #ed8c82; }
+#bpsim-water-properties details { padding: 10px 0; border-top: 1px solid #405259; }
+#bpsim-water-properties summary { cursor: pointer; color: #b7dcca; font-weight: 600; }
+#bpsim-water-actions, #bpsim-preview-actions { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
+
+@media (max-width: 1560px) {
+    #bpsim-doc-actions .bpsim-title { display: none; }
+}
+@media (max-width: 1240px) {
+    #bpsim-doc-actions .bpsim-select { width: 132px; }
+}

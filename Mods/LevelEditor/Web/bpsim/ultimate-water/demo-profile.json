@@ -1,0 +1,1147 @@
+{
+  "source": "Ultimate Water 2D / DW Demo Scene",
+  "unity": "6000.2.9f1",
+  "source_sha256": "0b10c80eb41834c5386514da307d234e9db617babe9dccfec3750551ef202b36",
+  "shaders": {
+    "Underwater": {
+      "sha256": "f6e517c584878856466a949a83a0e9878f5d0296d869e6fde8cb0000fd2e5f7f",
+      "properties": {
+        "_RippleCount": 0.0,
+        "_RippleImpactRadius": 0.0,
+        "_UnderwaterCaptureFadeFlip": 0.0,
+        "_UnderWaterBottomColor": [
+          0.0,
+          1.0,
+          0.703514575958252,
+          1.0
+        ],
+        "_UnderwaterTopColor": [
+          0.02643289975821972,
+          0.5094339847564697,
+          0.206085205078125,
+          0.0
+        ],
+        "_ColorContribution": 0.0,
+        "_WaveAmplitude": 0.6000000238418579,
+        "_WaveSpeed": 0.10000000149011612,
+        "_WaveFrequency": 5.0,
+        "_GradientSmoothness": 0.0,
+        "_GradientHeight": 0.0,
+        "_Thickness": 0.07000000029802322,
+        "_Smoothness": 0.0,
+        "_noiseSize": 50.0,
+        "_MeniscusSpeed": 0.10000000149011612,
+        "_MeniscusColor": [
+          0.0,
+          1.0,
+          0.8806343078613281,
+          1.0
+        ],
+        "_UnderwaterCaptureFadeFeather": 1.0,
+        "_UnderwaterCaptureFadeDistance": 0.0,
+        "_WaterlineDisturbanceStrength": 0.012000000104308128,
+        "_WaveMode": 1.0,
+        "_UnderwaterEdgeFadeEnabled": 0.0,
+        "_UnderwaterEdgeFadeHorizontal": 0.0,
+        "_UnderwaterEdgeFadeBottom": 0.0,
+        "_WaterlineEdgeFadeLeftDistance": 0.0,
+        "_WaterlineEdgeFadeLeftFeather": 0.0,
+        "_WaterlineEdgeFadeRightDistance": 0.0,
+        "_WaterlineEdgeFadeRightFeather": 0.0,
+        "_UnderwaterDistortionSize": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_UnderwaterDistortionStrength": 0.0,
+        "_UnderwaterDistortionFadeDistance": 0.0,
+        "_UnderwaterDistortionFadeFeather": 0.25,
+        "_UnderwaterDistortionFadeFlip": 0.0,
+        "_UnderwaterDistortionScrollSpeed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "FakePerspectiveSurface": {
+      "sha256": "d43a06feee8f87b2d0353d2a200c14ec21d944fdd565483121bc249dcefa6adc",
+      "properties": {
+        "_RippleCount": 0.0,
+        "_RippleImpactRadius": 0.0,
+        "_Reflections": 0.0,
+        "_NormalStrength": 0.0,
+        "_NormalsTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_NormalSpeed": [
+          0.019999999552965164,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_Reflectivity": 0.5,
+        "_RippleStrength": 1.0,
+        "_offset": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamProjectionMinY": 0.0,
+        "_SurfaceFoamProjectionMaxY": 1.0,
+        "_SurfaceColor": [
+          0.0,
+          0.5811200141906738,
+          0.9921569228172302,
+          1.0
+        ],
+        "_RippleColor": [
+          0.8199999928474426,
+          0.9599999785423279,
+          1.0,
+          1.0
+        ],
+        "_RippleYOffset": 0.0,
+        "_RipplePerspectiveShift": 1.0,
+        "_BaseFarColor": [
+          0.0,
+          0.5811200141906738,
+          0.9921569228172302,
+          1.0
+        ],
+        "_BaseGradientDistance": 10.0,
+        "_BaseGradientFade": 0.25,
+        "_JitterSpeed": 1.0,
+        "_FoamClearance": 5.0,
+        "_FoamColor": [
+          0.7783018946647644,
+          0.949578583240509,
+          1.0,
+          1.0
+        ],
+        "_FoamSize": 0.20000000298023224,
+        "_WaveAmplitude": 1.0,
+        "_WaveSpeed": 4.0,
+        "_WaveFrequency": 0.05000000074505806,
+        "_PerspectivePower": 16.0,
+        "_Horizon": -2.0,
+        "_SurfaceFoamTextureColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_ReflectionMapVisible": 0.0,
+        "_ReflectionMapStrength": 0.0,
+        "_SurfaceFoamEnabled": 1.0,
+        "_SurfaceFoamMode": 0.0,
+        "_SurfaceFoamBlend": 0.5,
+        "_SurfaceFoamOpacity": 1.0,
+        "_SurfaceFoamTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamPerspectiveShift": 1.0,
+        "_SurfaceFoamPerspectiveHorizon": 0.0,
+        "_SurfaceFoamProjectionHorizon": 8.0,
+        "_SurfaceFoamProjectionPitch": 45.0,
+        "_SurfaceFoamProjectionCameraHeight": 1.0,
+        "_SurfaceFoamProjectionFov": 1.0,
+        "_SurfaceFoamProjectionNearOffset": 0.25,
+        "_SurfaceFoamProjectionDepthScale": 1.0,
+        "_SurfaceFoamProjectionWidthScale": 1.0,
+        "_SurfaceFoamProjectionCenterX": 0.0,
+        "_SurfaceFoamRippleDisplacementStrength": 0.44999998807907104,
+        "_SurfaceFoamPerspectiveFadeStart": 8.0,
+        "_SurfaceFoamNearFadeDistance": 0.0,
+        "_SurfaceFoamNearFadeFeather": 0.25,
+        "_SurfaceFoamFarFadeDistance": 0.0,
+        "_SurfaceFoamFarFadeFeather": 0.25,
+        "_SurfaceFoamDistortionTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamDistortion": 0.05000000074505806,
+        "_SurfaceFoamDistortionSpeed": 1.0,
+        "_SurfaceFoamSharpness": 2.049999952316284,
+        "_SurfaceFoamTextureContrast": 1.0,
+        "_SurfaceFoamVoronoiIntensity": 1.0,
+        "_SurfaceFoamTextureIntensity": 1.0,
+        "_SurfaceFoamFlowVariation": 0.3499999940395355,
+        "_SurfaceFoamVoronoiOpacity": 1.0,
+        "_SurfaceFoamTextureOpacity": 1.0,
+        "_SurfaceFoamVoronoiDistortion": 0.05000000074505806,
+        "_SurfaceFoamTextureDistortion": 0.05000000074505806,
+        "_SurfaceFoamVoronoiScrollSpeed": [
+          0.03999999910593033,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureScrollSpeed": [
+          0.03999999910593033,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiDistortionTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiSize": [
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureSize": [
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiDistortionOffset": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionOffset": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_RippleFoamEnabled": 0.0,
+        "_RippleFoamColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_RippleFoamOpacity": 1.0,
+        "_RippleFoamWidth": 0.25,
+        "_RippleFoamSoftness": 0.3499999940395355,
+        "_RippleFoamBreakup": 0.44999998807907104,
+        "_RippleFoamMaskMode": 1.0,
+        "_RippleFoamProceduralScale": 2.0,
+        "_RippleFoamProceduralCutoff": 0.44999998807907104,
+        "_RippleFoamProceduralContrast": 1.25,
+        "_RippleFoamTextureTiling": [
+          1.5,
+          1.5,
+          0.0,
+          0.0
+        ],
+        "_RippleFoamTextureDistortion": 0.11999999731779099,
+        "_RippleFoamTextureCutoff": 0.3499999940395355,
+        "_RippleFoamTextureContrast": 3.0,
+        "_WakeFoamMaskDebugColor": [
+          1.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "_WaveMode": 1.0,
+        "_FakeSurfaceTopWaveOffset": 0.6000000238418579,
+        "_FakeSurfaceTopWaveAmplitude": 1.0,
+        "_FakeSurfaceTopWaveSpeed": 4.0,
+        "_FakeSurfaceTopWaveFrequency": 0.05000000074505806,
+        "_FakeSurfaceTopWaveMode": 1.0,
+        "_FakeSurfaceTopWaveDirection": -1.0,
+        "_SurfaceFoamVoronoiDistortionScrollSpeed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionScrollSpeed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "WaterSurface": {
+      "sha256": "7cde76048eff21162559fcc45ea2584d63b0132e3b1a43e2e3505d931d5437b7",
+      "properties": {
+        "_WaterColor": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "_WaterSpeed": [
+          0.019999999552965164,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_NormalStrength": 1.0,
+        "_NormalsTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_Reflectivity": 0.5,
+        "_RipplesNormalStrength": 0.6000000238418579,
+        "_RippleCount": 0.0,
+        "_RippleImpactRadius": 0.0,
+        "_WaveAmplitude": 1.0,
+        "_WaveSpeed": 4.0,
+        "_WaveFrequency": 0.05000000074505806,
+        "_SurfaceDistortionFadeDistance": 1.0,
+        "_SurfaceDistortionFadeFeather": 0.15000000596046448,
+        "_SurfaceDistortionFadeFlip": 0.0,
+        "_SurfaceFoamFadeDistance": 1.0,
+        "_SurfaceFoamFadeFeather": 0.15000000596046448,
+        "_SurfaceFoamFadeFlip": 0.0,
+        "_UnderwaterPlaneColor": [
+          0.0,
+          0.5398396849632263,
+          0.7641509771347046,
+          1.0
+        ],
+        "_UnderwaterOpacity": 0.800000011920929,
+        "_UnderwaterNormalDistortion": 0.05000000074505806,
+        "_SurfaceFoamEnabled": 1.0,
+        "_SurfaceFoamVoronoiOpacity": 1.0,
+        "_SurfaceFoamVoronoiColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_SurfaceFoamVoronoiSize": [
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiDistortionTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiDistortionOffset": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiDistortion": 0.05000000074505806,
+        "_SurfaceFoamVoronoiScrollSpeed": [
+          0.03999999910593033,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamSharpness": 2.049999952316284,
+        "_SurfaceFoamTextureOpacity": 1.0,
+        "_SurfaceFoamTextureColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_SurfaceFoamTextureSize": [
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionOffset": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortion": 0.05000000074505806,
+        "_SurfaceFoamTextureScrollSpeed": [
+          0.03999999910593033,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_BaseFarColor": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "_BaseGradientDistance": 10.0,
+        "_BaseGradientFade": 0.25,
+        "_SurfaceFoamProjectionMinY": 0.0,
+        "_SurfaceFoamProjectionMaxY": 1.0,
+        "_SurfaceFoamMode": 0.0,
+        "_SurfaceFoamBlend": 0.5,
+        "_UnderwaterCaptureDistortionTiling": [
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_UnderwaterCaptureDistortionStrength": 0.02500000037252903,
+        "_SurfaceFoamDistortionSpeed": 1.0,
+        "_RippleFoamEnabled": 0.0,
+        "_RippleFoamColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_WakeFoamMaskDebugColor": [
+          1.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "_RippleFoamOpacity": 1.0,
+        "_RippleFoamWidth": 0.25,
+        "_RippleFoamSoftness": 0.3499999940395355,
+        "_RippleFoamBreakup": 0.44999998807907104,
+        "_RippleFoamTextureTiling": [
+          1.5,
+          1.5,
+          0.0,
+          0.0
+        ],
+        "_RippleFoamTextureDistortion": 0.11999999731779099,
+        "_RippleFoamMaskMode": 1.0,
+        "_RippleFoamProceduralScale": 2.0,
+        "_RippleFoamProceduralContrast": 1.25,
+        "_RippleFoamProceduralCutoff": 0.44999998807907104,
+        "_RippleFoamTextureContrast": 3.0,
+        "_RippleFoamTextureCutoff": 0.3499999940395355,
+        "_ReflectionFadeDistance": 1.0,
+        "_ReflectionFadeFeather": 0.15000000596046448,
+        "_ReflectionFadeFlip": 0.0,
+        "_WaveMode": 1.0,
+        "_RippleColor": [
+          0.8199999928474426,
+          0.9599999785423279,
+          1.0,
+          1.0
+        ],
+        "_RippleColorOpacity": 0.0,
+        "_SurfaceFoamVoronoiDistortionScrollSpeed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionScrollSpeed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "LightRays": {
+      "sha256": "76913bb306c953d6bc23368fb8ca8a338aea80e531d43eb1260d490ad6d8bf23",
+      "properties": {
+        "_Color": [
+          0.7200000286102295,
+          0.9700000286102295,
+          1.0,
+          0.8199999928474426
+        ],
+        "_Opacity": 0.5,
+        "_Brightness": 2.25,
+        "_Softness": 0.3199999928474426,
+        "_SurfaceFade": 0.18000000715255737,
+        "_SourceFadeOffset": 0.8500000238418579,
+        "_DepthFadePower": 2.5999999046325684,
+        "_OpacityAnimationStrength": 0.0,
+        "_OpacityAnimationSpeed": 0.0,
+        "_FlickerStrength": 0.07999999821186066,
+        "_FlickerSpeed": 0.800000011920929,
+        "_RandomMovement": 0.0,
+        "_RandomMovementSpeed": 0.0,
+        "_RandomAngleTilt": 0.0,
+        "_RandomAngleTiltSpeed": 0.0,
+        "_LocalZBounds": [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "_LocalXYBounds": [
+          -0.5,
+          0.5,
+          -1.0,
+          0.0
+        ],
+        "_ClipToWaterBounds": 0.0,
+        "_PreviewSolid": 0.0,
+        "_ClipTo2DWaterline": 0.0,
+        "_WaveAmplitude": 0.0,
+        "_WaveSpeed": 0.0,
+        "_WaveFrequency": 0.0,
+        "_WaveMode": 0.0,
+        "_RippleCount": 0.0,
+        "_RippleImpactRadius": 0.5,
+        "_WaterInteractionsEnabled": 0.0,
+        "_ImpactRippleDeformationEnabled": 0.0,
+        "_WakeRippleDeformationEnabled": 0.0,
+        "_WakeFrequency": 1.0,
+        "_WakeTravelSpeed": 1.0,
+        "_WakeDamping": 0.0,
+        "_SplashEnabled": 0.0,
+        "_SplashHeightMultiplier": 0.0,
+        "_MultiplyBlend": 0.0,
+        "_SrcBlend": 1.0,
+        "_DstBlend": 10.0
+      }
+    }
+  },
+  "textures": {
+    "Medium01": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "4dd72a36e7f1044de2fb5b11f3b6c786b8314ddc50d93b8838ea17500e084081"
+    },
+    "Medium05": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "d738511ccb3e081b650e542abdd7d345af4cdfdfca977f74ea0f5af8254e6cd5"
+    },
+    "Large02": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "f1b76358e9043888975146b5a4673f4049ddec80240675cbf7332fe379ed0c41"
+    },
+    "Thin01": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "6caabfb6ffcef383f8ca5061058c83bde0b21fcda495661a73b68084ed0073cd"
+    },
+    "Medium03": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "8e5a55a14ecfae93192138bfe9380d7b0a715e6bf9e87dcee5a3d170eb1c3f71"
+    },
+    "Medium06": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "dd7aeb1eac81baf3e475d05bc26b3c1fc69f068dfcfd341cbccbf9a6d5a67c71"
+    },
+    "Medium04": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "97d442b5130b1dc53f2f0107821991ee595819599ee0b8fd62777c347c27af60"
+    },
+    "Thin02": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "43582c67d798a9755d70bbc3fa6c77ea8f3346b795207904323b5f197080dcf5"
+    },
+    "Medium02": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "d187e10ed157ffaa18b067bc2e64649c62f7133b6a6c81ae9cbe05702721956c"
+    },
+    "Large01": {
+      "width": 512,
+      "height": 512,
+      "format": 1,
+      "color_space": 0,
+      "mip_count": 1,
+      "sha256": "3e2eb1e3faa3e4ae6774cdc5c94558b3bdf92b2b1ac76cc0bd41a664a5047b8b"
+    },
+    "Splash": {
+      "width": 1024,
+      "height": 1024,
+      "format": 4,
+      "color_space": 1,
+      "mip_count": 1,
+      "sha256": "19d33813ebc8a2a3e2c7dc521fb4a711032ab0a759b06509eb0fa6b64928dfc4"
+    },
+    "Foam_01": {
+      "width": 512,
+      "height": 512,
+      "format": 10,
+      "color_space": 1,
+      "mip_count": 10,
+      "sha256": "b6f05d025a48605059531d89c057ef6d4df4aa9726d631db4b174c5391df1e07"
+    },
+    "Foam_03": {
+      "width": 512,
+      "height": 512,
+      "format": 10,
+      "color_space": 1,
+      "mip_count": 10,
+      "sha256": "b7ed4e353b3c6ff0f1bfe9910fbf899798d4483e1171e58f3a55f540a87574ff"
+    },
+    "Foam_02": {
+      "width": 512,
+      "height": 512,
+      "format": 10,
+      "color_space": 1,
+      "mip_count": 10,
+      "sha256": "e0a0d73dd03328d38e86b54c1c533542eed7aea0680715821b8f3162d278cd4c"
+    },
+    "WaterNormals_01": {
+      "width": 512,
+      "height": 512,
+      "format": 12,
+      "color_space": 0,
+      "mip_count": 10,
+      "sha256": "2fca951e03e986d8d388d9f913032826a28bf46b3876a3d80663b2a029f4eb77"
+    },
+    "Mist": {
+      "width": 1920,
+      "height": 1080,
+      "format": 12,
+      "color_space": 1,
+      "mip_count": 1,
+      "sha256": "3a5f159840d6769e4dba3a431fd1508bdb75904bea49b00844ae54e70d55d08e"
+    }
+  },
+  "materials": {
+    "SurfaceWater": {
+      "floats": {
+        "_BaseGradientDistance": 1.1799999475479126,
+        "_BaseGradientFade": 0.1599999964237213,
+        "_NormalStrength": 0.25099998712539673,
+        "_QueueControl": -1.0,
+        "_QueueOffset": 0.0,
+        "_ReflectionFadeDistance": 0.45100000500679016,
+        "_ReflectionFadeFeather": 0.8339999914169312,
+        "_ReflectionFadeFlip": 0.0,
+        "_Reflectivity": 0.6629999876022339,
+        "_RippleColorOpacity": 0.0,
+        "_RippleCount": 0.0,
+        "_RippleFoamBreakup": 0.10300000011920929,
+        "_RippleFoamEnabled": 1.0,
+        "_RippleFoamMaskMode": 0.5,
+        "_RippleFoamOpacity": 5.0,
+        "_RippleFoamProceduralContrast": 11.800000190734863,
+        "_RippleFoamProceduralCutoff": 0.6830000281333923,
+        "_RippleFoamProceduralScale": 8.0,
+        "_RippleFoamSoftness": 0.0,
+        "_RippleFoamTextureContrast": 13.100000381469727,
+        "_RippleFoamTextureCutoff": 0.1979999989271164,
+        "_RippleFoamTextureDistortion": 0.0,
+        "_RippleFoamWidth": 0.8600000143051147,
+        "_RippleImpactRadius": 0.25,
+        "_RipplesNormalStrength": 0.5,
+        "_SurfaceDistortionFadeDistance": 0.7049999833106995,
+        "_SurfaceDistortionFadeFeather": 0.503000020980835,
+        "_SurfaceDistortionFadeFlip": 1.0,
+        "_SurfaceFoamBlend": 0.0,
+        "_SurfaceFoamDistortionSpeed": 1.0,
+        "_SurfaceFoamEnabled": 1.0,
+        "_SurfaceFoamFadeDistance": 0.9079999923706055,
+        "_SurfaceFoamFadeFeather": 0.20600000023841858,
+        "_SurfaceFoamFadeFlip": 1.0,
+        "_SurfaceFoamMode": 0.0,
+        "_SurfaceFoamProjectionMaxY": 1.0,
+        "_SurfaceFoamProjectionMinY": 0.0,
+        "_SurfaceFoamSharpness": 5.349999904632568,
+        "_SurfaceFoamTextureDistortion": 0.7099999785423279,
+        "_SurfaceFoamTextureOpacity": 1.8300000429153442,
+        "_SurfaceFoamVoronoiDistortion": 0.6000000238418579,
+        "_SurfaceFoamVoronoiOpacity": 0.5979999899864197,
+        "_UnderwaterCaptureDistortionStrength": 0.0,
+        "_UnderwaterNormalDistortion": 0.05000000074505806,
+        "_UnderwaterOpacity": 1.0,
+        "_WaveAmplitude": 0.0,
+        "_WaveFrequency": 0.05000000074505806,
+        "_WaveMode": 0.0,
+        "_WaveSpeed": 4.0
+      },
+      "vectors": {
+        "_BaseFarColor": [
+          0.0,
+          0.8067972660064697,
+          1.0,
+          1.0
+        ],
+        "_NormalsTiling": [
+          6.900000095367432,
+          32.27000045776367,
+          0.0,
+          0.0
+        ],
+        "_RippleColor": [
+          1.0,
+          1.0,
+          1.0,
+          0.0
+        ],
+        "_RippleFoamColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_RippleFoamTextureTiling": [
+          3.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_SurfaceFoamTextureDistortionOffset": [
+          0.49000000953674316,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionScrollSpeed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureDistortionTiling": [
+          2.0999999046325684,
+          0.6499999761581421,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureScrollSpeed": [
+          0.03999999910593033,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamTextureSize": [
+          1.2300000190734863,
+          2.9600000381469727,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_SurfaceFoamVoronoiDistortionOffset": [
+          0.9800000190734863,
+          0.75,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiDistortionScrollSpeed": [
+          0.009999999776482582,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiDistortionTiling": [
+          0.038167938590049744,
+          0.0525486059486866,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiScrollSpeed": [
+          0.07999999821186066,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "_SurfaceFoamVoronoiSize": [
+          36.0,
+          34.099998474121094,
+          0.0,
+          0.0
+        ],
+        "_UnderwaterCaptureDistortionTiling": [
+          7.409999847412109,
+          7.079999923706055,
+          0.0,
+          0.0
+        ],
+        "_UnderwaterPlaneColor": [
+          0.392080694437027,
+          0.7088049054145813,
+          0.8396226167678833,
+          1.0
+        ],
+        "_WakeFoamMaskDebugColor": [
+          1.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "_WaterColor": [
+          0.0,
+          0.66343754529953,
+          0.9921568036079407,
+          1.0
+        ],
+        "_WaterSpeed": [
+          0.03999999910593033,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "textures": {
+        "_LocalReflectionMap": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_LocalUnderwaterSurfaceMap": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_NormalTexture": {
+          "name": "WaterNormals_01",
+          "scale": [
+            1.0,
+            -0.9800000190734863
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_RippleCentersTex": {
+          "name": "",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_RippleFoamTexture": {
+          "name": "Foam_01",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_RippleParamsTex": {
+          "name": "",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_SurfaceFoamTexture": {
+          "name": null,
+          "scale": [
+            9.229999542236328,
+            0.9399999976158142
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_SurfaceFoamTextureDistortionMap": {
+          "name": "WaterNormals_01",
+          "scale": [
+            -0.800000011920929,
+            -0.6800000071525574
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_SurfaceFoamVoronoiDistortionMap": {
+          "name": "WaterNormals_01",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_UnderwaterCaptureDistortionMap": {
+          "name": "WaterNormals_01",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "unity_Lightmaps": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "unity_LightmapsInd": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "unity_ShadowMasks": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    "Underwater": {
+      "floats": {
+        "_ColorContribution": 1.0,
+        "_GradientHeight": 5.079999923706055,
+        "_GradientSmoothness": 1.7799999713897705,
+        "_MeniscusSpeed": 0.05999999865889549,
+        "_QueueControl": 0.0,
+        "_QueueOffset": 0.0,
+        "_RippleCount": 0.0,
+        "_RippleImpactRadius": 0.25,
+        "_Smoothness": 0.07000000029802322,
+        "_Thickness": 0.019999999552965164,
+        "_UnderwaterCaptureFadeDistance": 2.5299999713897705,
+        "_UnderwaterCaptureFadeFeather": 2.4200000762939453,
+        "_UnderwaterCaptureFadeFlip": 1.0,
+        "_UnderwaterDistortionFadeDistance": 0.004000000189989805,
+        "_UnderwaterDistortionFadeFeather": 0.01600000075995922,
+        "_UnderwaterDistortionFadeFlip": 1.0,
+        "_UnderwaterDistortionStrength": 0.12999999523162842,
+        "_UnderwaterEdgeFadeBottom": 0.0,
+        "_UnderwaterEdgeFadeEnabled": 0.0,
+        "_UnderwaterEdgeFadeHorizontal": 0.0,
+        "_WaterlineDisturbanceStrength": 0.007699999958276749,
+        "_WaterlineEdgeFadeHorizontal": 0.0,
+        "_WaterlineEdgeFadeLeftDistance": 0.0,
+        "_WaterlineEdgeFadeLeftFeather": 0.0,
+        "_WaterlineEdgeFadeRightDistance": 0.0,
+        "_WaterlineEdgeFadeRightFeather": 0.0,
+        "_WaveAmplitude": 0.0,
+        "_WaveFrequency": 0.05000000074505806,
+        "_WaveMode": 0.0,
+        "_WaveSpeed": 4.0,
+        "_noiseSize": 22.399999618530273
+      },
+      "vectors": {
+        "_MeniscusColor": [
+          0.0,
+          1.483870506286621,
+          2.0,
+          0.9921568632125854
+        ],
+        "_UnderWaterBottomColor": [
+          0.0,
+          0.19270586967468262,
+          1.0,
+          1.0
+        ],
+        "_UnderwaterDistortionScrollSpeed": [
+          -0.019999999552965164,
+          0.019999999552965164,
+          0.0,
+          0.0
+        ],
+        "_UnderwaterDistortionSize": [
+          0.07999999821186066,
+          0.15000000596046448,
+          0.0,
+          0.0
+        ],
+        "_UnderwaterTopColor": [
+          0.0,
+          1.0,
+          0.7019608020782471,
+          1.0
+        ]
+      },
+      "textures": {
+        "_AlphaTex": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_MainTex": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_RippleCentersTex": {
+          "name": "",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_RippleParamsTex": {
+          "name": "",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "_UnderwaterDistortionMap": {
+          "name": "WaterNormals_01",
+          "scale": [
+            2.1700000762939453,
+            9.460000038146973
+          ],
+          "offset": [
+            -0.9300000071525574,
+            0.0
+          ]
+        },
+        "unity_Lightmaps": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "unity_LightmapsInd": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        },
+        "unity_ShadowMasks": {
+          "name": null,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "offset": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  }
+}
