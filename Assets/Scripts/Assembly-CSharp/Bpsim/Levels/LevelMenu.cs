@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Bpsim.Modding;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -77,6 +78,8 @@ namespace Bpsim.Levels
 
 		private string m_episode;
 
+		private readonly List<Button> m_modButtons = new List<Button>();
+
 		public static LevelMenu Create(Transform parent)
 		{
 			GameObject gameObject = new GameObject("BpsimLevelMenu");
@@ -99,6 +102,9 @@ namespace Bpsim.Levels
 			base.gameObject.AddComponent<GraphicRaycaster>();
 			CreateToggleButton(base.transform);
 			CreatePanel(base.transform);
+			ModLevelMenu.Changed += RefreshModButtons;
+			ModLevels.CatalogChanged += RefreshCatalog;
+			RefreshModButtons();
 			m_panel.gameObject.SetActive(false);
 			RefreshStatus();
 		}
@@ -192,6 +198,8 @@ namespace Bpsim.Levels
 
 		private void PopulateEpisodes()
 		{
+			foreach (Button button in m_episodeButtons) if (button != null) Destroy(button.gameObject);
+			m_episodeButtons.Clear();
 			List<LevelEntryJson> levels = LevelCatalog.Levels;
 			List<string> episodes = new List<string>();
 			foreach (LevelEntryJson level in levels)
@@ -212,8 +220,41 @@ namespace Bpsim.Levels
 			}
 			if (episodes.Count > 0)
 			{
-				ShowEpisode(episodes[0]);
+				ShowEpisode(episodes.Contains(m_episode) ? m_episode : episodes[0]);
 			}
+		}
+
+		private void RefreshCatalog()
+		{
+			PopulateEpisodes();
+			RefreshStatus();
+		}
+
+		private void RefreshModButtons()
+		{
+			foreach (Button button in m_modButtons)
+				if (button != null) { button.gameObject.SetActive(false); Destroy(button.gameObject); }
+			m_modButtons.Clear();
+			int index = 0;
+			foreach (ModLevelMenu.MenuAction action in ModLevelMenu.Actions)
+			{
+				ModLevelMenu.MenuAction captured = action;
+				Button button = CreateButton(m_panel, "ModLevelAction_" + action.Owner.ToString("N"), action.Label,
+					new Vector2(-590f, -390f + 54f * index++), new Vector2(236f, 46f), new Vector2(0.5f, 0.5f),
+					() => { m_panel.gameObject.SetActive(false); captured.Click(); });
+				m_modButtons.Add(button);
+			}
+			if (m_status != null)
+			{
+				m_status.rectTransform.anchoredPosition = new Vector2(index > 0 ? 20f : -160f, -400f);
+				m_status.rectTransform.sizeDelta = new Vector2(index > 0 ? 800f : 1160f, 40f);
+			}
+		}
+
+		private void OnDestroy()
+		{
+			ModLevelMenu.Changed -= RefreshModButtons;
+			ModLevels.CatalogChanged -= RefreshCatalog;
 		}
 
 		private void ShowEpisode(string episode)
@@ -302,7 +343,7 @@ namespace Bpsim.Levels
 			}
 			int count = LevelCatalog.Levels.Count;
 			string current = LevelManager.Instance != null && LevelManager.Instance.HasLevel ? "　当前：" + LevelManager.Instance.Entry.title : "　当前：无";
-			m_status.text = "共 " + count + " 个 BPLE 内置关卡" + current;
+			m_status.text = "共 " + count + " 个关卡" + current;
 			m_status.color = TextColor;
 		}
 
@@ -318,6 +359,7 @@ namespace Bpsim.Levels
 
 		private static string EpisodeLabel(string episode)
 		{
+			if (episode != null && episode.StartsWith("mod_", StringComparison.Ordinal)) return "我的关卡 · Mod";
 			// episode_3_cave / episode_3_sandbox / episode_race / episode_mm
 			if (episode == "episode_race")
 			{

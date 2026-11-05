@@ -33,7 +33,15 @@ namespace Bpsim.Levels
 		/// Set to false by automated QA runs (which build their own scenes) so the recorded
 		/// session is not replayed on top of them.
 		/// </summary>
-		public static bool AutoRestore { get; set; } = true;
+		/// <remarks>
+		/// Batch mode defaults to off: a QA run inherits whatever level the last interactive
+		/// session left in PlayerPrefs, and replaying it drives the camera through
+		/// <see cref="M:Bpsim.Levels.LevelManager" />'s framing, which silently changes grid
+		/// visibility (<see cref="P:Bpsim.Parts.PartScene.GridVisible" /> hides the fine grid
+		/// at orthographic size &gt;= 50) and loads unrelated parts. Interactive runs and the
+		/// shipped player still restore by default.
+		/// </remarks>
+		public static bool AutoRestore { get; set; } = !Application.isBatchMode;
 
 		/// <summary>Path of the schematics file loaded last through 加载场景, or empty.</summary>
 		public static string ScenePath => PlayerPrefs.GetString(ScenePathKey, string.Empty);

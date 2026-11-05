@@ -69,9 +69,33 @@ namespace Bpsim.UI
 			m_browseButtons[2].onClick.AddListener(BrowseInnovationData);
 			m_applyButton.onClick.AddListener(Apply);
 			m_cancelButton.onClick.AddListener(Cancel);
+			EnsureBpirFormatOption();
 			string directoryName = GetDefaultDataDirectory();
 			m_bpsimDataPath = Path.Combine(directoryName, "bput");
 			m_innovationDataPath = Path.Combine(directoryName, "Rovio");
+		}
+
+		/// <summary>
+		/// 存档格式下拉框（prefab 里只有 4 项）。BPIR 格式是后加的，为了不改动 prefab 的
+		/// yaml（手改容易破坏序列化），在运行期把第 5 项补上；重复打开界面也不会重复追加。
+		/// </summary>
+		private const string BpirFormatLabel = "BPIR 存档 (原版 Innovation Rebuild)";
+
+		private void EnsureBpirFormatOption()
+		{
+			if (m_loadFormat == null)
+			{
+				return;
+			}
+			foreach (Dropdown.OptionData option in m_loadFormat.options)
+			{
+				if (option != null && option.text == BpirFormatLabel)
+				{
+					return;
+				}
+			}
+			m_loadFormat.options.Add(new Dropdown.OptionData(BpirFormatLabel));
+			m_loadFormat.RefreshShownValue();
 		}
 
 		// The data folders are looked for two levels above persistentDataPath
@@ -153,6 +177,7 @@ namespace Bpsim.UI
 				1 => SchematicsFormat.Json, 
 				2 => SchematicsFormat.EncryptedXml, 
 				3 => SchematicsFormat.Xml, 
+				4 => SchematicsFormat.BpirCsv, 
 				_ => SchematicsFormat.None, 
 			};
 			Exception ex = null;

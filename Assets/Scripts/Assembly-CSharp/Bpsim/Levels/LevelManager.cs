@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using System.Text;
 using Bpsim.Parts;
+using Bpsim.Modding;
 using UnityEngine;
 
 namespace Bpsim.Levels
@@ -98,6 +99,26 @@ namespace Bpsim.Levels
 				error = "正在导入，请稍候";
 				return false;
 			}
+			if (PartManager.Instance == null || PartManager.Instance.IsSimulating)
+			{
+				error = "请先停止模拟再导入关卡";
+				return false;
+			}
+			// Reject malformed documents before unloading the player's current level.
+			try
+			{
+				ModLevels.Validate(new ModLevelDefinition
+				{
+					LevelBytes = LevelCatalog.ReadLevelBytes(entry), Prefabs = entry.prefabs, References = entry.references,
+					Starter = LevelCatalog.ReadContraption(entry),
+					StarterFormat = entry.modDefinition != null ? entry.modDefinition.StarterFormat : SchematicsFormat.Xml
+				});
+			}
+			catch (Exception exception)
+			{
+				error = exception.Message;
+				return false;
+			}
 			m_loading = true;
 			try
 			{
@@ -112,6 +133,7 @@ namespace Bpsim.Levels
 				}
 				FrameCamera(result);
 				LevelSession.RecordLevel(entry.scene);
+				ModLevels.NotifyLoaded(entry, result);
 				Changed?.Invoke();
 				Debug.Log($"[BpsimLevels] '{entry.title}' 已导入：地形 {result.TerrainCount} 块，道具 {result.PropCount} 个");
 				return true;
@@ -175,7 +197,8 @@ namespace Bpsim.Levels
 			try
 			{
 				using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(xml), writable: false);
-				partManager.LoadScene(stream, entry.scene, SchematicsFormat.Xml);
+				partManager.LoadScene(stream, entry.scene,
+					entry.modDefinition != null ? entry.modDefinition.StarterFormat : SchematicsFormat.Xml);
 			}
 			catch (Exception exception)
 			{

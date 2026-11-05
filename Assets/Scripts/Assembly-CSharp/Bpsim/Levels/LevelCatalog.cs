@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Bpsim.Modding;
 using UnityEngine;
 
 namespace Bpsim.Levels
@@ -25,6 +26,9 @@ namespace Bpsim.Levels
 
 		/// <summary>Asset names referenced by the level payload (textures), by index.</summary>
 		public string[] references;
+
+		[NonSerialized] internal Guid modOwner;
+		[NonSerialized] internal ModLevelDefinition modDefinition;
 	}
 
 	[Serializable]
@@ -172,9 +176,13 @@ namespace Bpsim.Levels
 
 		private static Shader s_spriteShader;
 
+		private static LevelAssetReader s_assets;
+
+		private static LevelAssetReader Assets => s_assets ?? (s_assets = new LevelAssetReader(Root));
+
 		public static string Root => Path.Combine(Application.streamingAssetsPath, FolderName);
 
-		public static bool IsAvailable => File.Exists(Path.Combine(Root, "index.json"));
+		public static bool IsAvailable => Assets.Exists("index.json");
 
 		public static List<LevelEntryJson> Levels
 		{
@@ -215,22 +223,25 @@ namespace Bpsim.Levels
 
 		public static byte[] ReadLevelBytes(LevelEntryJson entry)
 		{
+			if (entry?.modDefinition != null)
+			{
+				return entry.modDefinition.LevelBytes != null ? (byte[])entry.modDefinition.LevelBytes.Clone() : null;
+			}
 			if (entry == null || string.IsNullOrEmpty(entry.data))
 			{
 				return null;
 			}
-			string path = Path.Combine(Root, entry.data.Replace('/', Path.DirectorySeparatorChar));
-			return File.Exists(path) ? File.ReadAllBytes(path) : null;
+			return Assets.ReadAllBytes(entry.data);
 		}
 
 		public static string ReadContraption(LevelEntryJson entry)
 		{
+			if (entry?.modDefinition != null) return entry.modDefinition.Starter;
 			if (entry == null || string.IsNullOrEmpty(entry.contraption))
 			{
 				return null;
 			}
-			string path = Path.Combine(Root, "contraptions", entry.contraption);
-			return File.Exists(path) ? File.ReadAllText(path) : null;
+			return Assets.ReadAllText("contraptions/" + entry.contraption);
 		}
 
 		/// <summary>
@@ -249,8 +260,8 @@ namespace Bpsim.Levels
 			{
 				return cached;
 			}
-			string path = Path.Combine(Root, "textures", name + ".png");
-			if (!File.Exists(path))
+			byte[] bytes = Assets.ReadAllBytes("textures/" + name + ".png");
+			if (bytes == null)
 			{
 				Debug.LogWarning($"[BpsimLevels] missing texture '{name}'");
 				return null;
@@ -262,7 +273,7 @@ namespace Bpsim.Levels
 				wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp,
 				anisoLevel = 1
 			};
-			if (!texture.LoadImage(File.ReadAllBytes(path)))
+			if (!texture.LoadImage(bytes))
 			{
 				UnityEngine.Object.Destroy(texture);
 				Debug.LogWarning($"[BpsimLevels] cannot decode texture '{name}'");
@@ -439,6 +450,8 @@ namespace Bpsim.Levels
 			return shader;
 		}
 
+		internal static void InvalidateIndex() { s_levels = null; }
+
 		private static void EnsureIndex()
 		{
 			if (s_levels != null)
@@ -446,17 +459,19 @@ namespace Bpsim.Levels
 				return;
 			}
 			s_levels = new List<LevelEntryJson>();
-			string path = Path.Combine(Root, "index.json");
-			if (!File.Exists(path))
+			string json = Assets.ReadAllText("index.json");
+			if (json == null)
 			{
-				Debug.LogError($"[BpsimLevels] {path} is missing; run Tools/BPSim/export_levels.py --write");
+				Debug.LogError($"[BpsimLevels] {Root}/index.json is missing; run Tools/BPSim/export_levels.py --write");
+				ModLevels.AppendEntries(s_levels);
 				return;
 			}
-			LevelIndexJson index = JsonUtility.FromJson<LevelIndexJson>(File.ReadAllText(path));
+			LevelIndexJson index = JsonUtility.FromJson<LevelIndexJson>(json);
 			if (index != null && index.levels != null)
 			{
 				s_levels.AddRange(index.levels);
 			}
+			ModLevels.AppendEntries(s_levels);
 		}
 
 		private static void EnsurePrefabs()
@@ -466,13 +481,13 @@ namespace Bpsim.Levels
 				return;
 			}
 			s_prefabs = new Dictionary<string, LevelPrefabJson>(StringComparer.OrdinalIgnoreCase);
-			string path = Path.Combine(Root, "prefabs.json");
-			if (!File.Exists(path))
+			string json = Assets.ReadAllText("prefabs.json");
+			if (json == null)
 			{
-				Debug.LogError($"[BpsimLevels] {path} is missing");
+				Debug.LogError($"[BpsimLevels] {Root}/prefabs.json is missing");
 				return;
 			}
-			LevelPrefabTableJson table = JsonUtility.FromJson<LevelPrefabTableJson>(File.ReadAllText(path));
+			LevelPrefabTableJson table = JsonUtility.FromJson<LevelPrefabTableJson>(json);
 			if (table == null || table.items == null)
 			{
 				return;

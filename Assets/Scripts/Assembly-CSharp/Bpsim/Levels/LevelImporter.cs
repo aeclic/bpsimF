@@ -27,6 +27,8 @@ namespace Bpsim.Levels
 		/// <summary>World-space position the contraption should be built at.</summary>
 		public Vector3 Start;
 
+		public Vector3 Anchor;
+
 		public int TerrainCount;
 
 		public int PropCount;
@@ -89,6 +91,7 @@ namespace Bpsim.Levels
 			// position (parents carry no scale), so the shift is applied to each node
 			// rather than to the hierarchy root.
 			Vector3 anchor = FindAnchor(objects);
+			result.Anchor = anchor;
 			Vector3 offset = new Vector3(0f - anchor.x, 0f - anchor.y, DepthOffset);
 			GameObject root = new GameObject("BpsimLevel_" + entry.scene);
 			root.transform.SetParent(parent, false);

@@ -157,6 +157,7 @@ namespace Bpsim.Parts
 				SchematicsFormat.Json => SchematicsJsonLoader.Default, 
 				SchematicsFormat.Xml => SchematicsXmlLoader.Default, 
 				SchematicsFormat.EncryptedXml => SchematicsEncryptedXmlLoader.Default, 
+				SchematicsFormat.BpirCsv => SchematicsBpirCsvLoader.Default, 
 				_ => throw new InvalidOperationException(), 
 			};
 		}

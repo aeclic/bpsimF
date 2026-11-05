@@ -213,7 +213,7 @@ namespace Bpsim.QA
 				Check("save parts has free fields", found && Near(saved.OffsetX, 1.48f) && Near(saved.OffsetY, 3.24f) && Near(saved.RotationDegrees, 123f) && Near(saved.ScaleX, 3f) && Near(saved.ScaleY, 1.5f), "unit=" + saved.OffsetX + "," + saved.OffsetY + "," + saved.RotationDegrees + "," + saved.ScaleX + "," + saved.ScaleY);
 
 				Schematics source = Schematics.FromNative(units);
-				Check("csv 12 columns", CsvHasTwelveColumns(source), "");
+				Check("csv 13 columns", CsvHasThirteenColumns(source), "");
 				Schematics csvBack = RoundTrip(source, SchematicsFormat.Csv);
 				Check("csv roundtrip", csvBack != null && csvBack.Units.Count == source.Units.Count && Near(csvBack.Units[0].OffsetX, source.Units[0].OffsetX) && Near(csvBack.Units[0].ScaleY, source.Units[0].ScaleY), csvBack == null ? "read failed" : csvBack.Units.Count.ToString());
 
@@ -655,13 +655,13 @@ namespace Bpsim.QA
 			box.Dispose();
 		}
 
-		private static bool CsvHasTwelveColumns(Schematics schematics)
+		private static bool CsvHasThirteenColumns(Schematics schematics)
 		{
 			using MemoryStream stream = new MemoryStream();
 			Schematics.CreateLoader(SchematicsFormat.Csv).Write(stream, schematics);
 			string text = Encoding.UTF8.GetString(stream.ToArray());
 			string line = text.Split('\n')[0];
-			return line.Split(',').Length == 12;
+			return line.Split(',').Length == 13;
 		}
 
 		private static Schematics RoundTrip(Schematics source, SchematicsFormat format)
