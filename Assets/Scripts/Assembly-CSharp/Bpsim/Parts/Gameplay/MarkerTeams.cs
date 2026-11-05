@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Bpsim.Factions;
 using Bpsim.Parts.Simulation;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -25,12 +26,12 @@ namespace Bpsim.Parts.Gameplay
 				if (!em.Exists(part)) continue;
 				previouslyTagged |= em.HasComponent<PartMarkerTeam>(part);
 				var info = PartGameplayUtil.TypeInfo(part);
-				if (info.PartType != PartType.Kicker || info.PartIndex != 3) continue;
+				if (!FactionRules.IsMarker(info)) continue;
 				int component = PartGameplayUtil.ConnectedComponent(part);
 				PartGameplayUtil.TryGetGrid(part, out _, out _, out int rotation, out _);
 				Teams.TryGetValue(component, out var team);
 				team.Component = component;
-				team.Teams |= 1 << (rotation % 4);
+				team.Teams |= FactionRules.TeamMask(rotation);
 				team.Diagonal |= rotation >= 4;
 				Teams[component] = team;
 			}
@@ -54,8 +55,8 @@ namespace Bpsim.Parts.Gameplay
 		internal static bool SameTeam(Entity a, Entity b)
 		{
 			int ca = PartGameplayUtil.ConnectedComponent(a), cb = PartGameplayUtil.ConnectedComponent(b);
-			if (ca >= 0 && ca == cb) return true;
-			return Teams.TryGetValue(ca, out var ta) && Teams.TryGetValue(cb, out var tb) && (ta.Teams & tb.Teams) != 0;
+			Teams.TryGetValue(ca, out var ta); Teams.TryGetValue(cb, out var tb);
+			return FactionRules.SameTeam(ca, ta.Teams, cb, tb.Teams);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Bpsim.Factions;
 using Bpsim.Parts;
 using Bpsim.Rendering;
 using UnityEngine;
@@ -69,7 +70,8 @@ namespace Bpsim.UI
 			obj.name = $"Item_{partType}_{partIndex}";
 			obj.transform.SetParent(m_listContent.transform, worldPositionStays: false);
 			obj.SetActive(value: true);
-			obj.transform.Find("Name").GetComponent<Text>().text = partType.GetAliasName();
+			obj.transform.Find("Name").GetComponent<Text>().text = FactionRules.IsMarker(new PartTypeInfo(partType, partIndex))
+				? "三星分离器（阵营）" : PartVariants.GetDisplayName(new PartTypeInfo(partType, partIndex));
 			Toggle component = obj.GetComponent<Toggle>();
 			component.onValueChanged.AddListener(delegate(bool value)
 			{

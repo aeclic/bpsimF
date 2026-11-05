@@ -225,6 +225,7 @@ namespace Bpsim
 		public void Update(SimulationSettings settings)
 		{
 			UpdateTnt(settings);
+			UpdateFactions(settings);
 			SimulationType = settings.SimulationType;
 			FixedTimeStep = settings.FixedTimeStep;
 			SolverIterationCount = settings.SolverIterationCount;

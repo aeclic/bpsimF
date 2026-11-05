@@ -223,6 +223,9 @@ namespace Bpsim.UI
 				gameObject.transform.SetParent(RowParent, worldPositionStays: false);
 				gameObject.transform.Find("Name").GetComponent<Text>().text = item.Key switch
 				{
+					"BuildFactionOutlines" => "建造界面阵营描边",
+					"RuntimeFactionOutlines" => "运行时阵营描边（默认关闭）",
+					"FactionOutlineWidth" => "阵营描边宽度（1–8 像素）",
 					"TNTExplosionForce" => "TNT 爆炸力度",
 					"TNTExplosionRadius" => "TNT 爆炸范围倍率",
 					"AlienTNTExplosionForce" => "外星 TNT 爆炸力度",

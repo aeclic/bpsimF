@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   debugShaders:
     debugReplacementPS: {fileID: 4800000, guid: 7fd1b4924dc317e47b034a4a7b203b3c, type: 3}
-  m_RendererFeatures: []
+  m_RendererFeatures:
+  - {fileID: 3422574630169659380}
   m_RendererFeatureMap:
   m_UseNativeRenderPass: 0
   m_TransparencySortMode: 0
@@ -53,3 +54,16 @@ MonoBehaviour:
   m_FallbackErrorShader: {fileID: 4800000, guid: 0659fa4c90771c0409449e7296748e90, type: 3}
   m_PostProcessData: {fileID: 11400000, guid: 7f9c56e46dbf610428e263f62874fc18, type: 2}
   m_FallOffLookup: {fileID: 2800000, guid: 4d16366891ee7d14e9a8d1b5c67a9523, type: 3}
+--- !u!114 &3422574630169659380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d111dc2a0b22b142804f4d59508b893, type: 3}
+  m_Name: Faction EPO Outline
+  m_EditorClassIdentifier:
+  m_Active: 1

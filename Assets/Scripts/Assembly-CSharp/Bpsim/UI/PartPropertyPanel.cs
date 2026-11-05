@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Bpsim.Factions;
 using Bpsim.Parts;
 using Bpsim.Parts.Skin;
 using Unity.Entities;
@@ -209,7 +210,9 @@ namespace Bpsim.UI
 			if (!Valid) return;
 			m_refreshing = true;
 			var type = Manager.GetComponentData<PartTypeValue>(m_part);
-			m_info.text = type.Type.GetAliasName(); m_material.text = type.Index.ToString();
+			bool marker = FactionRules.IsMarker(new PartTypeInfo(type.Type, type.Index));
+			m_info.text = marker ? "三星分离器 · " + FactionRules.TeamName(TransformData().Rotation) : type.Type.GetAliasName();
+			m_material.text = type.Index.ToString();
 			if (Manager.HasComponent<Unity.Transforms.WorldTransform>(m_part))
 			{
 				var angles = math.degrees(Bpsim.Physics.MathExtensions.ToEulerAngles(Manager.GetComponentData<Unity.Transforms.WorldTransform>(m_part).Rotation));
