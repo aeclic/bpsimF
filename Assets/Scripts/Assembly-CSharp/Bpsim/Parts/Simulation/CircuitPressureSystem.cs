@@ -95,8 +95,39 @@ namespace Bpsim.Parts.Simulation
             using(var entities=sensors.ToEntityArray(Allocator.Temp))
                 for(int i=0;i<entities.Length;i++)
                 {var data=EntityManager.GetComponentData<CircuitPart>(entities[i]);data.Pressure=0;EntityManager.SetComponentData(entities[i],data);}
-            if(!SystemAPI.TryGetSingleton(out SimulationSingleton simulation)||!SystemAPI.TryGetSingleton(out PhysicsWorldSingleton physics))return;
+            if(!SystemAPI.TryGetSingleton(out PhysicsWorldSingleton physics))return;
             hits.Clear();
+
+            // Anvil（box3d）后端：Unity.Physics / Havok 的事件通道会静默跳过，
+            // 直接读 AnvilContactEventSystem 产出的接触表。
+            if(Bpsim.Physics.Anvil.AnvilStepSystem.Active)
+            {
+                if(!SystemAPI.TryGetSingleton(out Bpsim.Physics.Anvil.AnvilContactsSingleton anvilContacts)) return;
+                var sensorLookup=GetComponentLookup<CircuitPressureTag>(true);
+                var ltLookup=GetComponentLookup<LocalTransform>(true);
+                var parentLookup=GetComponentLookup<Parent>(true);
+                float inverseDelta=1/math.max(1e-5f,World.Time.DeltaTime);
+                for(int i=0;i<anvilContacts.Count;i++)
+                {
+                    var e=anvilContacts.Events[i];
+                    bool sa=sensorLookup.HasComponent(e.EntityA),sb=sensorLookup.HasComponent(e.EntityB);
+                    if(!sa&&!sb) continue;
+                    Entity sensor=sa?e.EntityA:e.EntityB;
+                    if(!ltLookup.HasComponent(sensor)||parentLookup.HasComponent(sensor)) continue;
+                    var t=ltLookup[sensor];
+                    float3 up=math.mul(t.Rotation,new float3(0,1,0));
+                    if(math.dot(e.Position-t.Position,up)>.4f)
+                        hits.Add(new Hit{Sensor=sensor,Pressure=math.abs(math.dot(e.Normal,up))*e.Impulse*inverseDelta});
+                }
+                for(int i=0;i<hits.Length;i++) if(EntityManager.Exists(hits[i].Sensor))
+                {
+                    var data=EntityManager.GetComponentData<CircuitPart>(hits[i].Sensor);data.Pressure+=hits[i].Pressure;
+                    EntityManager.SetComponentData(hits[i].Sensor,data);
+                }
+                return;
+            }
+
+            if(!SystemAPI.TryGetSingleton(out SimulationSingleton simulation))return;
             var job=new Contacts {
                 Sensors=GetComponentLookup<CircuitPressureTag>(true),Transforms=GetComponentLookup<LocalToWorld>(true),World=physics.PhysicsWorld,
                 PhysicsTransforms=GetComponentLookup<LocalTransform>(true),Parents=GetComponentLookup<Parent>(true),

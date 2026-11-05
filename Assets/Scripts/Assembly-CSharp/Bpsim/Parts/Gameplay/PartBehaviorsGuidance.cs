@@ -120,8 +120,19 @@ namespace Bpsim.Parts.Gameplay
 			hits.Clear(); distance = float.PositiveInfinity; velocity = float3.zero;
 			float range = math.max(0, AvoidanceDistance);
 			var input = new RaycastInput { Start = PartVariantPhysics.Position(Part), End = PartVariantPhysics.Position(Part) + direction * range, Filter = CollisionFilter.Default };
-			var collector = new AllHitsCollector<RaycastHit>(1, ref hits);
-			if (!world.CastRay(input, ref collector)) return false;
+			// Anvil 后端：Unity.Physics 的 broadphase 不再维护（省掉每步重建 BVH 的开销），
+			// 射线直接问 box3d。返回的命中与 AllHitsCollector 一样按距离升序。
+			if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
+			{
+				var anvil = Bpsim.Physics.Anvil.AnvilStepSystem.Anvil;
+				if (anvil == null || !anvil.IsCreated) return false;
+				if (anvil.CastRayAll(hits, input.Start, input.End - input.Start) <= 0) return false;
+			}
+			else
+			{
+				var collector = new AllHitsCollector<RaycastHit>(1, ref hits);
+				if (!world.CastRay(input, ref collector)) return false;
+			}
 			bool detectParts = false;
 			if (Em.HasComponent<PartContainerValue>(Part))
 			{

@@ -308,10 +308,24 @@ namespace Bpsim.Parts.Simulation
 			NativeList<RaycastHit> hits = new NativeList<RaycastHit>(8, Allocator.Temp);
 			try
 			{
-				AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref hits);
-				if (!collisionWorld.CastRay(input, ref collector))
+				// Anvil 后端：Unity.Physics 的 broadphase 在 Anvil 模式下不维护，射线直接问 box3d。
+				// input.Filter 的 CollidesWith 位掩码原样透传（巨构模式下整车被剪掉）。
+				if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
 				{
-					return;
+					var anvil = Bpsim.Physics.Anvil.AnvilStepSystem.Anvil;
+					if (anvil == null || !anvil.IsCreated ||
+						anvil.CastRayAll(hits, input.Start, input.End - input.Start, input.Filter.CollidesWith) <= 0)
+					{
+						return;
+					}
+				}
+				else
+				{
+					AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref hits);
+					if (!collisionWorld.CastRay(input, ref collector))
+					{
+						return;
+					}
 				}
 				bool found = false;
 				float bestFraction = float.MaxValue;

@@ -171,10 +171,22 @@ namespace Bpsim.Parts.Simulation
 			};
 			NativeList<RaycastHit> hits = m_hits;
 			hits.Clear();
-			AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref hits);
-			if (!collisionWorld.CastRay(input, ref collector))
+			// Anvil 后端：直接问 box3d 的 broadphase（Unity.Physics 的树在 Anvil 模式下不维护）。
+			if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
 			{
-				return false;
+				var anvil = Bpsim.Physics.Anvil.AnvilStepSystem.Anvil;
+				if (anvil == null || !anvil.IsCreated || anvil.CastRayAll(hits, input.Start, input.End - input.Start) <= 0)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref hits);
+				if (!collisionWorld.CastRay(input, ref collector))
+				{
+					return false;
+				}
 			}
 			float bestFraction = float.MaxValue;
 			bool found = false;

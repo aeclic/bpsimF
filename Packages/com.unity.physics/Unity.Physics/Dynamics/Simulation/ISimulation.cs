@@ -14,7 +14,11 @@ namespace Unity.Physics
         UnityPhysics,
 #if HAVOK_PHYSICS_EXISTS
         /// <summary>   Havok implementation (using C++ plugin) </summary>
-        HavokPhysics
+        HavokPhysics,
+#endif
+#if ANVIL_PHYSICS_EXISTS
+        /// <summary>   Anvil implementation (Box3D native plugin, stepped by <c>AnvilStepSystem</c>) </summary>
+        AnvilPhysics,
 #endif
     }
 

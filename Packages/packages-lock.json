@@ -182,6 +182,12 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
+    "com.valgore.anvil": {
+      "version": "file:com.valgore.anvil",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.xxhq.htmltougui": {
       "version": "https://github.com/jixinhaoqi/HtmlToUGUI.git",
       "depth": 0,

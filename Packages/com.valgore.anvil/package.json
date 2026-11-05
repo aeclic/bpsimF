@@ -1,0 +1,16 @@
+{
+  "name": "com.valgore.anvil",
+  "displayName": "Anvil Physics (box3d backend, reconstructed)",
+  "version": "1.3.0",
+  "unity": "2022.2",
+  "unityRelease": "2f1",
+  "description": "Local reconstruction of the Anvil Physics package surface for bpsim. Only purpose: make Unity.Physics define ANVIL_PHYSICS_EXISTS and host the box3d native backend. The runtime lives in Assets/Scripts/Assembly-CSharp/Bpsim/Physics/Anvil plus Assets/Plugins/x86_64/box3d.dll.",
+  "keywords": [
+    "physics",
+    "box3d",
+    "anvil"
+  ],
+  "author": {
+    "name": "bpsim"
+  }
+}

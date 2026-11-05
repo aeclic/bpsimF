@@ -128,7 +128,27 @@ namespace Bpsim.Parts.Simulation
 			var manager = PartGameplayManager.Instance;
 			if (manager == null || !manager.IsRunning || TNTCollisionSetup.ActiveCount == 0) return;
 			var snapshots = World.GetExistingSystemManaged<TNTVelocitySystem>();
-			if (snapshots == null || snapshots.Charges.Count() == 0 || !SystemAPI.TryGetSingleton(out SimulationSingleton simulation)) return;
+			if (snapshots == null || snapshots.Charges.Count() == 0) return;
+
+			// Anvil（box3d）后端：ICollisionEventsJob 不会被执行（SimulationSingleton.Type 不是 UnityPhysics），
+			// 改读 AnvilContactEventSystem 产出的单例。
+			if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
+			{
+				if (!SystemAPI.TryGetSingleton(out Bpsim.Physics.Anvil.AnvilContactsSingleton anvilContacts)) return;
+				for (int i = 0; i < anvilContacts.Count; i++)
+				{
+					Bpsim.Physics.Anvil.AnvilContactEvent e = anvilContacts.Events[i];
+					Entity a = ResolveAnvil(e.EntityA, snapshots), b = ResolveAnvil(e.EntityB, snapshots);
+					snapshots.Velocities.TryGetValue(e.EntityA, out float3 va);
+					snapshots.Velocities.TryGetValue(e.EntityB, out float3 vb);
+					float speed = math.length(va - vb);
+					if (snapshots.Charges.Contains(a) && manager.Find(a) is TNTBehavior tntA) tntA.OnImpact(speed);
+					if (snapshots.Charges.Contains(b) && manager.Find(b) is TNTBehavior tntB) tntB.OnImpact(speed);
+				}
+				return;
+			}
+
+			if (!SystemAPI.TryGetSingleton(out SimulationSingleton simulation)) return;
 			using var hits = new NativeList<Hit>(Allocator.TempJob);
 			var job = new Contacts {
 				Velocities = snapshots.Velocities, Charges = snapshots.Charges, Hits = hits,
@@ -139,6 +159,13 @@ namespace Bpsim.Parts.Simulation
 			Dependency = job.Schedule(simulation, Dependency);
 			Dependency.Complete();
 			for (int i = 0; i < hits.Length; i++) if (manager.Find(hits[i].Part) is TNTBehavior tnt) tnt.OnImpact(hits[i].Speed);
+		}
+
+		/// <summary>Anvil 后端没有 ColliderKey，只能按 body 解析 MegaStructure 的子体。</summary>
+		private static Entity ResolveAnvil(Entity body, TNTVelocitySystem snapshots)
+		{
+			if (body != snapshots.MegaBody) return body;
+			return body;
 		}
 	}
 }

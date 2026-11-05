@@ -30,19 +30,27 @@ namespace Bpsim.Parts.Simulation
 	[UpdateInGroup(typeof(PhysicsInitializeGroup), OrderFirst = true)]
 	public partial class MegaStructureDriveSystem : SystemBase
 	{
+		public int DiagnosticTicks { get; private set; }
+		public float3 DiagnosticImpulse { get; private set; }
+		public int DiagnosticStage { get; private set; }
+		public int DiagnosticBodies { get; private set; }
 		protected override void OnUpdate()
 		{
+			DiagnosticTicks++;
+			DiagnosticStage = 0;
 			if (!MegaStructure.Active)
 			{
 				return;
 			}
 			Entity body = MegaStructure.Body;
+			DiagnosticStage = 1;
 			EntityManager entityManager = base.EntityManager;
 			if (!entityManager.Exists(body) || !entityManager.HasComponent<PhysicsVelocity>(body) || !entityManager.HasComponent<PhysicsMass>(body) || !entityManager.HasComponent<LocalTransform>(body))
 			{
 				return;
 			}
 			LocalTransform bodyTransform = entityManager.GetComponentData<LocalTransform>(body);
+			DiagnosticStage = 2;
 			PhysicsVelocity bodyVelocity = entityManager.GetComponentData<PhysicsVelocity>(body);
 			PhysicsMass bodyMass = entityManager.GetComponentData<PhysicsMass>(body);
 			float3 com = bodyTransform.Position + math.rotate(bodyTransform.Rotation, bodyMass.CenterOfMass);
@@ -65,13 +73,15 @@ namespace Bpsim.Parts.Simulation
 			float3 angularMomentum = float3.zero;
 			float inverseTotalMass = 1f / math.max(MegaStructure.TotalMass, 0.001f);
 			EntityQuery query = base.GetEntityQuery(ComponentType.ReadWrite<MegaPartOffset>(), ComponentType.ReadWrite<PhysicsVelocity>(), ComponentType.ReadOnly<PhysicsMass>());
+			DiagnosticBodies = query.CalculateEntityCount();
+			DiagnosticStage = 3;
 			unsafe
 			{
 				// 用 IJobChunk 并行而不是 Entities.ForEach：这里必须同步算完（下面要立刻写整车速度），
 				// 而且需要在同一遍里把部件的速度复位成期望值，避免同一 delta 被重复计入。
 				// 各 chunk 各自累加到 LinearSums/AngularSums 的独立槽位，最后在主线程归约——
 				// 单个 chunk 一个累加槽，比串行 IJob 快得多（两万个部件的逐实体读写是 cache 友好的顺序访问）。
-				int chunkCount = query.CalculateChunkCount();
+				int chunkCount = query.CalculateChunkCountWithoutFiltering();
 				NativeArray<float3> linearSums = new NativeArray<float3>(math.max(chunkCount, 1), Allocator.TempJob);
 				NativeArray<float3> angularSums = new NativeArray<float3>(math.max(chunkCount, 1), Allocator.TempJob);
 				DriveJob driveJob = new DriveJob
@@ -88,8 +98,38 @@ namespace Bpsim.Parts.Simulation
 					LinearSums = linearSums,
 					AngularSums = angularSums
 				};
-				base.Dependency = driveJob.ScheduleParallel(query, base.Dependency);
-				base.Dependency.Complete();
+				if (UnityEngine.Application.isEditor || !BurstCompiler.IsEnabled)
+				{
+					entityManager.CompleteAllTrackedJobs();
+					// The existing managed Mega mirror uses the stable child list. Use
+					// that list for drive as well in the player-DOTS Editor compatibility path.
+					foreach (Entity part in MegaStructure.Children)
+					{
+						if (!entityManager.Exists(part) || !entityManager.HasComponent<MegaPartOffset>(part)) continue;
+						MegaPartOffset offset = entityManager.GetComponentData<MegaPartOffset>(part);
+						LocalTransform transform = entityManager.GetComponentData<LocalTransform>(part);
+						PhysicsVelocity velocity = entityManager.GetComponentData<PhysicsVelocity>(part);
+						PhysicsMass mass = entityManager.GetComponentData<PhysicsMass>(part);
+						float3 expected = expectedLinear + math.cross(expectedAngularWorld, transform.Position - expectedCom);
+						float3 deltaLinear = velocity.Linear - expected;
+						float3 expectedPartAngular = math.rotate(math.inverse(expectedRotation), expectedAngularWorld);
+						float3 deltaAngular = velocity.Angular - expectedPartAngular;
+						float3 impulse = deltaLinear * math.max(offset.Mass, 1e-5f);
+						linearImpulse += impulse;
+						angularMomentum += math.cross(transform.Position - expectedCom, impulse);
+						float3 inverse = mass.InverseInertia;
+						float3 inertia = new float3(inverse.x > 0 ? 1 / inverse.x : 0,
+							inverse.y > 0 ? 1 / inverse.y : 0, inverse.z > 0 ? 1 / inverse.z : 0);
+						angularMomentum += math.rotate(transform.Rotation, inertia * deltaAngular);
+						velocity.Linear = expected; velocity.Angular = expectedPartAngular;
+						entityManager.SetComponentData(part, velocity);
+					}
+				}
+				else
+				{
+					base.Dependency = driveJob.ScheduleParallel(query, base.Dependency);
+					base.Dependency.Complete();
+				}
 				for (int i = 0; i < chunkCount; i++)
 				{
 					linearImpulse += linearSums[i];
@@ -102,6 +142,7 @@ namespace Bpsim.Parts.Simulation
 			{
 				return;
 			}
+			DiagnosticImpulse = linearImpulse;
 			// 线性：P / 总质量。角：绕重心累计的角动量换回刚体局部惯性空间后除以惯性张量
 			// （PhysicsVelocity.Angular 是本体局部空间，见 Integrator.IntegrateOrientation）。
 			PhysicsVelocity result = bodyVelocity;
@@ -203,8 +244,10 @@ namespace Bpsim.Parts.Simulation
 	[UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
 	public partial class MegaStructureMirrorSystem : SystemBase
 	{
+		public int DiagnosticTicks { get; private set; }
 		protected override void OnUpdate()
 		{
+			DiagnosticTicks++;
 			if (!MegaStructure.Active)
 			{
 				return;
@@ -253,8 +296,16 @@ namespace Bpsim.Parts.Simulation
 				InverseRotation = inverseRotation,
 				CenterOfMass = com
 			};
-			base.Dependency = job.ScheduleParallel(query, base.Dependency);
-			base.Dependency.Complete();
+			if (UnityEngine.Application.isEditor || !BurstCompiler.IsEnabled)
+			{
+				entityManager.CompleteAllTrackedJobs();
+				MegaStructure.SyncMirror(entityManager);
+			}
+			else
+			{
+				base.Dependency = job.ScheduleParallel(query, base.Dependency);
+				base.Dependency.Complete();
+			}
 		}
 
 		[BurstCompile]
@@ -333,7 +384,20 @@ namespace Bpsim.Parts.Simulation
 			}
 			Entity body = MegaStructure.Body;
 			EntityManager entityManager = base.EntityManager;
-			if (!entityManager.Exists(body) || !SystemAPI.TryGetSingleton<SimulationSingleton>(out var simulation))
+			if (!entityManager.Exists(body))
+			{
+				return;
+			}
+
+			// Anvil（box3d）后端：Unity.Physics / Havok 的事件通道对非 UnityPhysics 类型会静默跳过，
+			// 改为直接消费 AnvilContactEventSystem 产出的接触表。
+			if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
+			{
+				ConsumeAnvilContacts(body);
+				return;
+			}
+
+			if (!SystemAPI.TryGetSingleton<SimulationSingleton>(out var simulation))
 			{
 				return;
 			}
@@ -385,6 +449,82 @@ namespace Bpsim.Parts.Simulation
 			MegaStructure.TotalEvents += MegaStructure.LastEventCount;
 			MegaStructure.PeakImpactSpeed = math.max(MegaStructure.PeakImpactSpeed, MegaStructure.LastMaxSpeed);
 			hits.Dispose();
+		}
+
+		/// <summary>
+		/// Anvil 后端的接触消费：语义与 <see cref="MegaDamageJob"/> 一致 —— 只用「法向接近速度」
+		/// 与阈值比较，部件还原靠 AnvilContactEvent 的 Entity（Anvil 没有 ColliderKey，
+		/// 整车在 box3d 里就是单个 body，接触实体直接是整车实体，此时按最大接近速度摘件）。
+		/// </summary>
+		private void ConsumeAnvilContacts(Entity body)
+		{
+			if (!SystemAPI.TryGetSingleton(out Bpsim.Physics.Anvil.AnvilContactsSingleton contacts))
+			{
+				return;
+			}
+
+			ComponentLookup<PhysicsVelocity> velocities = GetComponentLookup<PhysicsVelocity>(true);
+			ComponentLookup<MegaPartOffset> offsets = GetComponentLookup<MegaPartOffset>(true);
+			NativeList<Entity> children = MegaStructure.Children;
+
+			MegaStructure.LastEventCount = contacts.Count;
+			MegaStructure.LastMaxSpeed = 0f;
+
+			float3 vehicleVelocity = MegaStructure.LastBodyLinear;
+			quaternion bodyRotation = MegaStructure.LastBodyRotation;
+			float3 bodyPosition = EntityManager.GetComponentData<LocalTransform>(body).Position;
+			int detached = 0;
+			for (int i = 0; i < contacts.Count && detached < MaxDetachPerStep; i++)
+			{
+				Bpsim.Physics.Anvil.AnvilContactEvent contact = contacts.Events[i];
+				bool aIsBody = contact.EntityA == body;
+				bool bIsBody = contact.EntityB == body;
+				if (!aIsBody && !bIsBody)
+				{
+					continue;
+				}
+
+				float3 normal = aIsBody ? contact.Normal : -contact.Normal;
+				Entity other = aIsBody ? contact.EntityB : contact.EntityA;
+				float3 otherVelocity = velocities.HasComponent(other) ? velocities[other].Linear : float3.zero;
+				float speed = math.abs(math.dot(vehicleVelocity - otherVelocity, normal));
+				MegaStructure.LastMaxSpeed = math.max(MegaStructure.LastMaxSpeed, speed);
+				if (speed < MegaStructure.BreakSpeed)
+				{
+					continue;
+				}
+
+				// 找出离接触点最近的部件：box3d 里整车是单个 compound 拆成的多 shape 同体，
+				// 接触表只给整车实体，因此按接触点位置就近归属。
+				Entity closest = Entity.Null;
+				float bestDistance = float.MaxValue;
+				for (int c = 0; c < children.Length; c++)
+				{
+					Entity child = children[c];
+					if (!offsets.HasComponent(child))
+					{
+						continue;
+					}
+					float3 partPosition = bodyPosition + math.rotate(bodyRotation, offsets[child].Position);
+					float distance = math.distancesq(partPosition, contact.Position);
+					if (distance < bestDistance)
+					{
+						bestDistance = distance;
+						closest = child;
+					}
+				}
+				if (closest == Entity.Null)
+				{
+					continue;
+				}
+				MegaStructure.RequestDetach(closest);
+				detached++;
+			}
+
+			MegaStructure.LastHitCount = detached;
+			MegaStructure.DetachedTotal += detached;
+			MegaStructure.TotalEvents += MegaStructure.LastEventCount;
+			MegaStructure.PeakImpactSpeed = math.max(MegaStructure.PeakImpactSpeed, MegaStructure.LastMaxSpeed);
 		}
 
 		private struct MegaHitComparer : IComparer<MegaHit>

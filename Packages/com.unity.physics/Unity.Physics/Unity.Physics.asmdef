@@ -26,6 +26,11 @@
             "define": "HAVOK_PHYSICS_EXISTS"
         },
         {
+            "name": "com.valgore.anvil",
+            "expression": "0.0.0",
+            "define": "ANVIL_PHYSICS_EXISTS"
+        },
+        {
             "name": "com.unity.dataflowgraph",
             "expression": "0.0.0",
             "define": "UNITY_DATAFLOWGRAPH_EXISTS"

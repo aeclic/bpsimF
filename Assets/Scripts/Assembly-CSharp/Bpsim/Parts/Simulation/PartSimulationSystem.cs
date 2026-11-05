@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using Bpsim.Collections;
 using Unity.Burst;
@@ -266,10 +266,32 @@ namespace Bpsim.Parts.Simulation
 			// Havok 移植：工程现在按发布版的方式编译 Unity.Physics（HAVOK_PHYSICS_EXISTS），
 			// 因此冲量事件调度走 Havok.Physics 提供的 IHavokImpulseEventsJobExtensions.Schedule，
 			// 与发布版一致（见 BPSIM_HAVOK_PORT.md）。
-			dependency = IHavokImpulseEventsJobExtensions.Schedule(new ImpulseEventJob
+			if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
 			{
-				Joints = nativeParallelHashSet
-			}, __query_125383276_1.GetSingleton<SimulationSingleton>(), dependency);
+				// Anvil 后端：Unity.Physics / Havok 的事件调度都会因 SimulationSingleton.Type
+				// 不是 UnityPhysics/HavokPhysics 而直接跳过，所以改从 box3d 自己的 joint events
+				// 拿「本步超阈值」的关节。box3d 的阈值单位是力（冲量/dt），换算在
+				// AnvilWorld.SyncJointsToNative 里做，语义与 SetImpulseEventThresholdAllConstraints 一致。
+				using (NativeList<Entity> anvilJoints = new NativeList<Entity>(64, Allocator.Temp))
+				{
+					int breakCount = Bpsim.Physics.Anvil.AnvilStepSystem.CollectJointEvents(anvilJoints);
+					for (int i = 0; i < breakCount; i++)
+					{
+						Entity jointEntity = anvilJoints[i];
+						if (jointEntity != Entity.Null)
+						{
+							nativeParallelHashSet.Add(jointEntity);
+						}
+					}
+				}
+			}
+			else
+			{
+				dependency = IHavokImpulseEventsJobExtensions.Schedule(new ImpulseEventJob
+				{
+					Joints = nativeParallelHashSet
+				}, __query_125383276_1.GetSingleton<SimulationSingleton>(), dependency);
+			}
 			__Unity_Physics_PhysicsConstrainedBodyPair_RW_ComponentLookup.Update(ref base.CheckedStateRef);
 			dependency = IJobExtensions.Schedule(new RemoveJointsJob
 			{
