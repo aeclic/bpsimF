@@ -94,6 +94,9 @@ namespace Bpsim.Rendering
 
 		private NativeArray<SpriteRect> m_data;
 
+		// 与 SpriteManager.Version 对齐；Mod 在运行时追加精灵后版本号变化，这里重建本地副本。
+		private int m_dataVersion = -1;
+
 		private ComponentTypeHandle<MeshRect> __Bpsim_Rendering_MeshRect_RW_ComponentTypeHandle;
 
 		private ComponentTypeHandle<MeshUVRect> __Bpsim_Rendering_MeshUVRect_RW_ComponentTypeHandle;
@@ -108,10 +111,6 @@ namespace Bpsim.Rendering
 		// "NullReferenceException at SpriteSystem.OnStartRunning" on every boot.
 		private bool TryInitializeData()
 		{
-			if (m_data.IsCreated)
-			{
-				return true;
-			}
 			SpriteManager manager = SpriteManager.Instance;
 			if (manager == null)
 			{
@@ -122,7 +121,17 @@ namespace Bpsim.Rendering
 			{
 				return false;
 			}
+			int version = manager.Version;
+			if (m_data.IsCreated && m_dataVersion == version && m_data.Length == sprites.Length)
+			{
+				return true;
+			}
+			if (m_data.IsCreated)
+			{
+				m_data.Dispose();
+			}
 			m_data = new NativeArray<SpriteRect>(sprites, Allocator.Persistent);
+			m_dataVersion = version;
 			return true;
 		}
 

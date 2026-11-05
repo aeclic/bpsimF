@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Bpsim.Parts;
+using Bpsim.Rendering;
 using UnityEngine;
 
 namespace Bpsim.Mods
@@ -28,6 +30,23 @@ namespace Bpsim.Mods
 		/// <param name="newIndex">新索引，必须 ≥ <see cref="CustomIndexBase"/>。</param>
 		/// <param name="displayName">显示名，同时作为 GameObject 名。</param>
 		public static bool TryAddVariant(PartType baseType, int baseIndex, int newIndex, string displayName, out string error)
+		{
+			return TryAddVariant(baseType, baseIndex, newIndex, displayName, null, out error);
+		}
+
+		/// <summary>
+		/// 注册一个部件变体，并在**建 ECS 预制体之前**先让 Mod 修饰克隆出来的模板。
+		/// </summary>
+		/// <param name="prepare">
+		/// 在 <c>spawner.AddPrefab</c> 之前对克隆体执行的修饰（换贴图键名、加子物体等）。
+		/// </param>
+		/// <remarks>
+		/// 修饰必须发生在建预制体之前：<c>PartEntityFactory.CreateSprite</c> 是在
+		/// <c>AddPrefab</c> 时按当时的 <c>SpriteBase.SpriteName</c> 一次性把
+		/// <see cref="PartAtlasIndex"/> 烤进 ECS 实体的。之后再改 <c>m_name</c>，
+		/// 场上实体仍然指向旧图集（表现为「选择器里看得见新皮肤，放出来还是原版贴图」）。
+		/// </remarks>
+		public static bool TryAddVariant(PartType baseType, int baseIndex, int newIndex, string displayName, Action<ManagedPart> prepare, out string error)
 		{
 			error = null;
 			if (newIndex < CustomIndexBase)
@@ -76,7 +95,10 @@ namespace Bpsim.Mods
 				collection.AddPart(new PartTypeInfo(baseType, newIndex), clone);
 				// 登记「变体 → 基部件」：原版的索引区间判断（彩色框 12..129 等）靠它
 				// 把变体认成基部件那一类，否则变体实体缺 ColoredFrame、质量查不到。
-				PartVariants.Register(clone.TypeInfo, basePart.TypeInfo);
+				PartVariants.Register(clone.TypeInfo, basePart.TypeInfo, displayName);
+				// 皮肤必须在这里改：AddPrefab 会立刻把 SpriteBase 的键名烤成
+				// SpriteID + PartAtlasIndex 写进 ECS 实体，之后再改名字只影响模板对象。
+				prepare?.Invoke(clone);
 				// 关键：PartEntitySpawner 的预制体表是 PartManager.Start() 时一次性铺的，
 				// 不在这里补登记的话 FindPrefab 对变体返回 Entity.Null，
 				// 放置逻辑会直接跳过 —— 选择器里看得见，场上放不出来。
@@ -134,6 +156,134 @@ namespace Bpsim.Mods
 				UnityEngine.Object.Destroy(part.gameObject);
 			}
 			return true;
+		}
+
+		/// <summary>
+		/// 注册一个带皮肤的部件变体：克隆基部件 → 换索引 → 换贴图/图标 → 登记。
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// 这是 <see cref="TryAddVariant"/> 的皮肤版。区别在于克隆完成后会拿
+		/// <paramref name="spriteKey"/> 覆盖变体上的 <c>MeshSprite.m_name</c>，
+		/// 于是 <c>PartEntityFactory.CreateSprite</c> 会按新键名查到 <see cref="PartAtlasIndex"/>，
+		/// 渲染时走另一张图集的材质。
+		/// </para>
+		/// <para>
+		/// 皮肤必须先用 <see cref="ModSprites.RegisterAtlas"/> / <see cref="ModSprites.RegisterSprite"/>
+		/// 注册好，否则这里只换名字、贴图仍是基部件那张。
+		/// </para>
+		/// </remarks>
+		public static bool TryAddSkinVariant(PartType baseType, int baseIndex, int newIndex, string displayName, string spriteKey, string iconSpriteKey, out string error)
+		{
+			return TryAddSkinVariant(baseType, baseIndex, newIndex, displayName, spriteKey, null, iconSpriteKey, out error);
+		}
+
+		/// <summary>
+		/// 注册一个带皮肤的部件变体；<paramref name="skins"/> 非空时按「子物体名 → 精灵键」
+		/// 精确换多段皮肤（吸盘轮的轮/辐条、拳套箱的本体/弹簧、发动机的可视化子物体）。
+		/// </summary>
+		public static bool TryAddSkinVariant(PartType baseType, int baseIndex, int newIndex, string displayName, string spriteKey, IDictionary<string, string> skins, string iconSpriteKey, out string error)
+		{
+			// 换皮肤必须在建 ECS 预制体之前完成，否则 PartAtlasIndex 会烤成基部件那张图集。
+			if (!TryAddVariant(baseType, baseIndex, newIndex, displayName, delegate (ManagedPart variant)
+			{
+				if (skins != null && skins.Count > 0)
+				{
+					ModSprites.SetSkins(variant.gameObject, skins);
+				}
+				else if (!string.IsNullOrEmpty(spriteKey))
+				{
+					ModSprites.SetVariantSkin(variant.gameObject, spriteKey);
+				}
+			}, out error))
+			{
+				return false;
+			}
+			if (!string.IsNullOrEmpty(iconSpriteKey))
+			{
+				RegisterVariantIcon(new PartTypeInfo(baseType, newIndex), iconSpriteKey);
+			}
+			return true;
+		}
+
+		/// <summary>把一个 GameObject 下所有 <c>SpriteBase</c> 的贴图键名换成 <paramref name="spriteKey"/>。</summary>
+		public static int ApplySkin(GameObject part, string spriteKey)
+		{
+			if (part == null || string.IsNullOrEmpty(spriteKey))
+			{
+				return 0;
+			}
+			SpriteBase[] sprites = part.GetComponentsInChildren<SpriteBase>(includeInactive: true);
+			int count = 0;
+			foreach (SpriteBase sprite in sprites)
+			{
+				sprite.SpriteName = spriteKey;
+				sprite.Apply();
+				count++;
+			}
+			return count;
+		}
+
+		/// <summary>
+		/// 给变体登记建造列表图标：把已注册的精灵条目重命名成
+		/// <c>Part_&lt;Type&gt;_&lt;Index&gt;_Rendered</c>，<c>PartSelector</c> 就能直接查到。
+		/// </summary>
+		public static void RegisterVariantIcon(PartTypeInfo info, string spriteKey)
+		{
+			SpriteManager manager = SpriteManager.Instance;
+			if (manager == null || !manager.TryGetID(spriteKey, out int id))
+			{
+				return;
+			}
+			string rendered = "Part_" + info.PartType + "_" + info.PartIndex + "_Rendered";
+			if (manager.HasID(rendered))
+			{
+				return;
+			}
+			SpriteRect rect = manager.GetSprite(id);
+			string atlas = manager.GetSpriteAtlas(id);
+			SpriteMap.MapEntry entry = ToEntry(rect, atlas, manager);
+			manager.TryAddSprite(rendered, atlas, in entry, out int _, out string _);
+		}
+
+		/// <summary>
+		/// 由已有的 <see cref="SpriteRect"/> 反推一份 <see cref="SpriteMap.MapEntry"/>，
+		/// 用于「同一个像素格子换个名字」。
+		/// </summary>
+		private static SpriteMap.MapEntry ToEntry(in SpriteRect rect, string atlasName, SpriteManager manager)
+		{
+			// SpriteRect 已经把像素换算成局部尺寸与归一化 UV，反推回去会丢精度；
+			// 这里直接把 UV 转成像素，轴心取 (0,0)、缩放取 1，得到同一块像素。
+			if (!manager.TryGetAtlasHeader(atlasName, out SpriteMap.MapHeader header))
+			{
+				return default(SpriteMap.MapEntry);
+			}
+			int x = Mathf.RoundToInt(rect.U * header.Width);
+			int y = Mathf.RoundToInt((1f - rect.V - rect.H) * header.Height);
+			int w = Mathf.Max(1, Mathf.RoundToInt(rect.W * header.Width));
+			int h = Mathf.Max(1, Mathf.RoundToInt(rect.H * header.Height));
+			// 顶点尺寸 = 2 * (int)(像素 * 缩放) * header.Scale，反解出 ScaleX/ScaleY。
+			float scaleFactor = header.Scale;
+			float sx = 1f;
+			float sy = 1f;
+			if (scaleFactor > 0f && w > 0 && h > 0)
+			{
+				int pxW = Mathf.Max(1, Mathf.RoundToInt(rect.VertexW / (2f * scaleFactor)));
+				int pxH = Mathf.Max(1, Mathf.RoundToInt(rect.VertexH / (2f * scaleFactor)));
+				sx = (float)pxW / (float)w;
+				sy = (float)pxH / (float)h;
+			}
+			int pivotX = 0;
+			int pivotY = 0;
+			if (scaleFactor > 0f && sx != 0f)
+			{
+				pivotX = Mathf.RoundToInt(-rect.VertexX / (2f * scaleFactor * sx));
+			}
+			if (scaleFactor > 0f && sy != 0f)
+			{
+				pivotY = Mathf.RoundToInt(-rect.VertexY / (2f * scaleFactor * sy));
+			}
+			return new SpriteMap.MapEntry(x, y, w, h, pivotX, pivotY, sx, sy);
 		}
 
 		/// <summary>这个索引是不是 Mod 加的部件。</summary>

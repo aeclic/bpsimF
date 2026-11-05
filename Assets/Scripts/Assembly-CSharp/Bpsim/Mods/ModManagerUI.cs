@@ -25,6 +25,9 @@ namespace Bpsim.Mods
 		private Button m_tabWorkshop;
 
 		private GameObject m_floatingButton;
+		private Button m_installClipboard;
+		private Button m_installFile;
+		private bool m_installing;
 
 		public static bool IsOpen => s_instance != null && s_instance.m_canvas != null;
 
@@ -181,8 +184,10 @@ namespace Bpsim.Mods
 			Button openFolder = ModUiKit.Button(footer, "打开 Mods 文件夹", ModUiKit.Neutral, OpenModsFolder, 24);
 			ModUiKit.SetRect(openFolder.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, new Vector2(250f, 0f));
 
-			Button installClip = ModUiKit.Button(footer, "安装剪贴板里的 zip", ModUiKit.Success, InstallFromClipboard, 24);
-			ModUiKit.SetRect(installClip.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(270f, 0f), new Vector2(590f, 0f));
+			m_installClipboard = ModUiKit.Button(footer, "安装剪贴板里的 zip", ModUiKit.Success, InstallFromClipboard, 24);
+			ModUiKit.SetRect(m_installClipboard.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(270f, 0f), new Vector2(590f, 0f));
+			m_installFile = ModUiKit.Button(footer, "选择 zip 安装", ModUiKit.Success, InstallFromFile, 24);
+			ModUiKit.SetRect(m_installFile.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(610f, 0f), new Vector2(850f, 0f));
 
 			Button refresh = ModUiKit.Button(footer, "刷新", ModUiKit.Primary, () =>
 			{
@@ -531,23 +536,70 @@ namespace Bpsim.Mods
 
 		private void InstallFromClipboard()
 		{
-			string path = string.Empty;
-			try { path = GUIUtility.systemCopyBuffer; } catch { }
-			if (string.IsNullOrWhiteSpace(path) || !File.Exists(path) || !path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+			if (m_installing) return;
+			if (!ModZipClipboard.TryRead(() => GUIUtility.systemCopyBuffer, out string path, out string error))
 			{
-				ModManager.Instance.Toast("剪贴板里没有 .zip 路径。请复制 zip 的完整路径后重试。");
+				ShowInstallFeedback(error, true);
 				return;
 			}
+			InstallArchive(path);
+		}
+
+		private async void InstallFromFile()
+		{
+			if (m_installing) return;
+			string selected = null;
+			SetInstalling(true);
+			try
+			{
+				selected = await FileAPI.OpenFile(ModPaths.Root);
+			}
+			catch (Exception ex) { ShowInstallFeedback("选择文件失败：" + ex.Message, true); }
+			finally { SetInstalling(false); }
+			if (string.IsNullOrEmpty(selected)) return;
+			if (!ModZipClipboard.TryNormalizePath(selected, out string path, out string error))
+			{
+				ShowInstallFeedback(error, true);
+				return;
+			}
+			InstallArchive(path);
+		}
+
+		private void InstallArchive(string path)
+		{
+			if (m_installing) return;
+			SetInstalling(true);
+			ShowInstallFeedback("正在安装：" + Path.GetFileName(path), false);
 			try
 			{
 				ModPackage pkg = ModManager.Instance.InstallZip(path);
-				ModManager.Instance.Toast("已安装：" + pkg.DisplayName);
 				Rebuild();
+				ShowInstallFeedback(pkg.IsLoaded ? "已安装并启用：" + pkg.DisplayName :
+					"已安装，但未能加载：" + (pkg.Error ?? pkg.State.ToString()), !pkg.IsLoaded);
 			}
 			catch (Exception ex)
 			{
-				ModManager.Instance.Toast("安装失败：" + ex.Message);
+				ShowInstallFeedback("安装失败：" + ex.Message, true);
 			}
+			finally { SetInstalling(false); }
+		}
+
+		private void SetInstalling(bool installing)
+		{
+			m_installing = installing;
+			if (m_installClipboard != null) m_installClipboard.interactable = !installing;
+			if (m_installFile != null) m_installFile.interactable = !installing;
+		}
+
+		private void ShowInstallFeedback(string message, bool error)
+		{
+			SetStatus(message);
+			if (m_status != null)
+			{
+				m_status.supportRichText = false;
+				m_status.color = error ? ModUiKit.Danger : ModUiKit.TextMain;
+			}
+			ModManager.Ensure().Toast(message);
 		}
 	}
 }

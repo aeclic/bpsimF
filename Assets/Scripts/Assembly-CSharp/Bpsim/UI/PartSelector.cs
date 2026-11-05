@@ -57,6 +57,55 @@ namespace Bpsim.UI
 					m_itemMap[(int)partType] = CreateItem(partType);
 				}
 			}
+			PartVariants.Changed += RefreshLabels;
+			RefreshLabels();
+		}
+
+		private void OnDestroy()
+		{
+			PartVariants.Changed -= RefreshLabels;
+		}
+
+		/// <summary>
+		/// 变体登记表变动后，把每一行的名字重算一遍。
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// <see cref="Start"/> 跑得比 Mod 初始化早：Mod 是在 <c>ModManager</c>（执行顺序 -500）
+		/// 里扫目录、编译脚本、克隆部件之后才 <c>PartVariants.Register</c> 的，那时这一排按钮
+		/// 早就画好了，文本里「（+N）」自然算成 0。结果就是玩家打开建造界面看到的是一份
+		/// 和原版一模一样的清单 —— 这正是「Mod 的部件没显示在游戏里」的直接观感。
+		/// </para>
+		/// <para>
+		/// 订阅 <see cref="PartVariants.Changed"/> 之后，变体一登记就把标签补上。
+		/// 图标不用动：主列表永远显示基部件（索引 0）的图，变体只在双击弹窗里选。
+		/// </para>
+		/// </remarks>
+		private void RefreshLabels()
+		{
+			if (m_itemMap == null)
+			{
+				// Changed 可能在 Start 之前就触发（PartFactory 重建部件目录时会 Clear）。
+				return;
+			}
+			for (int i = 0; i < m_itemMap.Length; i++)
+			{
+				GameObject item = m_itemMap[i];
+				if (item == null)
+				{
+					continue;
+				}
+				Transform name = item.transform.Find("Name");
+				if (name == null)
+				{
+					continue;
+				}
+				Text text = name.GetComponent<Text>();
+				if (text != null)
+				{
+					text.text = Label((PartType)i);
+				}
+			}
 		}
 
 		private GameObject CreateItem(PartType partType)
@@ -65,7 +114,7 @@ namespace Bpsim.UI
 			obj.name = $"Item_{(int)partType}";
 			obj.transform.SetParent(m_content.transform, worldPositionStays: false);
 			obj.SetActive(value: true);
-			obj.transform.Find("Name").GetComponent<Text>().text = partType.GetAliasName();
+			obj.transform.Find("Name").GetComponent<Text>().text = Label(partType);
 			Toggle component = obj.GetComponent<Toggle>();
 			component.group = m_toggleGroup;
 			component.onValueChanged.AddListener(delegate(bool value)
@@ -84,6 +133,21 @@ namespace Bpsim.UI
 			PartPaletteDragSource dragSource = obj.AddComponent<PartPaletteDragSource>();
 			dragSource.Initialize(this, partType);
 			return obj;
+		}
+
+		/// <summary>
+		/// 主列表一行显示的名字：基类型名，后面缀上「有 N 个 Mod 变体」。
+		/// </summary>
+		/// <remarks>
+		/// 变体只出现在双击后弹出的 <see cref="CustomPartSelector"/> 里，主列表永远只有一行。
+		/// 不标出来的话，玩家看到的就是原版那一份清单，会以为 Mod 根本没装 —— 这正是
+		/// 「没显示在游戏内啊」的直接观感。
+		/// </remarks>
+		private static string Label(PartType partType)
+		{
+			string name = partType.GetAliasName();
+			int variants = PartVariants.CountVariants(partType);
+			return variants > 0 ? name + "（+" + variants + "）" : name;
 		}
 
 		/// <summary>
@@ -132,6 +196,20 @@ namespace Bpsim.UI
 		}
 
 		/// <summary>
+		/// 同一个图标条目的「数字版」名字：<c>Part_&lt;Type 的整数值&gt;_&lt;Index&gt;_Rendered</c>。
+		/// </summary>
+		/// <remarks>
+		/// 原版图集用的是枚举名（<c>Part_WoodenFrame_0_Rendered</c>），而 Mod 作者手写图集时
+		/// 很容易按 <c>(int)PartType</c> 写成 <c>Part_5_9000_Rendered</c> —— bpreboot 的
+		/// 18 个图标全踩了这个坑：图集登记成功了，查表却永远查不到，建造列表上于是只剩
+		/// 程序生成的占位图。查表时两种写法都试一次即可，不必强迫 Mod 改表。
+		/// </remarks>
+		public static string RenderedNumericName(PartTypeInfo info)
+		{
+			return "Part_" + (int)info.PartType + "_" + info.PartIndex + "_Rendered";
+		}
+
+		/// <summary>
 		/// 给选择器按钮设置 "渲染图" 图标，找不到图集条目时安静跳过。
 		/// </summary>
 		/// <remarks>
@@ -171,28 +249,16 @@ namespace Bpsim.UI
 			{
 				return;
 			}
-			SpriteManager manager = SpriteManager.Instance;
-			if (manager == null)
-			{
-				return;
-			}
-
 			string exact = RenderedName(info);
-			if (manager.HasID(exact))
+			if (TryApplyRendered(icon, sprite, info))
 			{
-				ApplySprite(icon, sprite, exact);
 				return;
 			}
 
 			// 变体没有自己的预制图：用基部件那一格，玩家一看就知道是「哪种框」。
-			if (PartVariants.TryGetBase(info, out PartTypeInfo baseInfo))
+			if (PartVariants.TryGetBase(info, out PartTypeInfo baseInfo) && TryApplyRendered(icon, sprite, baseInfo))
 			{
-				string fallback = RenderedName(baseInfo);
-				if (manager.HasID(fallback))
-				{
-					ApplySprite(icon, sprite, fallback);
-					return;
-				}
+				return;
 			}
 
 			if (skinFallback)
@@ -201,6 +267,31 @@ namespace Bpsim.UI
 				return;
 			}
 			ApplyFallbackIcon(icon, exact);
+		}
+
+		/// <summary>
+		/// 按条目名找图标并按下去；枚举名与数字名两种写法都试。
+		/// </summary>
+		private static bool TryApplyRendered(RectTransform icon, SpriteBase sprite, PartTypeInfo info)
+		{
+			SpriteManager manager = SpriteManager.Instance;
+			if (manager == null)
+			{
+				return false;
+			}
+			string name = RenderedName(info);
+			if (manager.HasID(name))
+			{
+				ApplySprite(icon, sprite, name);
+				return true;
+			}
+			name = RenderedNumericName(info);
+			if (manager.HasID(name))
+			{
+				ApplySprite(icon, sprite, name);
+				return true;
+			}
+			return false;
 		}
 
 		/// <param name="skinFallback">

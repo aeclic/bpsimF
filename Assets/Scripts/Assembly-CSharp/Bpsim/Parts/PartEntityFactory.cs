@@ -397,6 +397,17 @@ namespace Bpsim.Parts
 				{
 					Value = new float4(1f, 0f, 0f, 0f)
 				});
+				// Which atlas this sprite lives in.  Vanilla sprites report Part_Texture_0
+				// and get index 0, so only Mod skins end up on another material.
+				string atlasName = SpriteManager.Instance.GetSpriteAtlas(id);
+				int atlasIndex = PartAtlasRegistry.IndexOf(atlasName);
+				if (atlasIndex != PartAtlasIndex.Default)
+				{
+					context.EntityManager.AddComponentData(entity, new PartAtlasIndex
+					{
+						Value = atlasIndex
+					});
+				}
 			}
 		}
 
@@ -433,10 +444,15 @@ namespace Bpsim.Parts
 		{
 			PartTypeInfo partTypeInfo = new PartTypeInfo(component.PartType, component.PartIndex);
 			context.EntityManager.AddComponent(entity, GetPartComponentTypes(partTypeInfo));
+			// 变体（索引 ≥ 9000）在这里把「我归属哪个基部件」烘进组件：
+			// PartTransformSystem 等 Burst job 只读 BaseType/BaseIndex，不再查托管字典（BC1016）。
+			PartTypeInfo baseTypeInfo = PartVariants.Resolve(partTypeInfo);
 			context.EntityManager.SetComponentData(entity, new PartTypeValue
 			{
 				Type = partTypeInfo.PartType,
-				Index = partTypeInfo.PartIndex
+				Index = partTypeInfo.PartIndex,
+				BaseType = baseTypeInfo.PartType,
+				BaseIndex = baseTypeInfo.PartIndex
 			});
 			context.EntityManager.SetComponentData(entity, new PartExtensionComponent
 			{

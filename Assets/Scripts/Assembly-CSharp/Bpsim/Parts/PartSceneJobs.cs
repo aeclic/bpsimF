@@ -1,4 +1,4 @@
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -8,7 +8,6 @@ namespace Bpsim.Parts
 {
 	public static class PartSceneJobs
 	{
-		[BurstCompile]
 		public struct SelectPartsJob : IJob
 		{
 			public Reference<PartSceneUnmanaged> PartScene;
@@ -61,7 +60,6 @@ namespace Bpsim.Parts
 			}
 		}
 
-		[BurstCompile]
 		public struct PlacePartsJob : IJob
 		{
 			public Reference<PartSceneUnmanaged> PartScene;
@@ -92,7 +90,6 @@ namespace Bpsim.Parts
 			}
 		}
 
-		[BurstCompile]
 		public struct RemovePartsJob : IJob
 		{
 			public Reference<PartSceneUnmanaged> PartScene;
@@ -130,7 +127,6 @@ namespace Bpsim.Parts
 			}
 		}
 
-		[BurstCompile]
 		public struct SavePartsJob : IJob
 		{
 			[ReadOnly]
@@ -167,7 +163,6 @@ namespace Bpsim.Parts
 			}
 		}
 
-		[BurstCompile]
 		public struct MoveSchematicsJob : IJob
 		{
 			[ReadOnly]

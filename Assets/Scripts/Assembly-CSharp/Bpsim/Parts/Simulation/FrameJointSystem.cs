@@ -42,7 +42,8 @@ namespace Bpsim.Parts.Simulation
 				{
 					Entity value = part;
 					PartAspect partAspect = PartAspectLookup[value];
-					PartTypeInfo typeInfo = partAspect.TypeInfo;
+					// 变体按基部件归类（BaseTypeInfo 是建实体时预烘的，不会查托管字典）。
+					PartTypeInfo typeInfo = partAspect.BaseTypeInfo;
 					bool flag = false;
 					if (partAspect.ContainedPart != Entity.Null)
 					{

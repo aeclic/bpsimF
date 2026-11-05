@@ -33,6 +33,27 @@ namespace Bpsim.Parts
 
 		public PartTypeInfo TypeInfo => new PartTypeInfo(m_partType.ValueRO.Type, m_partType.ValueRO.Index);
 
+		/// <summary>
+		/// 变体归属的基部件；非变体就是自己。
+		/// </summary>
+		/// <remarks>
+		/// Burst job 里不能查托管字典，所以 <see cref="PartTypeValue"/> 在建实体时就把
+		/// 「我归属哪个基部件」烘好了（见 <c>PartEntityFactory.CreatePart</c>）。
+		/// 用 <c>BaseType == Unknown</c> 判断「没烘过」，这样手工构造的组件也能用。
+		/// </remarks>
+		public PartTypeInfo BaseTypeInfo
+		{
+			get
+			{
+				PartTypeValue value = m_partType.ValueRO;
+				if (value.BaseType == PartType.Unknown)
+				{
+					return new PartTypeInfo(value.Type, value.Index);
+				}
+				return new PartTypeInfo(value.BaseType, value.BaseIndex);
+			}
+		}
+
 		public ref readonly PartExtensionData ExtensionData => ref m_extensionComponent.ValueRO.Value;
 
 		[CreateProperty]

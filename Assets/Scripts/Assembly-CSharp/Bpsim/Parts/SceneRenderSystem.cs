@@ -29,21 +29,37 @@ namespace Bpsim.Parts
 			// the instances have to be grouped page-first.  The single-batch path always uses 0.
 			public readonly int Group;
 
+			// Atlas id (PartAtlasIndex).  A draw command can only name one material, so instances
+			// that come from different atlases must land in different commands: atlas sorts right
+			// after the page, before the depth priority.
+			public readonly int Atlas;
+
 			public SortPriority(int index, int priority)
-				: this(index, priority, 0)
+				: this(index, priority, 0, 0)
 			{
 			}
 
 			public SortPriority(int index, int priority, int group)
+				: this(index, priority, group, 0)
+			{
+			}
+
+			public SortPriority(int index, int priority, int group, int atlas)
 			{
 				Index = index;
 				Priority = priority;
 				Group = group;
+				Atlas = atlas;
 			}
 
 			int IComparable<SortPriority>.CompareTo(SortPriority other)
 			{
 				int num = Group.CompareTo(other.Group);
+				if (num != 0)
+				{
+					return num;
+				}
+				num = Atlas.CompareTo(other.Atlas);
 				if (num != 0)
 				{
 					return num;
@@ -181,6 +197,10 @@ namespace Bpsim.Parts
 			[ReadOnly]
 			public ComponentTypeHandle<WorldTransform> WorldTransformHandle;
 
+			// Optional: only Mod variants that swapped the atlas carry it.
+			[ReadOnly]
+			public ComponentTypeHandle<PartAtlasIndex> AtlasHandle;
+
 			[WriteOnly]
 			public NativeList<SortPriority>.ParallelWriter SortedIndices;
 
@@ -190,6 +210,8 @@ namespace Bpsim.Parts
 			{
 				int count = chunk.Count;
 				NativeArray<PartRenderInfo> nativeArray = chunk.GetNativeArray(ref PartRenderInfoHandle);
+				bool hasAtlas = chunk.Has(ref AtlasHandle);
+				NativeArray<PartAtlasIndex> nativeArray2 = (hasAtlas ? chunk.GetNativeArray(ref AtlasHandle) : default(NativeArray<PartAtlasIndex>));
 				NativeList<SortPriority> list = new NativeList<SortPriority>(count, Allocator.Temp);
 				for (int i = 0; i < count; i++)
 				{
@@ -198,7 +220,8 @@ namespace Bpsim.Parts
 					float3 max = partRenderInfo.Bounds.Max;
 					if (max.x >= Planes.left && min.x <= Planes.right && max.y >= Planes.bottom && min.y <= Planes.top)
 					{
-						list.AddNoResize(new SortPriority(partRenderInfo.Index, partRenderInfo.Priority, (InstancesPerPage > 0) ? (partRenderInfo.Index / InstancesPerPage) : 0));
+						int atlas = (hasAtlas ? nativeArray2[i].Value : PartAtlasIndex.Default);
+						list.AddNoResize(new SortPriority(partRenderInfo.Index, partRenderInfo.Priority, (InstancesPerPage > 0) ? (partRenderInfo.Index / InstancesPerPage) : 0, atlas));
 					}
 				}
 				SortedIndices.AddRangeNoResize(list);
@@ -222,11 +245,12 @@ namespace Bpsim.Parts
 			}
 		}
 
-		// One draw command per batch.  On constant-buffer platforms every batch can only address the
-		// window of instance data it was registered with, so the visible instances are grouped by
-		// page (SortPriority.Group) and each page becomes its own command whose instance indices are
-		// page-local.  The raw (structured buffer) path has a single page and therefore emits exactly
-		// one command, like it always did.
+		// One draw command per (page, atlas).  On constant-buffer platforms every batch can only
+		// address the window of instance data it was registered with, so the visible instances are
+		// grouped by page (SortPriority.Group) and each page becomes its own command whose instance
+		// indices are page-local.  Inside a page the instances are additionally split by atlas
+		// (SortPriority.Atlas) because a command names exactly one material.  The raw (structured
+		// buffer) path has a single page and emits one command per atlas.
 		[BurstCompile]
 		private struct EmitDrawCommandsJob : IJob
 		{
@@ -238,8 +262,9 @@ namespace Bpsim.Parts
 			[ReadOnly]
 			public BatchMeshID MeshID;
 
+			// Index 0 is the vanilla Part_Texture_0 material; Mod atlases follow.
 			[ReadOnly]
-			public BatchMaterialID MaterialID;
+			public NativeArray<BatchMaterialID> MaterialIDs;
 
 			[ReadOnly]
 			public NativeList<SortPriority> SortedIndices;
@@ -251,17 +276,20 @@ namespace Bpsim.Parts
 			{
 				int length = SortedIndices.Length;
 				int num = 0;
-				// Count the distinct page groups.  The first entry must NOT seed the "previous group"
-				// value: that made the first group look unchanged, so a single-page scene emitted zero
-				// draw commands (nothing rendered) and a multi-page scene emitted one command more than
-				// it had allocated, which overflowed the TempJob allocation and hung the player.
+				// Count the distinct (page, atlas) runs.  The first entry must NOT seed the
+				// "previous" values: that made the first run look unchanged, so a single-page scene
+				// emitted zero draw commands (nothing rendered) and a multi-page scene emitted one
+				// command more than it had allocated, which overflowed the TempJob allocation and
+				// hung the player.
 				int num2 = -1;
+				int num2b = -1;
 				for (int i = 0; i < length; i++)
 				{
-					if (SortedIndices[i].Group != num2)
+					if (SortedIndices[i].Group != num2 || SortedIndices[i].Atlas != num2b)
 					{
 						num++;
 						num2 = SortedIndices[i].Group;
+						num2b = SortedIndices[i].Atlas;
 					}
 				}
 				BatchCullingOutputDrawCommands* unsafePtr = (BatchCullingOutputDrawCommands*)CullingOutput.drawCommands.GetUnsafePtr();
@@ -277,24 +305,26 @@ namespace Bpsim.Parts
 				unsafePtr->instanceSortingPositionFloatCount = 0;
 				int num4 = 0;
 				int num5 = ((length > 0) ? SortedIndices[0].Group : (-1));
+				int numAtlas = ((length > 0) ? SortedIndices[0].Atlas : (-1));
 				int num6 = 0;
 				for (int j = 0; j < length; j++)
 				{
 					SortPriority sortPriority = SortedIndices[j];
-					if (sortPriority.Group != num5)
+					if (sortPriority.Group != num5 || sortPriority.Atlas != numAtlas)
 					{
 						if (num5 >= 0)
 						{
-							EmitDrawCommand(unsafePtr, num4++, num6, j - num6, num5);
+							EmitDrawCommand(unsafePtr, num4++, num6, j - num6, num5, numAtlas);
 						}
 						num5 = sortPriority.Group;
+						numAtlas = sortPriority.Atlas;
 						num6 = j;
 					}
 					unsafePtr->visibleInstances[j] = ((InstancesPerPage > 0) ? (sortPriority.Index - num5 * InstancesPerPage) : sortPriority.Index);
 				}
 				if (num5 >= 0)
 				{
-					EmitDrawCommand(unsafePtr, num4, num6, length - num6, num5);
+					EmitDrawCommand(unsafePtr, num4, num6, length - num6, num5, numAtlas);
 				}
 				if (num > 0)
 				{
@@ -310,7 +340,7 @@ namespace Bpsim.Parts
 				}
 			}
 
-			private unsafe void EmitDrawCommand(BatchCullingOutputDrawCommands* commands, int index, int visibleOffset, int visibleCount, int group)
+			private unsafe void EmitDrawCommand(BatchCullingOutputDrawCommands* commands, int index, int visibleOffset, int visibleCount, int group, int atlas)
 			{
 				// Nothing to draw into when no batch is registered; indexing BatchIDs with the
 				// clamped page index would be -1 here, which reads outside the array.
@@ -319,12 +349,13 @@ namespace Bpsim.Parts
 					return;
 				}
 				int num = ((group >= 0 && group < BatchIDs.Length) ? group : (BatchIDs.Length - 1));
+				BatchMaterialID materialID = (MaterialIDs.Length > 0) ? MaterialIDs[math.clamp(atlas, 0, MaterialIDs.Length - 1)] : default(BatchMaterialID);
 				commands->drawCommands[index] = new BatchDrawCommand
 				{
 					visibleOffset = (uint)visibleOffset,
 					visibleCount = (uint)visibleCount,
 					batchID = BatchIDs[num],
-					materialID = MaterialID,
+					materialID = materialID,
 					meshID = MeshID,
 					submeshIndex = 0,
 					splitVisibilityMask = 255,
@@ -366,6 +397,12 @@ namespace Bpsim.Parts
 		private BatchMeshID m_meshID;
 
 		private BatchMaterialID m_materialID;
+
+		// One BatchMaterialID per registered part atlas (index 0 = vanilla Part_Texture_0).
+		// Mod atlases are registered lazily because Mods load after the first frame.
+		private NativeArray<BatchMaterialID> m_atlasMaterials;
+
+		private int m_atlasMaterialCount = -1;
 
 		private EntityQuery m_updateEntityQuery;
 
@@ -446,7 +483,41 @@ namespace Bpsim.Parts
 			}
 			m_meshID = m_batchRendererGroup.RegisterMesh(builtinResource);
 			m_materialID = m_batchRendererGroup.RegisterMaterial(material);
+			RefreshAtlasMaterials();
 			return true;
+		}
+
+		// Keeps m_atlasMaterials in sync with PartAtlasRegistry.  Mods register their atlases after
+		// the first frame, so new ones are picked up here instead of only at startup.
+		private void RefreshAtlasMaterials()
+		{
+			int count = PartAtlasRegistry.Count;
+			if (count == m_atlasMaterialCount && m_atlasMaterials.IsCreated)
+			{
+				return;
+			}
+			if (m_atlasMaterials.IsCreated)
+			{
+				// A pending culling job may still be reading the old material table.
+				m_performCullingDependency.Complete();
+				m_performCullingDependency = default(JobHandle);
+				for (int i = 1; i < m_atlasMaterials.Length; i++)
+				{
+					if (m_atlasMaterials[i] != default(BatchMaterialID))
+					{
+						m_batchRendererGroup.UnregisterMaterial(m_atlasMaterials[i]);
+					}
+				}
+				m_atlasMaterials.Dispose();
+			}
+			m_atlasMaterials = new NativeArray<BatchMaterialID>(count, Allocator.Persistent);
+			m_atlasMaterials[0] = m_materialID;
+			for (int j = 1; j < count; j++)
+			{
+				Material atlasMaterial = PartAtlasRegistry.GetMaterial(j, null);
+				m_atlasMaterials[j] = ((atlasMaterial != null) ? m_batchRendererGroup.RegisterMaterial(atlasMaterial) : m_materialID);
+			}
+			m_atlasMaterialCount = count;
 		}
 
 		[Preserve]
@@ -456,6 +527,7 @@ namespace Bpsim.Parts
 			{
 				return;
 			}
+			RefreshAtlasMaterials();
 			int num = m_updateEntityQuery.CalculateEntityCount();
 			if (num == 0)
 			{
@@ -778,6 +850,10 @@ namespace Bpsim.Parts
 			{
 				m_properties.Dispose();
 			}
+			if (m_atlasMaterials.IsCreated)
+			{
+				m_atlasMaterials.Dispose();
+			}
 		}
 
 		public JobHandle OnPerformCulling(BatchRendererGroup rendererGroup, BatchCullingContext cullingContext, BatchCullingOutput cullingOutput, IntPtr userContext)
@@ -792,6 +868,7 @@ namespace Bpsim.Parts
 				Planes = cullingContext.cullingSplits[0].cullingMatrix.decomposeProjection,
 				PartRenderInfoHandle = GetComponentTypeHandle<PartRenderInfo>(isReadOnly: true),
 				WorldTransformHandle = GetComponentTypeHandle<WorldTransform>(isReadOnly: true),
+				AtlasHandle = GetComponentTypeHandle<PartAtlasIndex>(isReadOnly: true),
 				InstancesPerPage = m_instancesPerPage,
 				SortedIndices = sortedIndices.AsParallelWriter()
 			}, m_cullingEntityQuery, m_performCullingDependency);
@@ -808,7 +885,7 @@ namespace Bpsim.Parts
 				BatchIDs = m_pageBatches,
 				InstancesPerPage = m_instancesPerPage,
 				MeshID = m_meshID,
-				MaterialID = m_materialID,
+				MaterialIDs = m_atlasMaterials,
 				SortedIndices = sortedIndices,
 				CullingOutput = cullingOutput
 			}, dependsOn);

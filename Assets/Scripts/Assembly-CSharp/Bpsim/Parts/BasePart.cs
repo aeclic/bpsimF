@@ -81,12 +81,20 @@ namespace Bpsim.Parts
 
 		public static bool IsContainer(in PartAspect part)
 		{
-			return IsContainer(part.TypeInfo);
+			// Burst job 只走 BaseTypeInfo（实体侧预烘）+ 不查表的纯判断。
+			// 这里绝不能调 IsContainer(PartTypeInfo)：那个重载里 PartVariants.Resolve
+			// 查的是托管 Dictionary，Burst 内联后会报 BC1016。
+			return IsContainerResolved(part.BaseTypeInfo);
 		}
 
 		public static bool IsContainer(PartTypeInfo info)
 		{
-			info = PartVariants.Resolve(info);
+			return IsContainerResolved(PartVariants.Resolve(info));
+		}
+
+		/// <summary>不做变体解析的纯判断：入参必须已经是基部件。</summary>
+		internal static bool IsContainerResolved(PartTypeInfo info)
+		{
 			return info.PartType switch
 			{
 				PartType.WoodenFrame => info.PartIndex != WoodenBox.PartIndex, 
@@ -97,12 +105,16 @@ namespace Bpsim.Parts
 
 		public static bool CanBeContained(in PartAspect part)
 		{
-			return CanBeContained(part.TypeInfo);
+			return CanBeContainedResolved(part.BaseTypeInfo);
 		}
 
 		public static bool CanBeContained(PartTypeInfo info)
 		{
-			info = PartVariants.Resolve(info);
+			return CanBeContainedResolved(PartVariants.Resolve(info));
+		}
+
+		internal static bool CanBeContainedResolved(PartTypeInfo info)
+		{
 			return info.PartType switch
 			{
 				PartType.WoodenFrame => info.PartIndex == WoodenBox.PartIndex, 
@@ -113,12 +125,16 @@ namespace Bpsim.Parts
 
 		public static bool IsStructural(in PartAspect part)
 		{
-			return IsStructural(part.TypeInfo);
+			return IsStructuralResolved(part.BaseTypeInfo);
 		}
 
 		public static bool IsStructural(PartTypeInfo info)
 		{
-			info = PartVariants.Resolve(info);
+			return IsStructuralResolved(PartVariants.Resolve(info));
+		}
+
+		internal static bool IsStructuralResolved(PartTypeInfo info)
+		{
 			switch (info.PartType)
 			{
 			case PartType.WoodenFrame:
@@ -135,7 +151,7 @@ namespace Bpsim.Parts
 
 		public static bool IsLarge(in PartAspect part)
 		{
-			return IsLarge(part.TypeInfo);
+			return IsLarge(part.BaseTypeInfo);
 		}
 
 		public static bool IsLarge(PartTypeInfo info)
@@ -150,12 +166,16 @@ namespace Bpsim.Parts
 
 		public static bool IsEightWay(in PartAspect part)
 		{
-			return IsEightWay(part.TypeInfo);
+			return IsEightWayResolved(part.BaseTypeInfo);
 		}
 
 		public static bool IsEightWay(PartTypeInfo info)
 		{
-			info = PartVariants.Resolve(info);
+			return IsEightWayResolved(PartVariants.Resolve(info));
+		}
+
+		internal static bool IsEightWayResolved(PartTypeInfo info)
+		{
 			PartType partType = info.PartType;
 			if (partType == PartType.GrapplingHook || partType == PartType.SpotLight || partType == PartType.TNT)
 			{
@@ -168,7 +188,7 @@ namespace Bpsim.Parts
 
 		public static bool CanFlip(in PartAspect part)
 		{
-			return CanFlip(part.TypeInfo);
+			return CanFlip(part.BaseTypeInfo);
 		}
 
 		public static bool CanFlip(PartTypeInfo info)
@@ -190,7 +210,7 @@ namespace Bpsim.Parts
 
 		public static RectInt GetGridRect(in PartAspect part)
 		{
-			return GetGridRect(part.TypeInfo);
+			return GetGridRect(part.BaseTypeInfo);
 		}
 
 		public static RectInt GetGridRect(PartTypeInfo info)
@@ -249,7 +269,10 @@ namespace Bpsim.Parts
 		public static float GetZOffset(in PartAspect part)
 		{
 			// 变体要按基部件算 Z：彩色框是 -0.45，别的才是 0/0.01。
-			PartTypeInfo partTypeInfo = PartVariants.Resolve(new PartTypeInfo(part.PartType, part.PartIndex));
+			// 这里必须用 BaseTypeInfo（建实体时预烘的）而不是 PartVariants.Resolve：
+			// 本函数在 PartTransformSystem 的 [BurstCompile] job 里被调用，
+			// 托管 Dictionary 会让 Burst 报 BC1016。
+			PartTypeInfo partTypeInfo = part.BaseTypeInfo;
 			float result;
 			switch (partTypeInfo.PartType)
 			{
@@ -311,7 +334,7 @@ namespace Bpsim.Parts
 
 		public static int GetAttachmentCount(PartAspect part)
 		{
-			return GetAttachmentCount(part.TypeInfo);
+			return GetAttachmentCount(part.BaseTypeInfo);
 		}
 
 		public static int GetAttachmentCount(PartTypeInfo info)

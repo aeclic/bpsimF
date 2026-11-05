@@ -1,7 +1,6 @@
-using System;
+﻿using System;
 using Bpsim.ComponentModel;
 using Bpsim.UI;
-using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -18,7 +17,10 @@ namespace Bpsim.Parts
 			Square = 2
 		}
 
-		[BurstCompile]
+		// 这两个 job 直接调托管 struct PartSceneUnmanaged（里面握着托管 EntityManager），
+		// Burst 编译不了；去掉 [BurstCompile] 后 Burst 也不会再顺着调用链走到
+		// PartVariants 的托管 Dictionary（BC1016）。它们本来就以 IJobExtensions.Run
+		// 同步执行，Burst 没有收益。
 		private struct PlacePartsJob : IJob
 		{
 			public bool Overlay;
@@ -48,7 +50,6 @@ namespace Bpsim.Parts
 			}
 		}
 
-		[BurstCompile]
 		private struct ErasePartsJob : IJob
 		{
 			public PartType PartType;

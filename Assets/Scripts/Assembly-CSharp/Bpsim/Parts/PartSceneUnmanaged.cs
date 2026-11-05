@@ -138,7 +138,7 @@ namespace Bpsim.Parts
 				return true;
 			}
 			PartTransform transform = EntityManager.GetComponentData<PartTransform>(part);
-			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(part).Value;
+			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(part).BaseValue;
 			// 旧层：把该件从所在格的表项里摘掉。
 			PartGridInfo oldGrid = default(PartGridInfo);
 			if (m_partMap.TryGet(transform.X, transform.Y, oldLayer, out PartGridInfo existing))
@@ -331,7 +331,7 @@ namespace Bpsim.Parts
 					continue;
 				}
 				PartTransform transform = EntityManager.GetComponentData<PartTransform>(candidate);
-				PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(candidate).Value;
+				PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(candidate).BaseValue;
 				PartFreeTransform freeTransform = EntityManager.HasComponent<PostTransformScale>(candidate) ? GetPartFreeTransform(candidate) : PartFreeTransform.Identity;
 				if (!PartPicking.Contains(in transform, in freeTransform, typeInfo, world))
 				{
@@ -376,7 +376,7 @@ namespace Bpsim.Parts
 			Entity part2 = Entity.Null;
 			if (BasePart.IsContainer(typeInfo))
 			{
-				bool flag2 = !part.HasPart || BasePart.CanBeContained(EntityManager.GetComponentData<PartTypeValue>(part.Part).Value);
+				bool flag2 = !part.HasPart || BasePart.CanBeContained(EntityManager.GetComponentData<PartTypeValue>(part.Part).BaseValue);
 				if ((!part.HasPartContainer && flag2) || overlay)
 				{
 					if (part.HasPartContainer)
@@ -470,7 +470,7 @@ namespace Bpsim.Parts
 			{
 				return false;
 			}
-			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(part).Value;
+			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(part).BaseValue;
 			PartAutoAlignMode mode = PartAutoAlign.GetMode(typeInfo);
 			if (mode == PartAutoAlignMode.None)
 			{
@@ -678,7 +678,7 @@ namespace Bpsim.Parts
 				{
 					for (int j = gridRect.yMin; j < gridRect.yMax; j++)
 					{
-						if ((i != 0 || j != 0) && m_partMap.TryGet(x + i, y + j, layer, out var part) && part.HasPart && !BasePart.IsStructural(EntityManager.GetComponentData<PartTypeValue>(part.Part).Value))
+						if ((i != 0 || j != 0) && m_partMap.TryGet(x + i, y + j, layer, out var part) && part.HasPart && !BasePart.IsStructural(EntityManager.GetComponentData<PartTypeValue>(part.Part).BaseValue))
 						{
 							return false;
 						}
@@ -702,7 +702,7 @@ namespace Bpsim.Parts
 
 		private void SetLargePartGridAt(int x, int y, int delta, Entity part, int layer)
 		{
-			PartTypeInfo value = EntityManager.GetComponentData<PartTypeValue>(part).Value;
+			PartTypeInfo value = EntityManager.GetComponentData<PartTypeValue>(part).BaseValue;
 			if (!BasePart.IsLarge(value))
 			{
 				return;
@@ -761,7 +761,7 @@ namespace Bpsim.Parts
 			{
 				return;
 			}
-			int attachmentCount = BasePart.GetAttachmentCount(EntityManager.GetComponentData<PartTypeValue>(part.Part).Value);
+			int attachmentCount = BasePart.GetAttachmentCount(EntityManager.GetComponentData<PartTypeValue>(part.Part).BaseValue);
 			if (attachmentCount == 0)
 			{
 				return;
@@ -894,7 +894,7 @@ namespace Bpsim.Parts
 			// 一个格子里可以同时有铁框（结构性）和框内的小件，此时结构判定必须看铁框，
 			// 否则铁框永远无法移到已被占用的格子上。
 			Entity entity = (source.HasPartContainer ? source.PartContainer : source.Part);
-			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(entity).Value;
+			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(entity).BaseValue;
 			if (target.Occupied > 0 && !BasePart.IsStructural(typeInfo))
 			{
 				return false;
@@ -974,7 +974,7 @@ namespace Bpsim.Parts
 			{
 				return false;
 			}
-			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(part).Value;
+			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(part).BaseValue;
 			if (BasePart.CanFlip(typeInfo))
 			{
 				// 可翻转件按 BPSS 的 FlipVertically 语义翻转，而不是转 90°。
@@ -1320,7 +1320,7 @@ namespace Bpsim.Parts
 				}
 				int layer = GetPartLayer(entity);
 				PartTransform transform = EntityManager.GetComponentData<PartTransform>(entity);
-				PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(entity).Value;
+				PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(entity).BaseValue;
 				m_partMap.TryGet(transform.X, transform.Y, layer, out var grid);
 				if (BasePart.IsContainer(typeInfo))
 				{
