@@ -31,6 +31,101 @@ namespace Bpsim.Parts.Simulation
 			}
 		}
 
+		/// <summary>
+		/// 给这一帧刚实例化出来的模拟部件写 <see cref="LocalTransform" /> 并补 <see cref="WorldTransform" />。
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// <see cref="WorldTransform" /> 在本工程里没有任何烘焙器负责，只由 Unity.Transforms 的
+		/// <c>LocalToWorldSystem</c> 在 <see cref="TransformSystemGroup" /> 里给「有 LocalTransform、
+		/// 没有 WorldTransform」的实体补上；而 <see cref="Run" /> 里的
+		/// <c>InstantiatePartsJob</c> → <c>BuildRigidbodiesJob</c> → <c>BuildJointsAndComponentsJob</c>
+		/// 全是同一帧同步 <c>IJobExtensions.Run</c>，跑在 TransformSystemGroup 之前。
+		/// 于是建关节时 <c>worldTransformLookup[entity]</c> 读的是不存在的组件，
+		/// <see cref="PartSimulatorUnmanaged.AddFixedJoint" /> 抛
+		/// <c>ArgumentException: A component with type:Unity.Transforms.WorldTransform has not been added to the entity</c>，
+		/// 整份 job 当场中断：一个关节都建不出来，连通块也停留在「每件一块」。
+		/// </para>
+		/// <para>
+		/// 位姿同样不能直接抄 Instantiate 复制过来的 LocalTransform：部件刚放置完就在这里开跑时，
+		/// 逐帧写 LocalTransform 的 <c>PartTransformSystem</c>（它在 TransformSystemGroup 里，
+		/// 且 <c>IsSimulating</c> 为真后会整个跳过）还没轮到过，复制到的是预制体模板的占位坐标。
+		/// 所以这里按 <c>PartTransformSystem</c> 一模一样的公式
+		/// <c>BasePart.MoveTo/RotateTo</c> 从 <see cref="PartTransform" /> 重算一遍，
+		/// 同时写回 LocalTransform —— 紧随其后的 <c>BuildRigidbodiesJob</c> 用
+		/// <c>Constraint2D.CreateFromTransform(LocalTransform)</c> 建约束、Unity.Physics 也按
+		/// LocalTransform 生成刚体，两边必须是同一份落位后的位姿。
+		/// </para>
+		/// <para>
+		/// 部件根实体没有 <see cref="Unity.Transforms.Parent" />，世界变换就等于自身
+		/// LocalTransform，所以 WorldTransform 取 <c>(WorldTransform)localTransform</c>，
+		/// 与 <c>LocalToWorldSystem.ComputeRootLocalToWorldJob</c> 一致。子实体
+		/// （<c>Visualization</c> / <c>WheelSprite</c> 之类）不参与焊接，仍交给
+		/// LocalToWorldSystem 的子物体路径。
+		/// </para>
+		/// <para>不能加 [BurstCompile]：要调用 EntityManager 做结构变更。</para>
+		/// </remarks>
+		private struct SeedWorldTransformJob : IJob
+		{
+			public EntityManager EntityManager;
+
+			public PartAspect.Lookup PartAspectLookup;
+
+			public Reference<PartSimulatorUnmanaged> Simulator;
+
+			public void Execute()
+			{
+				int count = Simulator.Value.Parts.Length;
+				// 分两趟：第一趟只读（PartAspect.Lookup 里缓存着 chunk 指针，边读边做结构变更
+				// 会让它失效），第二趟再统一写。
+				// 不能用 using 声明：using 变量是只读的，NativeArray 的索引器是属性，
+				// 对它赋值会报 CS1654，所以这里 try/finally 手动 Dispose。
+				NativeArray<LocalTransform> localTransforms = new NativeArray<LocalTransform>(count, Allocator.Temp);
+				NativeArray<bool> hasLocalTransform = new NativeArray<bool>(count, Allocator.Temp);
+				try
+				{
+					for (int i = 0; i < count; i++)
+					{
+						Entity part = Simulator.Value.Parts[i];
+						if (!EntityManager.HasComponent<LocalTransform>(part))
+						{
+							continue;
+						}
+						PartAspect aspect = PartAspectLookup[part];
+						LocalTransform localTransform = EntityManager.GetComponentData<LocalTransform>(part);
+						localTransform.Position = BasePart.MoveTo(in aspect);
+						localTransform.Rotation = BasePart.RotateTo(ref aspect);
+						localTransforms[i] = localTransform;
+						hasLocalTransform[i] = true;
+					}
+					for (int i = 0; i < count; i++)
+					{
+						if (!hasLocalTransform[i])
+						{
+							continue;
+						}
+						Entity part = Simulator.Value.Parts[i];
+						LocalTransform localTransform = localTransforms[i];
+						EntityManager.SetComponentData(part, localTransform);
+						WorldTransform worldTransform = (WorldTransform)localTransform;
+						if (EntityManager.HasComponent<WorldTransform>(part))
+						{
+							EntityManager.SetComponentData(part, worldTransform);
+						}
+						else
+						{
+							EntityManager.AddComponentData(part, worldTransform);
+						}
+					}
+				}
+				finally
+				{
+					localTransforms.Dispose();
+					hasLocalTransform.Dispose();
+				}
+			}
+		}
+
 		[BurstCompile]
 		private struct BuildPartsJob : IJob
 		{
@@ -63,7 +158,7 @@ namespace Bpsim.Parts.Simulation
 					};
 					nativeParallelHashMap.Add(entity, entity2);
 					Destination.Value.PartMap.TryGet(coordX, coordY, level, out var part);
-					if (BasePart.IsContainer(partAspect.TypeInfo))
+					if (BasePart.IsContainerResolved(partAspect.BaseTypeInfo))
 					{
 						part.PartContainer = entity2;
 						Destination.Value.PartMap.Set(coordX, coordY, level, part);
@@ -226,7 +321,7 @@ namespace Bpsim.Parts.Simulation
 					int coordX = sourceAspect.CoordX;
 					int coordY = sourceAspect.CoordY;
 					int layer = LayerLookup.TryGetComponent(part2, out var buildLayer) ? PartBuildLayer.Clamp(buildLayer.Value) : PartBuildLayer.MinLayer;
-					if (BasePart.IsContainer(sourceAspect.TypeInfo) && sourceAspect.ContainedPart != Entity.Null)
+					if (BasePart.IsContainerResolved(sourceAspect.BaseTypeInfo) && sourceAspect.ContainedPart != Entity.Null)
 					{
 						PartAspect partAspect = PartAspectLookup[sourceAspect.ContainedPart];
 						float maxImpulse = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + partAspect.ExtensionData.ConnectionStrength);
@@ -273,39 +368,73 @@ namespace Bpsim.Parts.Simulation
 							}
 						}
 					}
-					// BPIR 层规则：层 2..N 额外焊接「正下方」公共层 1 的同格/四邻域零件，
-					// 让高层结构与底层机架在模拟中保持为一个刚体。
+					// 跨层连接（照 BPIR Contraption.ConnectPart + TryConnectSameCell 的原始规则）：
+					// * 层 1 件没有跨层连接；
+					// * 层 2..N 件先看「正下方」同格有没有层 1 件：
+					//   - 有，就只连那一个（四个方向逐个试方向判定，命中即止）；
+					//   - 没有，才回退去连层 1 的四邻域；
+					// * 任何跨层连接都必须先过 CanConnectAcrossLayers 的方向判定。
+					// 旧实现是「同格 + 四邻域全部无条件焊接」，会把方向不对的零件（只有上下端子的
+					// 弹簧、油管之类）也焊进同一个刚体，这正是导入 BPIR 存档后「不该连的连上了」的来源。
 					if (layer <= PartBuildLayer.MinLayer)
 					{
 						continue;
 					}
-					for (int bx = -1; bx <= 1; bx++)
+					bool hasBelow = Simulator.Value.PartMap.TryGet(coordX, coordY, PartBuildLayer.MinLayer, out var belowCell) && (!(belowCell.PartContainer == Entity.Null) || !(belowCell.Part == Entity.Null));
+					if (hasBelow)
 					{
-						for (int by = -1; by <= 1; by++)
+						for (int k2 = 0; k2 < 2; k2++)
 						{
-							if (math.abs(bx) + math.abs(by) > 1)
+							Entity entity2 = ((k2 == 0) ? belowCell.PartContainer : belowCell.Part);
+							if (entity2 == Entity.Null || entity2 == part2)
 							{
 								continue;
 							}
-							if (!Simulator.Value.PartMap.TryGet(coordX + bx, coordY + by, PartBuildLayer.MinLayer, out var below))
+							PartAspect targetAspect2 = PartAspectLookup[entity2];
+							for (int j2 = 0; j2 < 4; j2++)
 							{
-								continue;
-							}
-							for (int k2 = 0; k2 < 2; k2++)
-							{
-								Entity entity2 = ((k2 == 0) ? below.PartContainer : below.Part);
-								if (entity2 == Entity.Null || entity2 == part2)
+								BitDirection direction2 = BitDirectionExtensions.FromIndex(j2);
+								if (!CanConnectAcrossLayers(in sourceAspect, in targetAspect2, direction2))
 								{
 									continue;
 								}
-								PartAspect targetAspect2 = PartAspectLookup[entity2];
-								float maxImpulse3 = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + targetAspect2.ExtensionData.ConnectionStrength);
+								float crossImpulse = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + targetAspect2.ExtensionData.ConnectionStrength);
 								if (CreateJoints)
 								{
-									PartSimulatorUnmanaged.AddFixedJoint(CommandBuffer, WorldTransformLookup, part2, entity2, maxImpulse3, enableCollision: false);
+									PartSimulatorUnmanaged.AddFixedJoint(CommandBuffer, WorldTransformLookup, part2, entity2, crossImpulse, enableCollision: false);
 								}
 								disjointSet.Union(nativeParallelHashMap[part2], nativeParallelHashMap[entity2]);
+								break;
 							}
+						}
+						continue;
+					}
+					for (int j2 = 0; j2 < 4; j2++)
+					{
+						BitDirection direction2 = BitDirectionExtensions.FromIndex(j2);
+						var (num3, num4) = direction2.ToVector();
+						if (!Simulator.Value.PartMap.TryGet(coordX + num3, coordY + num4, PartBuildLayer.MinLayer, out var belowNeighbour))
+						{
+							continue;
+						}
+						for (int k2 = 0; k2 < 2; k2++)
+						{
+							Entity entity2 = ((k2 == 0) ? belowNeighbour.PartContainer : belowNeighbour.Part);
+							if (entity2 == Entity.Null || entity2 == part2)
+							{
+								continue;
+							}
+							PartAspect targetAspect2 = PartAspectLookup[entity2];
+							if (!CanConnectAcrossLayers(in sourceAspect, in targetAspect2, direction2))
+							{
+								continue;
+							}
+							float crossImpulse = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + targetAspect2.ExtensionData.ConnectionStrength);
+							if (CreateJoints)
+							{
+								PartSimulatorUnmanaged.AddFixedJoint(CommandBuffer, WorldTransformLookup, part2, entity2, crossImpulse, enableCollision: false);
+							}
+							disjointSet.Union(nativeParallelHashMap[part2], nativeParallelHashMap[entity2]);
 						}
 					}
 				}
@@ -340,6 +469,16 @@ namespace Bpsim.Parts.Simulation
 				EntityManager = entityManager,
 				Source = partScene,
 				Destination = m_unmanaged
+			});
+			// 实例化出来的部件此刻还没有 WorldTransform（只有 TransformSystemGroup 之后的
+			// LocalToWorldSystem 会补），而下面的 BuildJointsAndComponentsJob 是同一帧同步
+			// Run 的，读 WorldTransform 会抛异常并中断整份 job。必须先补上；
+			// 顺带把 LocalTransform 校正成落位后的位姿（PartTransformSystem 本帧还没跑）。
+			IJobExtensions.Run(new SeedWorldTransformJob
+			{
+				EntityManager = entityManager,
+				PartAspectLookup = new PartAspect.Lookup(ref system.CheckedStateRef, isReadOnly: false),
+				Simulator = m_unmanaged
 			});
 			EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
 			IJobExtensions.Run(new ApplyFreeScaleJob
@@ -490,6 +629,31 @@ namespace Bpsim.Parts.Simulation
 				return true;
 			}
 			return source.Index < target.Index;
+		}
+
+		/// <summary>
+		/// 跨层连接用的方向判定。与 <see cref="CanConnectTo" /> 唯一的区别是**不做
+		/// <c>source.Index &lt; target.Index</c> 去重**：那条去重是为同层四邻域准备的
+		/// （一对零件会被双方各访问一次），而跨层连接只有高层那一侧会发起扫描
+		/// （BPIR <c>Contraption.ConnectPart</c> 同样只在 <c>TryConnectSameCell</c> /
+		/// 四邻域回退里单向发起），套上索引去重会让「两块机架叠在不同层」永远连不上。
+		/// 方向语义与 BPIR <c>Contraption.CanConnectTo(part1, part2, direction)</c> 一致：
+		/// 发起方要含 <paramref name="direction" />，对方要含反方向。
+		/// </summary>
+		public static bool CanConnectAcrossLayers(in PartAspect sourceAspect, in PartAspect targetAspect, BitDirection direction)
+		{
+			if (!sourceAspect.ExtensionData.IsConnectionSource)
+			{
+				return false;
+			}
+			if ((sourceAspect.ExtensionData.ConnectionDirection.Rotate(sourceAspect.Rotation) & direction) == 0)
+			{
+				return false;
+			}
+			BitDirection targetDirection = targetAspect.PartType == PartType.ElectricalPart
+				&& targetAspect.PartIndex >= 4 && targetAspect.PartIndex != 42
+				? BitDirection.Any : targetAspect.ExtensionData.ConnectionDirection.Rotate(targetAspect.Rotation);
+			return (targetDirection & direction.Reverse()) != 0;
 		}
 	}
 }
