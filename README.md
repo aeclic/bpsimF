@@ -279,9 +279,9 @@ CC0 只覆盖作者自己创作的部分，**不改变**仓库内第三方内容
 | Havok Physics | `Assets/Plugins/Havok.Physics.dll`、`x86_64/HavokNative.dll`、Android `.so` | Havok / Microsoft 专有；此处仅作技术研究 |
 | Vuplex WebView | `Assets/Vuplex/` | 商业授权 |
 | Unity 包、DOTS、URP、TextMeshPro | `Packages/`、`Assets/Plugins/` | Unity Companion License（另有若干 MIT 依赖） |
-| BepInEx 5.4.x | 独立 Mods 仓库的 `Mods/FrameShapes/Runtime/` | LGPL-2.1 |
+| BepInEx 5.4.x | 现已弃用，独立 Mods 仓库的 `Mods/FrameShapes/Runtime/` | LGPL-2.1 |
 | UniTask、Newtonsoft.Json、IngameDebugConsole 等 | `Assets/Plugins/` | 各自 MIT / 开源许可证，见上游仓库 |
-| ShaderRipper、besiege、bple、bpir、bpss、bprc | 参考项目 | 仅作思路与接口对照，未整体搬运 |
+| ShaderRipper、besiege、Bad Piggies Leading Edge、Bad Piggies Innovation Rebuild、Bad Piggies Starry Sea、Bad Piggies Rover Combination | 参考项目 | 仅作思路与接口对照. |
 | Bad Piggies Editor（Rust/WASM 关卡编辑器） | 独立 Mods 仓库的 `Mods/LevelEditor/` | AGPL-3.0-or-later；见该仓库的 `THIRD-PARTY-LICENSES/` |
 
 **CC0 不等于“整包可商用”**：上面的第三方组件仍受各自许可证约束；`Assets/StreamingAssets/` 未入库也意味着仓库不包含 BPLE 的原始关卡与美术。本地运行请使用你合法持有的游戏副本，并自行承担相应责任。
