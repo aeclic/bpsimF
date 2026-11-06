@@ -16,7 +16,7 @@
 
 BpsimF 是《Bad Piggies》（捣蛋猪）的粉丝向模拟器，目标是在 Unity 里还原 BPLE的建造体验：无网格自由拼装、按章节组织的关卡、以及“部件堆成山也不卡”的物理沙盒。
 
-和“一个部件一个 GameObject”的常规做法不同，这里的部件是 ECS 实体，渲染走自绘的 BatchRendererGroup + DOTS Instancing 管线，物理走 Unity.Physics + 打过补丁的 Havok 运行时。因此一辆两万部件的载具仍然能以可交互的帧率跑起来（见[性能](#性能)）。
+和“一个部件一个 GameObject”的常规做法不同，这里的部件是 ECS 实体，渲染走自绘的 BatchRendererGroup + DOTS Instancing 管线，物理走 Unity.Physics + 打过补丁的 Havok 运行时 + Box3D的 unity 2022移植。因此一辆两万部件的载具仍然能以可交互的帧率跑起来（见[性能](#性能)）。
 
 当前版本 `0.0.12`，状态是**能玩的开发中版本**：建造、选关、模拟、模组、Windows / Android 出包链路都已打通，玩法细节仍在对照 BPLE / BPIR / BPSS 逐步补齐。
 
@@ -30,7 +30,7 @@ BpsimF 是《Bad Piggies》（捣蛋猪）的粉丝向模拟器，目标是在 U
 |------|------|
 | 引擎 | Unity `2022.2.23f1c1`（Unity 中国版） |
 | 架构 | DOTS / ECS：Entities `1.0.0-pre.44`、Collections `2.1.0-pre.11`、Burst `1.8.4`、Mathematics `1.2.6` |
-| 物理 | Unity.Physics `1.0.0-pre.44` + Havok.Physics（本地补丁运行时） |
+| 物理 | Unity.Physics `1.0.0-pre.44` + Havok.Physics（本地补丁运行时）+ Box3D（AnvilPhysics） |
 | 渲染 | URP `14.0.7`；部件用 BatchRendererGroup 批量实例化；UI 用 uGUI + TextMeshPro |
 | 输入 | Input System `1.7.0`（键鼠 + 触屏） |
 | 模组面板 | Vuplex WebView（HTML/CSS/JS 面板） |
