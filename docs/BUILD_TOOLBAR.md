@@ -105,8 +105,15 @@ bpsim 现有深蓝圆角底板」的风格画，4× 超采样后 LANCZOS 缩到 
 `BuildToolbarQA` 的 `toolbar clears fps` / `file buttons relay out` / 图标尺寸断言都读
 `BuildToolbar.LastStep` / `LastButtonSize`，所以两种宽度下都成立。
 
-配色：普通态底板沿用现有按钮的深蓝 `(0, 0.196875, 0.4)`、图标近白；激活态底板
-`(0, 0.482, 0.722)`、图标纯白；不可用态底板 `(0.18, 0.18, 0.18)`、图标 35% 透明度。
+配色：普通态底板沿用现有按钮的深蓝 `(0, 0.196875, 0.4)`、图标近白（85% 不透明）；激活态底板
+绿色 `(0.18, 0.78, 0.36)`、图标纯白；不可用态底板 `(0.18, 0.18, 0.18)`、图标 35% 透明度。
+
+「激活态绿色」对四枚工具按钮与网格按钮一致：**平移部件、整车平移、部件变换、载具变换**
+（`CurrentTool` 等于对应枚举值时）和网格按钮（`GridModeState.Hidden/Free`，即非自由放置态）
+都亮绿色底板，与 HUD 播放键的「运行中」反馈同一套视觉语言；再点一次工具按钮或把网格
+切回自由放置恢复深蓝。（网格按钮是三态的，`Refresh()` 里非 `GridModeState.Free` 时用激活色。）工具按钮的底板是按钮自身的 `Image`、图标是 `Icon` 子物体，`SetToolVisual()`
+分别上色 —— 二者必须分开存进 `m_toolImages` / `m_toolIcons`，否则激活色会被图标的白色
+覆盖、底板永远停在深蓝。`BuildToolbarQA.CheckToolPlate()` 逐个工具核对开/关两态的底色。
 
 ## Besiege 式 HUD（播放键 + 抬头的横向滑条）
 
@@ -397,6 +404,8 @@ curl -X POST http://127.0.0.1:8791/api -d '{"method":"invoke_static","params":{"
 
 `BuildToolbarQA` 覆盖（放大镜 11 项见「左栏放大镜按钮」）：工具栏挂载、**10 个图标按钮**（原有 4 个 + 工具 6 个，逐个检查
 存在 / 有底板 `Image` / 有 `Button` / 图标精灵已加载 / 原文字层已隐藏）、
+**四枚工具按钮的开启态绿色底板**（`CheckToolPlate()` 对 Move / MoveAll / TransformPart / TransformMachine
+逐个核对：底板与图标是两个不同 `Image`、开启时 `g > r+0.2` 且 `g > b+0.2`、图标仍近白、再点一次恢复深蓝）、
 **合并掉的 5 枚按钮不再存在**（`BuildAdjustButton` / `BuildRotateButton` / `BuildRotateAllButton` /
 `BuildFreeTransformPartButton` / `BuildGridlessButton`）、
 **播放键已离开 ActionBar**、原有按钮重排（`load=428 settings=596.48`，步进读 `LastStep`）、

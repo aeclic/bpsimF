@@ -57,7 +57,7 @@ BpsimF 是《Bad Piggies》（捣蛋猪）的粉丝向模拟器，目标是在 U
 
 ## 性能
 
-开发机实测（详见 [`BPSIM_MEGA_STRUCTURE.md`](BPSIM_MEGA_STRUCTURE.md)）：
+开发机实测（详见 [`BPSIM_MEGA_STRUCTURE.md`]\(docs/BPSIM_MEGA_STRUCTURE.md\)）：
 
 | 测试载具 | 部件数 | 优化前 | 优化后 | 备注 |
 |----------|-------:|-------:|-------:|------|
@@ -168,7 +168,7 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 
 ## 模组开发
 
-本项目的 Mod 体系**不依赖 BepInEx**（旧的 BepInEx 通道已移除，见 [`BEPINEX_MODDING.md`](BEPINEX_MODDING.md)）。一个 Mod 就是 `persistentDataPath/Mods/<任意目录>/`（Windows 上是 `%USERPROFILE%\AppData\LocalLow\bprc\bpsimF\Mods\`）下的一个目录，放 `Mod.xml`，再按类型附带 `panel.html/css/js` 和/或托管 DLL。
+本项目的 Mod 体系**不依赖 BepInEx**（旧的 BepInEx 通道已移除，见 [`BEPINEX_MODDING.md`]\(docs/BEPINEX_MODDING.md\)）。一个 Mod 就是 `persistentDataPath/Mods/<任意目录>/`（Windows 上是 `%USERPROFILE%\AppData\LocalLow\bprc\bpsimF\Mods\`）下的一个目录，放 `Mod.xml`，再按类型附带 `panel.html/css/js` 和/或托管 DLL。
 
 - 清单：`Mod.xml`（旧 `manifest.json` 仍兼容），带 `<ID>` GUID —— 存档只认 GUID，改文件夹名不会让存档失效。
 - 纯内容包：只声明 `<Resources><Panel …/></Resources>`，Vuplex 加载，可拖动。
@@ -176,7 +176,7 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 - 加部件：`ModParts.TryAddVariant(PartType.MetalFrame, 12, 9001, "直角三角框", out error)` —— 克隆基部件换索引，选择器的变体列表里就会出现。
 - 加载前会跑程序集静态扫描：引用 `Steamworks` / `Mono.Cecil` / Roslyn、用 `PInvoke`、碰 `System.Reflection.Emit` 之类的直接拒绝。
 
-游戏内按 **F10**（或设置里的“打开 Mod 管理器”）打开列表。内置样板有三个：`example-addon/`（`Mod.xml` 纯面板）、`netease-music/`（旧 `manifest.json`，验证兼容）、`bpir-frame-shapes/`（**源码 Mod**，注册三个变形框变体，用来实测整条管线）。完整字段、`Modding.xml` 配置、钩子列表、扫描规则与迁移说明见 [`BPSIM_MODDING.md`](BPSIM_MODDING.md)。
+游戏内按 **F10**（或设置里的“打开 Mod 管理器”）打开列表。内置样板有三个：`example-addon/`（`Mod.xml` 纯面板）、`netease-music/`（旧 `manifest.json`，验证兼容）、`bpir-frame-shapes/`（**源码 Mod**，注册三个变形框变体，用来实测整条管线）。完整字段、`Modding.xml` 配置、钩子列表、扫描规则与迁移说明见 [`BPSIM_MODDING.md`]\(docs/BPSIM_MODDING.md\)。
 
 `Mods/FrameShapes/` 保留着旧的 **BepInEx 5.4.23.2** 插件源码（“bp-rebooted ECS 框形”），但 `FrameShapesBuildPostprocessor` 与 BepInEx 胶水层已删除，它不再被任何构建步骤部署；要用请按 `ModEntryPoint` 重写成普通 Mod 包。源码现在位于独立仓库 `aeclic/badpiggies-editor-sim-mod` 的 `Mods/FrameShapes/`。
 
@@ -211,60 +211,60 @@ Tools\unity-batch.bat -executeMethod Bpsim.EditorTools.AndroidBuild.Build
 
 **建造与 UI**
 
-- [`BPSIM_GRIDLESS_FREETRANSFORM.md`](BPSIM_GRIDLESS_FREETRANSFORM.md) — 无网格建造与自由变换的 ECS 移植；`PartFreeTransform`、11 列 CSV、XML 的 `gridlessX/gridlessY/fineAngle/partScale*`。
-- [`BPSIM_QUICKBUILD_INTERACTION.md`](BPSIM_QUICKBUILD_INTERACTION.md) — 点按旋转 / 长按拖动 / 自动对齐的实现与边界。
-- [`BPSIM_LAYERS_CONNECTIONS.md`](BPSIM_LAYERS_CONNECTIONS.md) — 1–16 图层、逐层网格、跨层重叠与焊接到第 1 层。
-- [`BPSIM_BUILD_PAGE_LAYOUT.md`](BPSIM_BUILD_PAGE_LAYOUT.md) — 底部场景选项卡、部件列表内的 92 高图层条。
-- [`BPSIM_BUILD_UI_REPAIR.md`](BPSIM_BUILD_UI_REPAIR.md) — 建造 UI 输入穿透与属性面板修复。
-- [`BUILD_TOOLBAR.md`](BUILD_TOOLBAR.md) — 顶部建造工具栏（参考主 BPRC 工程）。
-- [`BPSIM_LEVEL_MENU_TILES.md`](BPSIM_LEVEL_MENU_TILES.md) — BPLE 风格正方形数字选关格（`#70C030` 面 / `#3A542C` 描边、108 px、8 列）。
-- [`DEBUG_CONSOLE_PORT.md`](DEBUG_CONSOLE_PORT.md) — 从 BPRC 2026.3.2 移植 Debug 控制台。
+- [`BPSIM_GRIDLESS_FREETRANSFORM.md`]\(docs/BPSIM_GRIDLESS_FREETRANSFORM.md\) — 无网格建造与自由变换的 ECS 移植；`PartFreeTransform`、11 列 CSV、XML 的 `gridlessX/gridlessY/fineAngle/partScale*`。
+- [`BPSIM_QUICKBUILD_INTERACTION.md`]\(docs/BPSIM_QUICKBUILD_INTERACTION.md\) — 点按旋转 / 长按拖动 / 自动对齐的实现与边界。
+- [`BPSIM_LAYERS_CONNECTIONS.md`]\(docs/BPSIM_LAYERS_CONNECTIONS.md\) — 1–16 图层、逐层网格、跨层重叠与焊接到第 1 层。
+- [`BPSIM_BUILD_PAGE_LAYOUT.md`]\(docs/BPSIM_BUILD_PAGE_LAYOUT.md\) — 底部场景选项卡、部件列表内的 92 高图层条。
+- [`BPSIM_BUILD_UI_REPAIR.md`]\(docs/BPSIM_BUILD_UI_REPAIR.md\) — 建造 UI 输入穿透与属性面板修复。
+- [`BUILD_TOOLBAR.md`]\(docs/BUILD_TOOLBAR.md\) — 顶部建造工具栏（参考主 BPRC 工程）。
+- [`BPSIM_LEVEL_MENU_TILES.md`]\(docs/BPSIM_LEVEL_MENU_TILES.md\) — BPLE 风格正方形数字选关格（`#70C030` 面 / `#3A542C` 描边、108 px、8 列）。
+- [`DEBUG_CONSOLE_PORT.md`]\(docs/DEBUG_CONSOLE_PORT.md\) — 从 BPRC 2026.3.2 移植 Debug 控制台。
 
 **模拟与性能**
 
-- [`BPSIM_MEGA_STRUCTURE.md`](BPSIM_MEGA_STRUCTURE.md) — 整车刚体化、断件阈值、20k 部件数据与已知边界。
-- [`BPSIM_GAMEPLAY_PERF_FIX.md`](BPSIM_GAMEPLAY_PERF_FIX.md) — 大型存档行为层的平方级开销。
-- [`BPSIM_SPIN_PERF_FIX.md`](BPSIM_SPIN_PERF_FIX.md) — 高速自旋时 AABB 膨胀导致同车互撞。
-- [`BPSIM_TIME_SCALE_SMOOTHING.md`](BPSIM_TIME_SCALE_SMOOTHING.md) — 低倍率时间加速的抖动与平滑。
-- [`BPSIM_IMPACT_CFX_ASSESSMENT.md`](BPSIM_IMPACT_CFX_ASSESSMENT.md) — 对 Impact CFX v1.5.6 的评估：只解决表现、无物理/性能收益，结论是不引入。
+- [`BPSIM_MEGA_STRUCTURE.md`]\(docs/BPSIM_MEGA_STRUCTURE.md\) — 整车刚体化、断件阈值、20k 部件数据与已知边界。
+- [`BPSIM_GAMEPLAY_PERF_FIX.md`]\(docs/BPSIM_GAMEPLAY_PERF_FIX.md\) — 大型存档行为层的平方级开销。
+- [`BPSIM_SPIN_PERF_FIX.md`]\(docs/BPSIM_SPIN_PERF_FIX.md\) — 高速自旋时 AABB 膨胀导致同车互撞。
+- [`BPSIM_TIME_SCALE_SMOOTHING.md`]\(docs/BPSIM_TIME_SCALE_SMOOTHING.md\) — 低倍率时间加速的抖动与平滑。
+- [`BPSIM_IMPACT_CFX_ASSESSMENT.md`]\(docs/BPSIM_IMPACT_CFX_ASSESSMENT.md\) — 对 Impact CFX v1.5.6 的评估：只解决表现、无物理/性能收益，结论是不引入。
 
 **物理与逆向**
 
-- [`BPSIM_HAVOK_PORT.md`](BPSIM_HAVOK_PORT.md) — Havok 插件反编译、校验补丁与接入过程。
-- [`BPSIM_BSOD_ANALYSIS.md`](BPSIM_BSOD_ANALYSIS.md) — 蓝屏核查；确认并修掉了 `SceneRenderSystem` 每帧 6 次对同一 1 MB `GraphicsBuffer` Lock/Unlock 的真实 GPU 缺陷。
+- [`BPSIM_HAVOK_PORT.md`]\(docs/BPSIM_HAVOK_PORT.md\) — Havok 插件反编译、校验补丁与接入过程。
+- [`BPSIM_BSOD_ANALYSIS.md`]\(docs/BPSIM_BSOD_ANALYSIS.md\) — 蓝屏核查；确认并修掉了 `SceneRenderSystem` 每帧 6 次对同一 1 MB `GraphicsBuffer` Lock/Unlock 的真实 GPU 缺陷。
 
 **部件与玩法**
 
-- [`BPSIM_PART_FUNCTIONALITY_AUDIT.md`](BPSIM_PART_FUNCTIONALITY_AUDIT.md) — 部件功能审计；`Bpsim.QA.PartGameplayQA.Run("all")` 45/45 PASS。
-- [`BPSIM_OTHER_PARTS_AUDIT.md`](BPSIM_OTHER_PARTS_AUDIT.md) — BPSS 901-17 的其余部件与变种对照。
-- [`BPSIM_TNT_PORT.md`](BPSIM_TNT_PORT.md) — TNT 与各变种皮肤。
-- [`SODA_LAUNCH_PORT.md`](SODA_LAUNCH_PORT.md) — 汽水 / 火箭推力。
-- [`BPSIM_MANUAL_GUN_PORT.md`](BPSIM_MANUAL_GUN_PORT.md) — 黄色外星吸盘枪的手动炮塔。
-- [`BPSIM_FUEL_SKIN_PORT.md`](BPSIM_FUEL_SKIN_PORT.md) — 燃料箱并入 JetEngine 皮肤，删除 `FuelBox` / `FuelTube`。
+- [`BPSIM_PART_FUNCTIONALITY_AUDIT.md`]\(docs/BPSIM_PART_FUNCTIONALITY_AUDIT.md\) — 部件功能审计；`Bpsim.QA.PartGameplayQA.Run("all")` 45/45 PASS。
+- [`BPSIM_OTHER_PARTS_AUDIT.md`]\(docs/BPSIM_OTHER_PARTS_AUDIT.md\) — BPSS 901-17 的其余部件与变种对照。
+- [`BPSIM_TNT_PORT.md`]\(docs/BPSIM_TNT_PORT.md\) — TNT 与各变种皮肤。
+- [`SODA_LAUNCH_PORT.md`]\(docs/SODA_LAUNCH_PORT.md\) — 汽水 / 火箭推力。
+- [`BPSIM_MANUAL_GUN_PORT.md`]\(docs/BPSIM_MANUAL_GUN_PORT.md\) — 黄色外星吸盘枪的手动炮塔。
+- [`BPSIM_FUEL_SKIN_PORT.md`]\(docs/BPSIM_FUEL_SKIN_PORT.md\) — 燃料箱并入 JetEngine 皮肤，删除 `FuelBox` / `FuelTube`。
 
 **关卡、品牌与平台**
 
-- [`BPSIM_LEVEL_IMPORT_FIXES.md`](BPSIM_LEVEL_IMPORT_FIXES.md) — 地形碰撞、纹理、自动恢复上次关卡三项修复。
-- [`BPSIM_BRAND_SPLASH.md`](BPSIM_BRAND_SPLASH.md) — 开场品牌页切到原生 Unity Splash 的取舍。
-- [`BPSIM_ANDROID_BUILD_FIX.md`](BPSIM_ANDROID_BUILD_FIX.md) — 安卓打不开与打包过慢。
-- [`BPSIM_ANDROID_TOUCH_FIX.md`](BPSIM_ANDROID_TOUCH_FIX.md) — 安卓触控适配。
-- [`BPSIM_ANDROID_PART_TEXTURE_FIX.md`](BPSIM_ANDROID_PART_TEXTURE_FIX.md) — 安卓部件贴图丢失。
-- [`BPSIM_BUILD_CRASH_FIX.md`](BPSIM_BUILD_CRASH_FIX.md) — `m_DefaultShaderChunkSizeInMB: 0` 导致的打包崩溃。
-- [`BPSIM_SHADER_FIXES.md`](BPSIM_SHADER_FIXES.md) — 播放器构建 shader 报错的三个根因。
-- [`BPSIM_CONSOLE_WARNINGS_FIX.md`](BPSIM_CONSOLE_WARNINGS_FIX.md) — 控制台黄/红警告清理。
-- [`BPSIM_UPX_PACK.md`](BPSIM_UPX_PACK.md) — UPX 压缩实测与结论。
+- [`BPSIM_LEVEL_IMPORT_FIXES.md`]\(docs/BPSIM_LEVEL_IMPORT_FIXES.md\) — 地形碰撞、纹理、自动恢复上次关卡三项修复。
+- [`BPSIM_BRAND_SPLASH.md`]\(docs/BPSIM_BRAND_SPLASH.md\) — 开场品牌页切到原生 Unity Splash 的取舍。
+- [`BPSIM_ANDROID_BUILD_FIX.md`]\(docs/BPSIM_ANDROID_BUILD_FIX.md\) — 安卓打不开与打包过慢。
+- [`BPSIM_ANDROID_TOUCH_FIX.md`]\(docs/BPSIM_ANDROID_TOUCH_FIX.md\) — 安卓触控适配。
+- [`BPSIM_ANDROID_PART_TEXTURE_FIX.md`]\(docs/BPSIM_ANDROID_PART_TEXTURE_FIX.md\) — 安卓部件贴图丢失。
+- [`BPSIM_BUILD_CRASH_FIX.md`]\(docs/BPSIM_BUILD_CRASH_FIX.md\) — `m_DefaultShaderChunkSizeInMB: 0` 导致的打包崩溃。
+- [`BPSIM_SHADER_FIXES.md`]\(docs/BPSIM_SHADER_FIXES.md\) — 播放器构建 shader 报错的三个根因。
+- [`BPSIM_CONSOLE_WARNINGS_FIX.md`]\(docs/BPSIM_CONSOLE_WARNINGS_FIX.md\) — 控制台黄/红警告清理。
+- [`BPSIM_UPX_PACK.md`]\(docs/BPSIM_UPX_PACK.md\) — UPX 压缩实测与结论。
 
 **模组与其他**
 
-- [`BPSIM_MODDING.md`](BPSIM_MODDING.md) — **Mod 系统规范**：`Mod.xml` 字段、`Modding.xml` 配置、`ModEntryPoint` 钩子、静态扫描规则、GUID 与存档绑定、迁移与已知限制。
-- [`BEPINEX_MODDING.md`](BEPINEX_MODDING.md) — BepInEx 通道移除说明与迁移指引（旧文档已废弃）。
-- [`UI_APPROACH_COMPARISON.md`](UI_APPROACH_COMPARISON.md) — RPG Maker U2U Demo 与 BPSim UI 方式对比。
+- [`BPSIM_MODDING.md`]\(docs/BPSIM_MODDING.md\) — **Mod 系统规范**：`Mod.xml` 字段、`Modding.xml` 配置、`ModEntryPoint` 钩子、静态扫描规则、GUID 与存档绑定、迁移与已知限制。
+- [`BEPINEX_MODDING.md`]\(docs/BEPINEX_MODDING.md\) — BepInEx 通道移除说明与迁移指引（旧文档已废弃）。
+- [`UI_APPROACH_COMPARISON.md`]\(docs/UI_APPROACH_COMPARISON.md\) — RPG Maker U2U Demo 与 BPSim UI 方式对比。
 
 **协作规范**
 
 - [`.agents/skills/premise-gate/SKILL.md`](.agents/skills/premise-gate/SKILL.md) — premise-gate：来源不可信（反编译产物、遗留二进制、无文档 SDK）时先判这个任务现在能不能开工，再谈怎么写、怎么记；每段代码必须落进台账 / plan / 仪器 / 垃圾桶四条归宿之一。
   [`references/claims.md`](.agents/skills/premise-gate/references/claims.md) 是台账写法的口径，[`references/instruments.md`](.agents/skills/premise-gate/references/instruments.md) 是仪器自证清单，[`references/lessons.md`](.agents/skills/premise-gate/references/lessons.md) 是个案库，[`references/difficulty.md`](.agents/skills/premise-gate/references/difficulty.md) 是选任务口径，[`scripts/append-only-check.sh`](.agents/skills/premise-gate/scripts/append-only-check.sh) 守台账只增不减。
-- [`bpsim_weekly.txt`](bpsim_weekly.txt) — 2023.0.1 / 0.2 的技术测试与周报（ECS 渲染、Havok、10 万铁框 100 ms 内加载、安卓锁 60 fps）。
+- [`bpsim_weekly.txt`]\(docs/bpsim_weekly.txt\) — 2023.0.1 / 0.2 的技术测试与周报（ECS 渲染、Havok、10 万铁框 100 ms 内加载、安卓锁 60 fps）。
 - [`Brand/README.md`](Brand/README.md) — bpsimF wordmark 的设计说明（字母 b 里雕出小猪、海面与琥珀色）。
 
 ## 许可

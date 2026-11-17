@@ -158,6 +158,18 @@ InitTestScene*.unity*
 # SKILL.md + references/ + scripts/ are the tracked discovery-ledger skill.
 /.workbuddy-ai/
 /.dsh-file-claim.lock
+# 反编译 dump 与一次性探针（.il/.exe/types.txt），工具在 Tools/ 下，产物不进仓库。
+/_work/
+# 仅供截图/取色用的临时 MonoBehaviour；属于本地调试脚手架，不是游戏资源。
+/Assets/DshTemp/
+/Assets/DshTemp.meta
+# 认领写冲突时留下的待合并描述文件（本地状态，不是资源）。
+*.dshpending
+*.dshpending.meta
+
+
+# 散落在仓库根目录的单关存档（测试用存档统一放 savefile/）。
+/Level_Sandbox_02_1
 
 # One-off prefab backup taken before the uGUI/TMP package migration; regenerable
 # from git history (see Tools/BPSim/ui-plugin-migration.md)

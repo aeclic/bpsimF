@@ -1,5 +1,17 @@
 # BPSIM_ANDROID_BUILD_FIX — 安卓打不开 & 安卓打包过慢
 
+## 2026-11-07：Build Settings 卡在 Android SDK 检测
+
+本次现场停在 `Detecting Android SDK` 超过 87 分钟。`sdkmanager --list` 的 Java 主线程卡在远程仓库的 TLS 握手，尚未进入游戏编译。旧版后处理 Shader 剥离修复已存在，不能解释本次阻塞。
+
+新增 `Assets/Editor/Bpsim/AndroidBuildEnvironment.cs`：在 Unity 标准 `Build Settings → Build / Build And Run` 处理器外层，临时为 SDK 管理器设置连接、读取各 3000 ms 的网络超时，构建返回或异常时恢复原 `SDKMANAGER_OPTS`。原有 Android 菜单/批处理入口使用同一作用域。它不会修改共享 SDK、系统环境变量或 Gradle JVM 参数。构建前应先切换到 Android 平台并等待编译完成。
+
+项目及 Android 菜单固定使用现有 API 33，避免 Auto 触发选择/下载其他平台；**仅固定 API 无法解决这版 Unity 的联网列表检查**。另修复 UniWebView 对 Gradle 结构节点的识别，防止每次增量构建重复追加 Kotlin `resolutionStrategy`。
+
+实际从标准 Build Settings 点击 Build、保存 APK 后构建成功：SDK 检测 **74.255 秒**，Gradle **74.742 秒**，全程 **237.2 秒**。产物 `C:/Users/aecli/Downloads/bpsim1106-1.apk`（119555614 字节），ZIP CRC 与 APK v1/v2 签名校验通过。当前网络下两个独立 SDK 探测为 19.84 / 26.194 秒；3 秒是每次连接/读取的超时，整个 SDK 检查会访问多个仓库，不能理解为总共 3 秒。
+
+记录：`Logs/AndroidBuild/build-settings-verified.json` 与同名 `.log`；定位证据 `Logs/AndroidBuild/sdkmanager-stalled-stack.txt`。以下保留的是 2026-10-26 的旧问题与修复记录。
+
 > 2026-10-26。两个问题一起修：
 > 1. **前代项目（bpsim 2023.0.2，APK `bpsim_2023.0.2_android.apk`）在安卓设备上无法正常打开**。
 > 2. **安卓打包速度过慢**（本工程 bpsim-main 的 Android 构建）。
