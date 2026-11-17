@@ -12,7 +12,7 @@ namespace Bpsim.Parts
 	/// <see cref="PartFreeTransform" /> 的自由偏移、连续角与缩放合成进 <see cref="LocalTransform" />。
 	/// 缩放写到根实体的 <see cref="PostTransformScale" />：部件 prefab 根节点自身缩放都是 1，
 	/// 所以覆盖它不会破坏美术层级（视觉缩放都在子物体上）。
-	/// 模拟中（<c>IsSimulating</c>）不跑：物理系统接管 LocalTransform，自由变换只属于建造期。
+	/// 模拟中不逐帧重写：入场时 PartSimulator 使用同一合成函数初始化，之后由物理系统接管。
 	/// </summary>
 	[UpdateAfter(typeof(PartTransformSystem))]
 	[UpdateBefore(typeof(ParentSystem))]
@@ -41,19 +41,10 @@ namespace Bpsim.Parts
 				NativeArray<PartBuildLayer> layers = hasLayer ? chunk.GetNativeArray(ref LayerHandle) : default(NativeArray<PartBuildLayer>);
 				for (int i = 0; i < chunk.Count; i++)
 				{
-					PartFreeTransform free = PartFreeTransform.Sanitize(freeTransforms[i]);
+					PartFreeTransform free = freeTransforms[i];
 					int layer = hasLayer ? PartBuildLayer.Clamp(layers[i].Value) : PartBuildLayer.MinLayer;
-					LocalTransform local = localTransforms[i];
-					local.Position += new float3(free.Offset.x, free.Offset.y, -((float)(layer - PartBuildLayer.MinLayer) * PartBuildLayer.DepthStep));
-					if (free.RotationDegrees != 0f)
-					{
-						local.Rotation = math.mul(local.Rotation, quaternion.RotateZ(math.radians(free.RotationDegrees)));
-					}
-					localTransforms[i] = local;
-					postScales[i] = new PostTransformScale
-					{
-						Value = float3x3.Scale(free.Scale.x, free.Scale.y, 1f)
-					};
+					localTransforms[i] = PartFreeTransform.Compose(localTransforms[i], in free, layer);
+					postScales[i] = PartFreeTransform.VisualScale(in free);
 				}
 			}
 		}

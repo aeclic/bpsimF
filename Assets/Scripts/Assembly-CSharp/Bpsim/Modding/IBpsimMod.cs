@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Bpsim.Modding
 {
@@ -33,6 +34,41 @@ namespace Bpsim.Modding
 
 		/// <summary>宿主 UI 服务（加菜单按钮、开面板）。</summary>
 		IModUI Ui { get; }
+
+		/// <summary>本 Mod 自己的可调设置（在 <c>Mod.xml</c> 的 &lt;Settings&gt; 里声明）。</summary>
+		IModSettings Settings { get; }
+	}
+
+	/// <summary>
+	/// 宿主为单个 Mod 持久化的可调设置。取值/写值都会立即落到
+	/// <c>Mods/ModSettings.xml</c>，面板（Mod 管理器里的「设置」按钮）改的就是这份数据。
+	/// </summary>
+	/// <remarks>
+	/// Mod 只在 <c>Mod.xml</c> 里声明可调项即可获得 UI，不需要写代码；
+	/// 需要自己读值时用本接口，未知键返回传入的默认值而不是抛异常。
+	/// </remarks>
+	public interface IModSettings
+	{
+		/// <summary>本 Mod 声明过的全部设置项。</summary>
+		IReadOnlyList<ModSettingSpec> Specs { get; }
+
+		/// <summary>读开关；未声明/未设置时返回 <paramref name="fallback"/>。</summary>
+		bool GetBool(string key, bool fallback = false);
+
+		/// <summary>读整数。</summary>
+		int GetInt(string key, int fallback = 0);
+
+		/// <summary>读浮点数。</summary>
+		float GetFloat(string key, float fallback = 0f);
+
+		/// <summary>读文本。</summary>
+		string GetString(string key, string fallback = null);
+
+		/// <summary>写值（会按清单声明的类型归一化并落盘）。</summary>
+		void Set(string key, string value);
+
+		/// <summary>某项设置被改动时触发（参数：设置键）。</summary>
+		event Action<string> Changed;
 	}
 
 	/// <summary>Mod 日志（带 Mod id 前缀，落到 Unity Console 与 mod.log）。</summary>

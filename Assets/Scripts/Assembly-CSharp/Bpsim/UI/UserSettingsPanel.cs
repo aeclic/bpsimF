@@ -111,9 +111,21 @@ namespace Bpsim.UI
 
 		private DependencyProxy<DebugConsoleSettings> m_debugConsoleProxy;
 
+		// ---- 界面配色 ----
+
+		private readonly List<GameObject> m_swatchMarks = new List<GameObject>();
+
+		private readonly List<string> m_swatchIds = new List<string>();
+
 		private void Start()
 		{
 			Bind();
+			UiTheme.Changed += OnThemeChanged;
+		}
+
+		private void OnThemeChanged(UiPalette palette)
+		{
+			RefreshSwatchSelection();
 		}
 
 		private void Update()
@@ -139,6 +151,8 @@ namespace Bpsim.UI
 			BindCustomBackground();
 			BindModSection();
 			BindDebugConsoleSection();
+			BuildPalettePicker();
+			UiThemeApplicator.ApplyTo(gameObject);
 		}
 
 		/// <summary>
@@ -226,6 +240,12 @@ namespace Bpsim.UI
 					"BuildFactionOutlines" => "建造界面阵营描边",
 					"RuntimeFactionOutlines" => "运行时阵营描边（默认关闭）",
 					"FactionOutlineWidth" => "阵营描边宽度（1–8 像素）",
+					"BpleLightSystem" => "BPLE 实体光（光柱 / 光盾 / 光箱）",
+					"BpleSpecialUmbrellas" => "BPLE 特殊雨伞功能",
+					"BpleSeparatedLightButtons" => "灯光按方向和连通块分组",
+					"BpleDarkness" => "BPLE 夜景照明与夜视",
+					"BpleLightReaction" => "实体光反作用力（实验功能）",
+					"BpleLightTriggerExplosions" => "实体光触发爆炸（实验功能）",
 					"TNTExplosionForce" => "TNT 爆炸力度",
 					"TNTExplosionRadius" => "TNT 爆炸范围倍率",
 					"AlienTNTExplosionForce" => "外星 TNT 爆炸力度",
@@ -246,6 +266,169 @@ namespace Bpsim.UI
 			UserSettings.Instance.Reset();
 			m_backgroundFillApplied = false;
 			UserSettings.Save();
+			UiTheme.Set(UiTheme.DefaultId);
+			RefreshSwatchSelection();
+		}
+
+		// ============================================================================================
+		// 界面配色分组：一排色板（Swatch），点击即切换全局配色并持久化。
+		// 结构照 taffy：64x48 色块 + 顶部两条 8px 主/副色带 + 右上角 ✓ 选中标记。
+		// ============================================================================================
+
+		private void BuildPalettePicker()
+		{
+			if (m_content == null || m_content.transform.Find("PalettePicker") != null)
+			{
+				return;
+			}
+			AddSectionHeader("界面配色");
+			GameObject picker = new GameObject("PalettePicker", typeof(RectTransform),
+				typeof(GridLayoutGroup), typeof(LayoutElement));
+			picker.transform.SetParent(m_content.transform, worldPositionStays: false);
+			RectTransform rect = picker.GetComponent<RectTransform>();
+			rect.anchorMin = new Vector2(0f, 1f);
+			rect.anchorMax = new Vector2(0f, 1f);
+			rect.pivot = new Vector2(0.5f, 0.5f);
+			rect.sizeDelta = new Vector2(900f, 146f);
+			GridLayoutGroup layout = picker.GetComponent<GridLayoutGroup>();
+			layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+			layout.constraintCount = 5;
+			layout.cellSize = new Vector2(108f, 60f);
+			layout.spacing = new Vector2(10f, 10f);
+			layout.childAlignment = TextAnchor.MiddleLeft;
+			layout.padding = new RectOffset(8, 8, 8, 8);
+			LayoutElement element = picker.GetComponent<LayoutElement>();
+			element.minHeight = 146f;
+			element.preferredHeight = 146f;
+			element.minWidth = 0f;
+			element.preferredWidth = 900f;
+			Font font = null;
+			if (m_toggleTemplate != null)
+			{
+				Text templateText = m_toggleTemplate.transform.Find("Name")?.GetComponent<Text>();
+				if (templateText != null)
+				{
+					font = templateText.font;
+				}
+			}
+			m_swatchMarks.Clear();
+			m_swatchIds.Clear();
+			foreach (UiPalette palette in UiTheme.Palettes)
+			{
+				CreateSwatch(picker.transform, palette, font);
+			}
+			m_settingItems.Add(picker);
+			Button resetPalette = AddButton("恢复默认配色", delegate
+			{
+				UiTheme.Set(UiTheme.DefaultId);
+				RefreshSwatchSelection();
+			});
+			resetPalette.name = "ResetPaletteButton";
+			RefreshSwatchSelection();
+		}
+
+		private void CreateSwatch(Transform parent, UiPalette palette, Font font)
+		{
+			GameObject swatch = new GameObject("Swatch_" + palette.Id, typeof(RectTransform),
+				typeof(Image), typeof(Button), typeof(LayoutElement));
+			swatch.transform.SetParent(parent, worldPositionStays: false);
+			RectTransform rect = swatch.GetComponent<RectTransform>();
+			rect.sizeDelta = new Vector2(108f, 60f);
+			LayoutElement element = swatch.GetComponent<LayoutElement>();
+			element.minWidth = 108f;
+			element.preferredWidth = 108f;
+			element.minHeight = 60f;
+			Image image = swatch.GetComponent<Image>();
+			image.color = palette.Panel;
+			Button button = swatch.GetComponent<Button>();
+			button.targetGraphic = image;
+			ColorBlock colors = button.colors;
+			colors.normalColor = colors.selectedColor = Color.white;
+			colors.highlightedColor = new Color(1.16f, 1.16f, 1.16f, 1f);
+			colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+			button.colors = colors;
+			Outline outline = swatch.AddComponent<Outline>();
+			outline.effectColor = palette.AccentBright;
+			outline.effectDistance = new Vector2(1f, -1f);
+			outline.enabled = false;
+			string id = palette.Id;
+			button.onClick.AddListener(delegate
+			{
+				UiTheme.Set(id);
+				RefreshSwatchSelection();
+			});
+			m_swatchIds.Add(palette.Id);
+			m_swatchMarks.Add(CreateSelectedMark(swatch.transform, font));
+			CreateSwatchBand(swatch.transform, palette.Accent, 0f);
+			CreateSwatchBand(swatch.transform, palette.Second, 0.5f);
+			GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
+			labelGo.transform.SetParent(swatch.transform, worldPositionStays: false);
+			RectTransform labelRect = labelGo.GetComponent<RectTransform>();
+			labelRect.anchorMin = Vector2.zero;
+			labelRect.anchorMax = Vector2.one;
+			labelRect.offsetMin = new Vector2(2f, 2f);
+			labelRect.offsetMax = new Vector2(-2f, -2f);
+			Text label = labelGo.GetComponent<Text>();
+			label.font = Bpsim.Mods.ModUiKit.CjkFont ?? font;
+			label.text = palette.Name;
+			label.fontSize = 16;
+			label.alignment = TextAnchor.MiddleCenter;
+			label.color = palette.Text;
+			label.raycastTarget = false;
+		}
+
+		private static void CreateSwatchBand(Transform parent, Color color, float anchorMinX)
+		{
+			GameObject band = new GameObject("Band", typeof(RectTransform), typeof(Image));
+			band.transform.SetParent(parent, worldPositionStays: false);
+			RectTransform rect = band.GetComponent<RectTransform>();
+			rect.anchorMin = new Vector2(anchorMinX, 1f);
+			rect.anchorMax = new Vector2(anchorMinX + 0.5f, 1f);
+			rect.pivot = new Vector2(0f, 1f);
+			rect.sizeDelta = new Vector2(0f, 8f);
+			rect.anchoredPosition = Vector2.zero;
+			Image image = band.GetComponent<Image>();
+			image.color = color;
+			image.raycastTarget = false;
+		}
+
+		private static GameObject CreateSelectedMark(Transform parent, Font font)
+		{
+			GameObject mark = new GameObject("SelectedMark", typeof(RectTransform), typeof(Text), typeof(Shadow));
+			mark.transform.SetParent(parent, worldPositionStays: false);
+			RectTransform rect = mark.GetComponent<RectTransform>();
+			rect.anchorMin = new Vector2(1f, 1f);
+			rect.anchorMax = new Vector2(1f, 1f);
+			rect.pivot = new Vector2(1f, 1f);
+			rect.sizeDelta = new Vector2(20f, 20f);
+			rect.anchoredPosition = new Vector2(-2f, -2f);
+			Text text = mark.GetComponent<Text>();
+			text.font = font != null ? font : Bpsim.Mods.ModUiKit.CjkFont;
+			text.text = "✓";
+			text.fontSize = 16;
+			text.fontStyle = FontStyle.Bold;
+			text.alignment = TextAnchor.MiddleCenter;
+			text.color = new Color(1f, 1f, 1f, 0.95f);
+			text.raycastTarget = false;
+			Shadow shadow = mark.GetComponent<Shadow>();
+			shadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+			shadow.effectDistance = new Vector2(1f, -1f);
+			mark.SetActive(value: false);
+			return mark;
+		}
+
+		private void RefreshSwatchSelection()
+		{
+			string currentId = UiTheme.Current.Id;
+			for (int i = 0; i < m_swatchMarks.Count; i++)
+			{
+				if (m_swatchMarks[i] != null)
+				{
+					m_swatchMarks[i].SetActive(m_swatchIds[i] == currentId);
+					Outline outline = m_swatchMarks[i].transform.parent.GetComponent<Outline>();
+					if (outline != null) outline.enabled = m_swatchIds[i] == currentId;
+				}
+			}
 		}
 
 		// ============================================================================================
@@ -689,7 +872,7 @@ namespace Bpsim.UI
 			sliderRect.offsetMin = Vector2.zero;
 			sliderRect.offsetMax = Vector2.zero;
 			Image background = sliderObject.GetComponent<Image>();
-			background.color = new Color(1f, 1f, 1f, 0.16f);
+			background.color = UiTheme.Current.SliderTrack;
 			background.raycastTarget = true;
 
 			GameObject fillArea = new GameObject("Fill Area", typeof(RectTransform));
@@ -707,7 +890,7 @@ namespace Bpsim.UI
 			fillRect.offsetMin = Vector2.zero;
 			fillRect.offsetMax = Vector2.zero;
 			Image fillImage = fill.GetComponent<Image>();
-			fillImage.color = new Color(0.45f, 0.75f, 1f, 0.9f);
+			fillImage.color = UiTheme.Current.SliderFill;
 			fillImage.raycastTarget = false;
 
 			Slider slider = sliderObject.AddComponent<Slider>();
@@ -948,6 +1131,7 @@ namespace Bpsim.UI
 
 		private void OnDestroy()
 		{
+			UiTheme.Changed -= OnThemeChanged;
 			m_simulationSettingsProxy.Source.Unregister();
 			m_simulationSettingsProxy.Unregister();
 			if (m_interactionSettingsProxy != null)

@@ -1,0 +1,291 @@
+{
+  "label": "capacity-b",
+  "runId": "6b940c24ba72428b98c5e522ea50460a",
+  "nativeSha256": "a6172b234bdc2fb5687ed75c5c15aa7b68603d4b8d7c948d688ea3ec1b3ccdc6",
+  "contactSize": 36,
+  "cases": [
+    {
+      "pairs": 0,
+      "contacts": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "capacities": [
+        {
+          "capacity": 1,
+          "count": 0
+        },
+        {
+          "capacity": 7,
+          "count": 0
+        },
+        {
+          "capacity": 16,
+          "count": 0
+        },
+        {
+          "capacity": 32,
+          "count": 0
+        },
+        {
+          "capacity": 64,
+          "count": 0
+        },
+        {
+          "capacity": 65,
+          "count": 0
+        },
+        {
+          "capacity": 128,
+          "count": 0
+        },
+        {
+          "capacity": 129,
+          "count": 0
+        },
+        {
+          "capacity": 256,
+          "count": 0
+        }
+      ],
+      "adaptiveCapacity": 64,
+      "adaptiveReads": 1,
+      "fullCountersMeanUs": 0.3479,
+      "collectorMeanUs": 1.9961
+    },
+    {
+      "pairs": 1,
+      "contacts": 1,
+      "sha256": "7cdaf4baded8e79259750b88225b9c3f21dee28b90451f9e310eec59b4521e9d",
+      "capacities": [
+        {
+          "capacity": 1,
+          "count": 1
+        },
+        {
+          "capacity": 7,
+          "count": 1
+        },
+        {
+          "capacity": 16,
+          "count": 1
+        },
+        {
+          "capacity": 32,
+          "count": 1
+        },
+        {
+          "capacity": 64,
+          "count": 1
+        },
+        {
+          "capacity": 65,
+          "count": 1
+        },
+        {
+          "capacity": 128,
+          "count": 1
+        },
+        {
+          "capacity": 129,
+          "count": 1
+        },
+        {
+          "capacity": 256,
+          "count": 1
+        }
+      ],
+      "adaptiveCapacity": 64,
+      "adaptiveReads": 1,
+      "fullCountersMeanUs": 0.36915,
+      "collectorMeanUs": 0.48645
+    },
+    {
+      "pairs": 24,
+      "contacts": 24,
+      "sha256": "8743981d050cd7e96d0fe4668b0ca5b7ac1c440adfc3890ef72ab79a9262576d",
+      "capacities": [
+        {
+          "capacity": 1,
+          "count": 1
+        },
+        {
+          "capacity": 7,
+          "count": 7
+        },
+        {
+          "capacity": 16,
+          "count": 16
+        },
+        {
+          "capacity": 32,
+          "count": 24
+        },
+        {
+          "capacity": 64,
+          "count": 24
+        },
+        {
+          "capacity": 65,
+          "count": 24
+        },
+        {
+          "capacity": 128,
+          "count": 24
+        },
+        {
+          "capacity": 129,
+          "count": 24
+        },
+        {
+          "capacity": 256,
+          "count": 24
+        }
+      ],
+      "adaptiveCapacity": 64,
+      "adaptiveReads": 1,
+      "fullCountersMeanUs": 0.3649,
+      "collectorMeanUs": 0.54725
+    },
+    {
+      "pairs": 64,
+      "contacts": 64,
+      "sha256": "cd8b62cd898a61edd203291d35fd15f7b5319925daa28c896cbcbd315e28c8df",
+      "capacities": [
+        {
+          "capacity": 1,
+          "count": 1
+        },
+        {
+          "capacity": 7,
+          "count": 7
+        },
+        {
+          "capacity": 16,
+          "count": 16
+        },
+        {
+          "capacity": 32,
+          "count": 32
+        },
+        {
+          "capacity": 64,
+          "count": 64
+        },
+        {
+          "capacity": 65,
+          "count": 64
+        },
+        {
+          "capacity": 128,
+          "count": 64
+        },
+        {
+          "capacity": 129,
+          "count": 64
+        },
+        {
+          "capacity": 256,
+          "count": 64
+        }
+      ],
+      "adaptiveCapacity": 128,
+      "adaptiveReads": 2,
+      "fullCountersMeanUs": 0.3927,
+      "collectorMeanUs": 0.66995
+    },
+    {
+      "pairs": 65,
+      "contacts": 65,
+      "sha256": "5627e1e2b2941d4d4432f66b41b98cf2b747095ea03f03df8799d4268f515c8b",
+      "capacities": [
+        {
+          "capacity": 1,
+          "count": 1
+        },
+        {
+          "capacity": 7,
+          "count": 7
+        },
+        {
+          "capacity": 16,
+          "count": 16
+        },
+        {
+          "capacity": 32,
+          "count": 32
+        },
+        {
+          "capacity": 64,
+          "count": 64
+        },
+        {
+          "capacity": 65,
+          "count": 65
+        },
+        {
+          "capacity": 128,
+          "count": 65
+        },
+        {
+          "capacity": 129,
+          "count": 65
+        },
+        {
+          "capacity": 256,
+          "count": 65
+        }
+      ],
+      "adaptiveCapacity": 128,
+      "adaptiveReads": 2,
+      "fullCountersMeanUs": 0.38555,
+      "collectorMeanUs": 0.66775
+    },
+    {
+      "pairs": 128,
+      "contacts": 128,
+      "sha256": "5cd6a0c2fc02f696474f6be42142fa01181d36bd59e79c671cc3cfe6583bd36a",
+      "capacities": [
+        {
+          "capacity": 1,
+          "count": 1
+        },
+        {
+          "capacity": 7,
+          "count": 7
+        },
+        {
+          "capacity": 16,
+          "count": 16
+        },
+        {
+          "capacity": 32,
+          "count": 32
+        },
+        {
+          "capacity": 64,
+          "count": 64
+        },
+        {
+          "capacity": 65,
+          "count": 65
+        },
+        {
+          "capacity": 128,
+          "count": 128
+        },
+        {
+          "capacity": 129,
+          "count": 128
+        },
+        {
+          "capacity": 256,
+          "count": 128
+        }
+      ],
+      "adaptiveCapacity": 256,
+      "adaptiveReads": 3,
+      "fullCountersMeanUs": 0.44139999999999996,
+      "collectorMeanUs": 0.92025
+    }
+  ],
+  "failures": []
+}

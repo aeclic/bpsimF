@@ -34,7 +34,7 @@ namespace Bpsim.EditorTools
             List<string> references = host.compiledAssemblyReferences.Concat(host.assemblyReferences.Select(assembly => assembly.outputPath))
                 .Append(host.outputPath).Select(path => Path.IsPathRooted(path) ? path : Path.Combine(project, path))
                 .Where(File.Exists).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            string output = Path.Combine(mod, "BpsimLevelEditor.dll");
+            string output = Path.Combine(mod, "BpsimLevelEditor_v050.dll");
             string response = Path.Combine(work, "mod-compile.rsp");
             Func<string, string> quote = path => "\"" + Path.GetFullPath(path).Replace('\\', '/') + "\"";
             StringBuilder options = new StringBuilder("-target:library\n-langversion:latest\n-nostdlib+\n-noconfig\n");
@@ -150,6 +150,8 @@ namespace Bpsim.EditorTools
             string directory = Path.Combine(project, "Builds", "Mods");
             Directory.CreateDirectory(directory);
             string version = System.Xml.Linq.XDocument.Load(Path.Combine(mod, "Mod.xml")).Root.Element("Version").Value;
+            string assemblyPath = System.Xml.Linq.XDocument.Load(Path.Combine(mod, "Mod.xml"))
+                .Root.Element("Assemblies").Element("Assembly").Attribute("path").Value;
             string output = Path.Combine(directory, "BpsimLevelEditor-" + version + ".zip");
             using (FileStream file = new FileStream(output, FileMode.Create, FileAccess.Write))
             using (ZipArchive zip = new ZipArchive(file, ZipArchiveMode.Create))
@@ -158,6 +160,9 @@ namespace Bpsim.EditorTools
                 {
                     if (path.EndsWith(".dshclaim", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)) continue;
                     string relative = path.Substring(mod.Length + 1).Replace('\\', '/');
+                    if (String.Equals(Path.GetDirectoryName(path), mod, StringComparison.OrdinalIgnoreCase) &&
+                        path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) &&
+                        !String.Equals(Path.GetFileName(path), Path.GetFileName(assemblyPath), StringComparison.OrdinalIgnoreCase)) continue;
                     ZipArchiveEntry entry = zip.CreateEntry(relative, CompressionLevel.Optimal);
                     using (Stream stream = entry.Open())
                     using (FileStream source = File.OpenRead(path)) source.CopyTo(stream);

@@ -129,17 +129,24 @@ namespace Bpsim.Parts
 			}
 			int target = PartBuildLayer.Clamp(layer);
 			int oldLayer = GetPartLayer(part);
-			if (target > m_layerCount)
-			{
-				SetLayerCount(target);
-			}
 			if (oldLayer == target)
 			{
 				return true;
 			}
 			PartTransform transform = EntityManager.GetComponentData<PartTransform>(part);
 			PartTypeInfo typeInfo = EntityManager.GetComponentData<PartTypeValue>(part).BaseValue;
-			// 旧层：把该件从所在格的表项里摘掉。
+			// 新层必须先完整检查锚点和大型部件 footprint，再修改旧层；失败时
+			// 不应留下半个搬运结果，也不应无缘无故扩展 LayerCount。
+			m_partMap.TryGet(transform.X, transform.Y, target, out PartGridInfo targetGrid);
+			if (!CanSetPartLayerAt(transform.X, transform.Y, target, typeInfo, targetGrid))
+			{
+				return false;
+			}
+			if (target > m_layerCount)
+			{
+				SetLayerCount(target);
+			}
+			// 目标检查通过后才从旧层摘除，保证失败路径完全无副作用。
 			PartGridInfo oldGrid = default(PartGridInfo);
 			if (m_partMap.TryGet(transform.X, transform.Y, oldLayer, out PartGridInfo existing))
 			{
@@ -154,14 +161,7 @@ namespace Bpsim.Parts
 				}
 				SetPartGridAt(transform.X, transform.Y, oldGrid, oldLayer);
 			}
-			// 新层：同格已有该类的件时不覆盖，回滚并失败。
-			m_partMap.TryGet(transform.X, transform.Y, target, out PartGridInfo targetGrid);
 			bool isContainer = BasePart.IsContainer(typeInfo);
-			if (isContainer ? targetGrid.HasPartContainer : targetGrid.HasPart)
-			{
-				SetPartGridAt(transform.X, transform.Y, oldGrid, oldLayer);
-				return false;
-			}
 			if (BasePart.IsLarge(typeInfo))
 			{
 				SetLargePartGridAt(transform.X, transform.Y, -1, part, oldLayer);
@@ -183,6 +183,35 @@ namespace Bpsim.Parts
 			UpdateNeighbours(transform.X, transform.Y, oldLayer);
 			UpdateNeighbours(transform.X, transform.Y, target);
 			SetDirty();
+			return true;
+		}
+
+		private bool CanSetPartLayerAt(int x, int y, int layer, PartTypeInfo typeInfo, PartGridInfo targetGrid)
+		{
+			bool isContainer = BasePart.IsContainer(typeInfo);
+			if (isContainer ? targetGrid.HasPartContainer : targetGrid.HasPart)
+			{
+				return false;
+			}
+			if (targetGrid.Occupied > 0 && !BasePart.IsStructural(typeInfo))
+			{
+				return false;
+			}
+			if (!BasePart.IsLarge(typeInfo))
+			{
+				return true;
+			}
+			RectInt gridRect = BasePart.GetGridRect(typeInfo);
+			for (int i = gridRect.xMin; i < gridRect.xMax; i++)
+			{
+				for (int j = gridRect.yMin; j < gridRect.yMax; j++)
+				{
+					if ((i != 0 || j != 0) && m_partMap.TryGet(x + i, y + j, layer, out PartGridInfo occupied) && occupied.Occupied > 0)
+					{
+						return false;
+					}
+				}
+			}
 			return true;
 		}
 

@@ -104,7 +104,10 @@ def main() -> None:
     html = download(PAGES + "/badpiggies-editor/").decode("utf-8")
     if MAIN_JS not in html or MAIN_CSS not in html:
         raise RuntimeError("Published editor entry points do not match the pinned deployment.")
-    html = html.replace("</head>", '<base href="/badpiggies-editor/">\n<link rel="stylesheet" href="/bpsim/editor.css">\n</head>', 1)
+    html = html.replace("</head>",
+        '<base href="/badpiggies-editor/">\n'
+        '<link rel="stylesheet" href="/bpsim/editor.css">\n'
+        '<link rel="stylesheet" href="/bpsim/rc2-mode.css">\n</head>', 1)
     marker = '<script type="module" async src="' + MAIN_JS + '"></script>'
     if marker not in html:
         raise RuntimeError("Cannot locate the upstream module bootstrap")
@@ -112,7 +115,11 @@ def main() -> None:
         '<script src="/bpsim/level-binary.js"></script>\n'
         '<script src="/bpsim/ultimate-water-renderer.js"></script>\n'
         '<script src="/bpsim/water-canvas.js"></script>\n'
-        '<script src="/bpsim/editor-adapter.js"></script>\n' + marker, 1)
+        '<script src="/bpsim/editor-adapter.js"></script>\n'
+        '<script src="/bpsim/rc2-core.js"></script>\n'
+        '<script src="/bpsim/rc2-tools.js"></script>\n'
+        '<script src="/bpsim/renderer.js"></script>\n'
+        '<script src="/bpsim/rc2-mode.js"></script>\n' + marker, 1)
     (web / "index.html").write_text(html, encoding="utf-8", newline="\n")
     deployment_index = web / "badpiggies-editor" / "index.html"
     deployment_index.parent.mkdir(parents=True, exist_ok=True)

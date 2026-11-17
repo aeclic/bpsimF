@@ -11,32 +11,103 @@ namespace Bpsim.Parts.Simulation
 	{
 		public static BlobAssetReference<Collider> CreateBox(float3 center, float3 size)
 		{
+			return CreateBox(center, size, Material.Default);
+		}
+
+		public static BlobAssetReference<Collider> CreateBox(float3 center, float3 size, Material material)
+		{
 			return BoxCollider.Create(new BoxGeometry
 			{
 				Center = center,
 				Orientation = quaternion.identity,
 				Size = size,
 				BevelRadius = math.min(ConvexHullGenerationParameters.Default.BevelRadius, 0.5f * math.cmin(size))
-			});
+			}, CollisionFilter.Default, material);
 		}
 
 		public static BlobAssetReference<Collider> CreateSphere(float3 center, float radius)
+		{
+			return CreateSphere(center, radius, Material.Default);
+		}
+
+		public static BlobAssetReference<Collider> CreateSphere(float3 center, float radius, Material material)
 		{
 			return SphereCollider.Create(new SphereGeometry
 			{
 				Center = center,
 				Radius = radius
-			});
+			}, CollisionFilter.Default, material);
 		}
 
 		public static BlobAssetReference<Collider> CreateCapsule(float3 point0, float3 point1, float radius)
+		{
+			return CreateCapsule(point0, point1, radius, Material.Default);
+		}
+
+		public static BlobAssetReference<Collider> CreateCapsule(float3 point0, float3 point1, float radius, Material material)
 		{
 			return CapsuleCollider.Create(new CapsuleGeometry
 			{
 				Vertex0 = point0,
 				Vertex1 = point1,
 				Radius = radius
-			});
+			}, CollisionFilter.Default, material);
+		}
+
+		/// <summary>Create a leaf collider with its authored material, before compound construction.</summary>
+		public static BlobAssetReference<Collider> CreateCollider(UnityEngine.Collider source)
+		{
+			Material material = ConvertMaterial(source.sharedMaterial);
+			if (source is UnityEngine.BoxCollider box)
+			{
+				return CreateBox(box.center, box.size, material);
+			}
+			if (source is UnityEngine.SphereCollider sphere)
+			{
+				return CreateSphere(sphere.center, sphere.radius, material);
+			}
+			if (source is UnityEngine.CapsuleCollider capsule)
+			{
+				float3 offset = new float3(0f, .5f * capsule.height - capsule.radius, 0f);
+				return CreateCapsule((float3)capsule.center + offset, (float3)capsule.center - offset, capsule.radius, material);
+			}
+			throw new System.InvalidCastException();
+		}
+
+		/// <summary>Keep the template's tread/support material when creating ECS collider leaves.</summary>
+		/// <remarks>
+		/// DOTS has one friction coefficient, not separate static/dynamic coefficients, and no PhysX
+		/// Multiply combine mode. Minimum is the portable low-friction approximation for Multiply.
+		/// Average keeps DOTS' default GeometricMean: ArithmeticMean has a higher priority than even
+		/// Maximum in DOTS and would override a wheel's low-friction policy on an authored surface.
+		/// This preserves the BPLE tread coefficients, not exact PhysX material-pair semantics.
+		/// </remarks>
+		public static Material ConvertMaterial(UnityEngine.PhysicMaterial source)
+		{
+			Material material = Material.Default;
+			if (source == null)
+			{
+				return material;
+			}
+			material.Friction = source.dynamicFriction;
+			material.Restitution = source.bounciness;
+			material.FrictionCombinePolicy = ConvertCombinePolicy(source.frictionCombine);
+			material.RestitutionCombinePolicy = ConvertCombinePolicy(source.bounceCombine);
+			return material;
+		}
+
+		private static Material.CombinePolicy ConvertCombinePolicy(UnityEngine.PhysicMaterialCombine policy)
+		{
+			switch (policy)
+			{
+			case UnityEngine.PhysicMaterialCombine.Minimum:
+			case UnityEngine.PhysicMaterialCombine.Multiply:
+				return Material.CombinePolicy.Minimum;
+			case UnityEngine.PhysicMaterialCombine.Maximum:
+				return Material.CombinePolicy.Maximum;
+			default:
+				return Material.CombinePolicy.GeometricMean;
+			}
 		}
 
 		/// <summary>

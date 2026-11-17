@@ -243,6 +243,43 @@ namespace Bpsim.Modding
 			CatalogChanged?.Invoke();
 		}
 
+		/// <summary>
+		/// 由「关卡 Mod」在 <c>OnLoad</c> 里调用：把内置关卡数据根目录指向 Mod 自带的
+		/// <c>BpsimLevels</c> 目录。这样 <see cref="BuiltInLevels"/> / <see cref="ReadBuiltIn"/>
+		/// / LevelMenu / LevelEditor 全部照常工作，但数据物理上属于 Mod —— 不加载该 Mod
+		/// 时 <c>LevelCatalog.Root</c> 保持默认的 StreamingAssets 路径（那里已经没有关卡
+		/// 数据），因此游戏文件里不含任何关卡内容。
+		/// </summary>
+		/// <remarks>
+		/// 资源用 <see cref="ModHostResources.Own"/> 绑定到 owner：Mod 卸载/禁用时自动
+		/// 还原根目录、卸载当前关卡并刷新缓存，不留悬空数据。
+		/// </remarks>
+		public static IDisposable SetBuiltInRoot(ModEntryPoint owner, string absoluteRoot)
+		{
+			ModHostResources.CheckOwner(owner);
+			if (string.IsNullOrWhiteSpace(absoluteRoot))
+			{
+				throw new ArgumentNullException(nameof(absoluteRoot));
+			}
+			LevelCatalog.SetRoot(absoluteRoot);
+			Refresh();
+			return ModHostResources.Own(owner, new ModDisposableAction(() =>
+			{
+				if (LevelManager.Instance != null && LevelManager.Instance.HasLevel)
+				{
+					LevelManager.Instance.Unload();
+				}
+				LevelCatalog.SetRoot(null);
+				Refresh();
+			}));
+		}
+
+		/// <summary>打开内置关卡选择面板（供关卡 Mod 的入口按钮调用）。</summary>
+		public static void OpenLevelPicker()
+		{
+			LevelMenu.Open();
+		}
+
 		internal static void AppendEntries(List<LevelEntryJson> entries)
 		{
 			foreach (Catalog catalog in s_catalogs)

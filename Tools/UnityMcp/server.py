@@ -6,13 +6,15 @@ from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from pydantic import StrictInt, StrictStr
 
 from bridge import Bridge
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--project", default=str(Path(__file__).resolve().parents[2]))
-parser.add_argument("--bridge-url", default="http://127.0.0.1:8791")
+parser.add_argument("--bridge-url", default=None,
+                    help="Explicit loopback endpoint; otherwise discover this project's DshBridge instance")
 args = parser.parse_args()
 bridge = Bridge(args.project, args.bridge_url)
 mcp = FastMCP("bpsim-unity")
@@ -30,16 +32,35 @@ def unity_status() -> dict[str, Any]:
 @mcp.tool(annotations=query)
 def unity_read(
     method: Literal["hierarchy", "find", "get_components", "get_property", "read_file",
-                    "list_dir", "compile_status", "console", "playmode_state"],
+                    "list_dir", "compile_status", "console", "playmode_state", "profiler"],
     params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Query Unity without taking control. See unity://bpsim/guide for parameter examples.
 
     find: {name}; get_components: {target}; get_property: {target,component,path};
     read_file/list_dir: {path}; console/compile_status: {count}; hierarchy/playmode_state: {}.
+    profiler: {count, afterSequence, sessionId}; prefer unity_profiler for offline fallback.
     Never clear console logs. Busy requests fail promptly; retry queries only when Unity is stable.
     """
     return {"method": method, "result": bridge.read(method, params)}
+
+
+@mcp.tool(annotations=query)
+def unity_profiler(
+    count: StrictInt = 10,
+    after_sequence: StrictInt = 0,
+    session_id: StrictStr = "",
+    source: Literal["auto", "live", "log"] = "auto",
+) -> dict[str, Any]:
+    """Read Editor-only profiler summaries without taking control or changing Unity.
+
+    count: 1..120. First read returns recent samples; incremental reads use the returned
+    sessionId and nextSequence. Check cursorReset/historyTruncated/hasMore and metric availability.
+    auto prefers live Unity, falling back to bounded project-local JSONL while offline/busy.
+    log never contacts Unity. Persisted data is explicitly offline with sampleAgeSeconds.
+    Editor timings include Editor overhead/waits and are not a Player performance benchmark.
+    """
+    return bridge.profiler(count, after_sequence, session_id, source)
 
 
 @mcp.tool(annotations=control)

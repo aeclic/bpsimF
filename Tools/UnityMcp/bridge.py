@@ -10,10 +10,12 @@ import time
 import urllib.request
 from urllib.parse import urlsplit
 
+from profiler import read_profiler_log, validate_profiler_params
+
 
 READ_METHODS = frozenset({
     "hierarchy", "find", "get_components", "get_property", "read_file",
-    "list_dir", "compile_status", "console", "playmode_state",
+    "list_dir", "compile_status", "console", "playmode_state", "profiler",
 })
 WRITE_METHODS = frozenset({
     "create_primitive", "create_empty", "destroy", "set_transform",
@@ -27,9 +29,32 @@ class BridgeError(RuntimeError):
     pass
 
 
+def discover_bridge_url(project):
+    """Discover only this project's loopback endpoint; ping still verifies identity."""
+    default = "http://127.0.0.1:8791"
+    instance = project / "Temp" / "DshBridge" / "instance.json"
+    if not instance.resolve().is_relative_to(project):
+        return default
+    try:
+        if instance.stat().st_size > 16384:
+            return default
+        info = json.loads(instance.read_text(encoding="utf-8"))
+        identity = info.get("project")
+        port = info.get("port")
+        if (info.get("bridge") != "DshBridge" or not isinstance(identity, str)
+                or not Path(identity).is_absolute() or Path(identity).resolve() != project
+                or type(port) is not int or not 1 <= port <= 65535):
+            return default
+        return f"http://127.0.0.1:{port}"
+    except (OSError, ValueError, TypeError, AttributeError):
+        return default
+
+
 class Bridge:
-    def __init__(self, project, url="http://127.0.0.1:8791", runtime=None):
+    def __init__(self, project, url=None, runtime=None):
         self.project = Path(project).resolve()
+        self.auto_discover = url is None
+        url = discover_bridge_url(self.project) if self.auto_discover else url
         endpoint = urlsplit(url)
         if (endpoint.scheme != "http" or endpoint.hostname != "127.0.0.1"
                 or endpoint.path not in ("", "/") or endpoint.query
@@ -128,6 +153,8 @@ class Bridge:
         return result
 
     def ping(self):
+        if self.auto_discover:
+            self.url = discover_bridge_url(self.project)
         try:
             info = self.http_json("/ping")
         except Exception as exc:
@@ -222,6 +249,11 @@ class Bridge:
 
     def validate(self, method, params):
         params = dict(params or {})
+        if method == "profiler":
+            try:
+                return validate_profiler_params(params)
+            except ValueError as exc:
+                raise BridgeError(str(exc)) from exc
         if method in {"read_file", "list_dir", "write_script", "save_scene", "open_scene"}:
             value = params.get("path", "Assets" if method == "list_dir" else "")
             path = self.project_path(value)
@@ -256,6 +288,25 @@ class Bridge:
             if not result.get("ok"):
                 raise BridgeError(str(result.get("error", result)))
             return result.get("result")
+
+    def profiler(self, count=10, after_sequence=0, session_id="", source="auto"):
+        if source not in {"auto", "live", "log"}:
+            raise BridgeError("Profiler source must be auto, live or log")
+        params = self.validate("profiler", {"count": count, "afterSequence": after_sequence, "sessionId": session_id})
+        live_error = None
+        if source != "log":
+            try:
+                result = self.read("profiler", params)
+                return {"method": "profiler", "source": "live", "result": result}
+            except BridgeError as exc:
+                if source == "live":
+                    raise
+                live_error = str(exc)
+        try:
+            result = read_profiler_log(self.project, params)
+        except (OSError, ValueError) as exc:
+            raise BridgeError(str(exc)) from exc
+        return {"method": "profiler", "source": "log", "liveError": live_error, "result": result}
 
     def write(self, method, token, params=None):
         if method not in WRITE_METHODS:

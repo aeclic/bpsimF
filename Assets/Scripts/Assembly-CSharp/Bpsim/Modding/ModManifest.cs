@@ -65,6 +65,9 @@ namespace Bpsim.Modding
 		/// <summary>网页面板列表（panel/mixed 用）。</summary>
 		public List<ModPanelSpec> panels = new List<ModPanelSpec>();
 
+		/// <summary>本 Mod 自己声明的可调设置项（Mod.xml 的 &lt;Settings&gt;）。</summary>
+		public List<ModSettingSpec> settings = new List<ModSettingSpec>();
+
 		/// <summary>标签（可选，工坊列表展示用）。</summary>
 		public List<string> tags = new List<string>();
 
@@ -72,6 +75,8 @@ namespace Bpsim.Modding
 			|| string.Equals(type, ModPackageType.Mixed, StringComparison.OrdinalIgnoreCase);
 
 		public bool HasPanels => panels != null && panels.Count > 0;
+
+		public bool HasSettings => settings != null && settings.Count > 0;
 
 		/// <summary>把缺失的关键字段补齐到可用状态（不抛异常，只做最小修正）。</summary>
 		public void Normalize()
@@ -108,6 +113,14 @@ namespace Bpsim.Modding
 			if (panels == null)
 			{
 				panels = new List<ModPanelSpec>();
+			}
+			if (settings == null)
+			{
+				settings = new List<ModSettingSpec>();
+			}
+			for (int i = 0; i < settings.Count; i++)
+			{
+				settings[i]?.Normalize("setting-" + i);
 			}
 			if (tags == null)
 			{

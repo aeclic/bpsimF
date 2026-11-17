@@ -255,6 +255,22 @@ namespace Bpsim.UI
 			AddVariantButtons(PartType.SpotLight, 4, "PartButton_SpotLight");
 			AddVariantButtons(PartType.SpringBoxingGlove, 5, "PartButton_SpringBoxingGlove");
 			AddVariantButtons(PartType.Umbrella, 7, "PartButton_Umbrella");
+			ButtonSpriteInfo umbrellaSprite = map[GetButtonInfo(PartType.Umbrella, 0)];
+			for (int direction = 0; direction < 4; direction++)
+			{
+				umbrellaSprite.Rotation = Quaternion.AngleAxis(90f * (direction - 1), Vector3.forward);
+				map[GetButtonInfo(PartType.Umbrella, direction)] = umbrellaSprite;
+			}
+			for (int direction = 0; direction < 8; direction++)
+			{
+				ButtonSpriteInfo point = map[GetButtonInfo(PartType.PointLight, 0)];
+				ButtonSpriteInfo spot = map[GetButtonInfo(PartType.SpotLight, 0)];
+				float degrees = direction < 4 ? 90 * direction : 45 + 90 * (direction - 4);
+				point.Rotation = Quaternion.AngleAxis(degrees, Vector3.forward);
+				spot.Rotation = Quaternion.AngleAxis(degrees - 90, Vector3.forward);
+				map[GetButtonInfo(PartType.PointLight, direction)] = point;
+				map[GetButtonInfo(PartType.SpotLight, direction)] = spot;
+			}
 			AddVariantButtons(PartType.PoweredUmbrella, 4, "PartButton_PoweredUmbrella");
 			AddVariantButtons(PartType.Bellows, 8, "PartButton_Bellows");
 			AddVariantButtons(PartType.Balloon, 8, "PartButton_Balloon");
@@ -373,7 +389,7 @@ namespace Bpsim.UI
 			foreach (Entity part in unmanagedRef.Value.Parts)
 			{
 				PartAspect aspect = PartManager.Instance.System.EntityManager.GetAspect<PartAspect>(part);
-				if (!BasePart.IsTriggerable(aspect.TypeInfo) || IsTntButtonHidden(part))
+				if (!BasePart.IsTriggerable(aspect) || IsTntButtonHidden(part))
 				{
 					continue;
 				}
@@ -412,7 +428,7 @@ namespace Bpsim.UI
 			foreach (Entity part2 in unmanagedRef.Value.Parts)
 			{
 				PartAspect aspect2 = PartManager.Instance.System.EntityManager.GetAspect<PartAspect>(part2);
-				if (!BasePart.IsTriggerable(aspect2.TypeInfo) || IsTntButtonHidden(part2))
+				if (!BasePart.IsTriggerable(aspect2) || IsTntButtonHidden(part2))
 				{
 					continue;
 				}

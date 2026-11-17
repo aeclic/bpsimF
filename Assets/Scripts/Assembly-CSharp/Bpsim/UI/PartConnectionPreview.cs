@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Bpsim.Parts;
+using Bpsim.Parts.Simulation;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -53,6 +54,12 @@ namespace Bpsim.UI
 			EnsureMaterial();
 			ref PartSceneUnmanaged unmanaged = ref scene.Unmanaged;
 			EntityManager entityManager = unmanaged.EntityManager;
+			if (manager.System == null)
+			{
+				HideFrom(0);
+				return;
+			}
+			PartAspect.Lookup aspectLookup = new PartAspect.Lookup(ref manager.System.CheckedStateRef, true);
 			NativeList<Entity> parts = unmanaged.Parts;
 			float width = ((SceneCamera.Instance != null && SceneCamera.Instance.Camera.orthographic) ? (SceneCamera.Instance.Camera.orthographicSize * 0.008f) : 0.055f);
 			width = math.clamp(width, 0.022f, 0.1f);
@@ -74,7 +81,7 @@ namespace Bpsim.UI
 					{
 						continue;
 					}
-					DrawPair(entityManager, unmanaged, entity, center, grid, s_sameLayerColor, width, dedupe: true, bridge: false);
+					DrawGridPairs(entityManager, unmanaged, entity, center, grid, PartSimulatorDirection(d), s_sameLayerColor, width, dedupe: true, bridge: false, in aspectLookup);
 				}
 				if (layer > PartBuildLayer.MinLayer)
 				{
@@ -84,7 +91,7 @@ namespace Bpsim.UI
 						int by = transform.Y + (d == 3 ? 1 : (d == 4 ? -1 : 0));
 						if (unmanaged.FindPartGridAt(bx, by, PartBuildLayer.MinLayer, out PartGridInfo below))
 						{
-							DrawPair(entityManager, unmanaged, entity, center, below, s_bridgeColor, width, dedupe: false, bridge: true);
+							DrawGridPairs(entityManager, unmanaged, entity, center, below, BridgeDirection(d), s_bridgeColor, width, dedupe: false, bridge: true, in aspectLookup);
 						}
 					}
 				}
@@ -92,9 +99,14 @@ namespace Bpsim.UI
 			HideFrom(m_used);
 		}
 
-		private void DrawPair(EntityManager entityManager, PartSceneUnmanaged unmanaged, Entity entity, float2 center, PartGridInfo grid, Color color, float width, bool dedupe, bool bridge)
+		private void DrawGridPairs(EntityManager entityManager, PartSceneUnmanaged unmanaged, Entity entity, float2 center, PartGridInfo grid, BitDirection direction, Color color, float width, bool dedupe, bool bridge, in PartAspect.Lookup aspectLookup)
 		{
-			Entity other = ((grid.Part != Entity.Null) ? grid.Part : grid.PartContainer);
+			DrawPair(entityManager, unmanaged, entity, center, grid.PartContainer, direction, color, width, dedupe, bridge, in aspectLookup);
+			DrawPair(entityManager, unmanaged, entity, center, grid.Part, direction, color, width, dedupe, bridge, in aspectLookup);
+		}
+
+		private void DrawPair(EntityManager entityManager, PartSceneUnmanaged unmanaged, Entity entity, float2 center, Entity other, BitDirection direction, Color color, float width, bool dedupe, bool bridge, in PartAspect.Lookup aspectLookup)
+		{
 			if (other == Entity.Null || other == entity || !entityManager.Exists(other) || !entityManager.HasComponent<PartTransform>(other))
 			{
 				return;
@@ -108,6 +120,10 @@ namespace Bpsim.UI
 			float2 otherCenter = Center(entityManager, unmanaged, other, in otherTransform);
 			float2 delta = center - otherCenter;
 			bool sameCell = math.lengthsq(delta) < 0.0001f;
+			if (!CanConnectPair(entity, other, direction, bridge && sameCell, in aspectLookup))
+			{
+				return;
+			}
 			if (!bridge && sameCell)
 			{
 				return;
@@ -136,6 +152,47 @@ namespace Bpsim.UI
 				to = new float3(otherCenter.x, otherCenter.y, LineZ);
 			}
 			DrawSegment(from, to, color, width);
+		}
+
+		private static bool CanConnectPair(Entity source, Entity target, BitDirection direction, bool sameCellBridge, in PartAspect.Lookup aspectLookup)
+		{
+			PartAspect sourceAspect = aspectLookup[source];
+			PartAspect targetAspect = aspectLookup[target];
+			if (sameCellBridge)
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					if (PartSimulator.CanConnectAcrossLayers(in sourceAspect, in targetAspect, BitDirectionExtensions.FromIndex(i)))
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+			if (sourceAspect.PartType == PartType.ElectricalPart && targetAspect.PartType == PartType.ElectricalPart)
+			{
+				return (CircuitPart.GetTerminals(sourceAspect.PartIndex, sourceAspect.Rotation, sourceAspect.Flipped) & direction) != 0
+					&& (CircuitPart.GetTerminals(targetAspect.PartIndex, targetAspect.Rotation, targetAspect.Flipped) & direction.Reverse()) != 0;
+			}
+			return PartSimulator.CanConnectTo(source, in sourceAspect, target, in targetAspect, direction)
+				|| PartSimulator.CanConnectTo(target, in targetAspect, source, in sourceAspect, direction.Reverse());
+		}
+
+		private static BitDirection PartSimulatorDirection(int index)
+		{
+			return BitDirectionExtensions.FromIndex(index);
+		}
+
+		private static BitDirection BridgeDirection(int index)
+		{
+			switch (index)
+			{
+			case 1: return BitDirection.Right;
+			case 2: return BitDirection.Left;
+			case 3: return BitDirection.Up;
+			case 4: return BitDirection.Down;
+			default: return BitDirection.Any;
+			}
 		}
 
 		private static float2 Center(EntityManager entityManager, PartSceneUnmanaged unmanaged, Entity entity, in PartTransform transform)

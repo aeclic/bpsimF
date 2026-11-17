@@ -40,13 +40,13 @@ namespace Bpsim.Levels
 
 		private const float EpisodeButtonStep = 42f;
 
-		private static readonly Color PanelColor = new Color(0.043f, 0.055f, 0.075f, 0.97f);
+		private static Color PanelColor { get { Color c = Bpsim.UI.UiTheme.Current.Shade(0.35f); c.a = 0.97f; return c; } }
 
-		private static readonly Color ButtonColor = new Color(0f, 0.196f, 0.4f, 1f);
+		private static Color ButtonColor => Bpsim.UI.UiTheme.Current.ToolbarButton;
 
-		private static readonly Color ButtonActiveColor = new Color(0f, 0.482f, 0.721f, 1f);
+		private static Color ButtonActiveColor => Bpsim.UI.UiTheme.Current.AccentBright;
 
-		private static readonly Color TextColor = new Color(0.9f, 0.94f, 1f, 1f);
+		private static Color TextColor => Bpsim.UI.UiTheme.Current.Text;
 
 		// Tile palette sampled from the BPLE level-select reference: the tiles there are a
 		// flat green (#70C030) with a thin dark-green edge — no gradient.
@@ -70,8 +70,6 @@ namespace Bpsim.Levels
 
 		private Text m_status;
 
-		private Button m_toggleButton;
-
 		private readonly List<Button> m_episodeButtons = new List<Button>();
 
 		private readonly List<RectTransform> m_levelTiles = new List<RectTransform>();
@@ -89,6 +87,34 @@ namespace Bpsim.Levels
 			return menu;
 		}
 
+		/// <summary>
+		/// 找到（或新建）常驻的关卡面板并显示它。关卡数据现在是可选 Mod，宿主不再在
+		/// 右上角挂常驻「关卡」按钮 —— 面板由关卡 Mod 通过
+		/// <c>ModLevels.OpenLevelPicker()</c> 打开。
+		/// </summary>
+		public static LevelMenu Open()
+		{
+			GameObject root = GameObject.Find(LevelBootstrap.RootName);
+			if (root == null)
+			{
+				root = new GameObject(LevelBootstrap.RootName);
+			}
+			LevelMenu menu = root.GetComponentInChildren<LevelMenu>(true);
+			if (menu == null)
+			{
+				menu = Create(root.transform);
+			}
+			menu.Show();
+			return menu;
+		}
+
+		/// <summary>显示关卡选择面板并刷新状态。</summary>
+		public void Show()
+		{
+			m_panel.gameObject.SetActive(true);
+			RefreshStatus();
+		}
+
 		private void Build()
 		{
 			m_font = ResolveFont();
@@ -100,10 +126,12 @@ namespace Bpsim.Levels
 			scaler.referenceResolution = new Vector2(1920f, 1080f);
 			scaler.matchWidthOrHeight = 0.5f;
 			base.gameObject.AddComponent<GraphicRaycaster>();
-			CreateToggleButton(base.transform);
+			// 右上角常驻「关卡」按钮已移除：关卡数据属于可选 Mod，面板改由
+			// ModLevels.OpenLevelPicker() / LevelMenu.Open() 按需打开。
 			CreatePanel(base.transform);
 			ModLevelMenu.Changed += RefreshModButtons;
 			ModLevels.CatalogChanged += RefreshCatalog;
+			Bpsim.UI.UiTheme.Changed += OnThemeChanged;
 			RefreshModButtons();
 			m_panel.gameObject.SetActive(false);
 			RefreshStatus();
@@ -141,12 +169,6 @@ namespace Bpsim.Levels
 			}
 		}
 
-		private void CreateToggleButton(Transform parent)
-		{
-			m_toggleButton = CreateButton(parent, "LevelMenuToggle", "关卡", new Vector2(-110f, -46f), new Vector2(150f, 60f), new Vector2(1f, 1f), Toggle);
-			m_toggleButton.GetComponent<Image>().color = ButtonColor;
-		}
-
 		private void CreatePanel(Transform parent)
 		{
 			m_panel = CreateRect(parent, "LevelMenuPanel", new Vector2(0f, 0f), new Vector2(1480f, 880f), new Vector2(0.5f, 0.5f));
@@ -158,13 +180,13 @@ namespace Bpsim.Levels
 			{
 				m_panel.gameObject.SetActive(false);
 			});
-			close.GetComponent<Image>().color = new Color(0.32f, 0.12f, 0.12f, 1f);
+			close.GetComponent<Image>().color = Bpsim.UI.UiTheme.Current.Danger;
 			m_episodeList = CreateRect(m_panel, "Episodes", new Vector2(-590f, 0f), new Vector2(260f, 720f), new Vector2(0.5f, 0.5f));
 			m_levelGrid = CreateRect(m_panel, "Levels", new Vector2(90f, 0f), new Vector2(1140f, 720f), new Vector2(0.5f, 0.5f));
 			CreateLevelScroll(m_levelGrid);
 			m_status = CreateLabel(m_panel, "Status", string.Empty, new Vector2(-160f, -400f), new Vector2(1160f, 40f), 22, TextAnchor.MiddleLeft);
 			Button unload = CreateButton(m_panel, "Unload", "卸载关卡", new Vector2(560f, -400f), new Vector2(160f, 46f), new Vector2(0.5f, 0.5f), UnloadLevel);
-			unload.GetComponent<Image>().color = new Color(0.28f, 0.2f, 0.08f, 1f);
+			unload.GetComponent<Image>().color = Bpsim.UI.UiTheme.Current.Mix(Bpsim.UI.UiTheme.Current.Second, 0.5f);
 			PopulateEpisodes();
 		}
 
@@ -255,6 +277,25 @@ namespace Bpsim.Levels
 		{
 			ModLevelMenu.Changed -= RefreshModButtons;
 			ModLevels.CatalogChanged -= RefreshCatalog;
+			Bpsim.UI.UiTheme.Changed -= OnThemeChanged;
+		}
+
+		private void OnThemeChanged(Bpsim.UI.UiPalette palette)
+		{
+			// 章节按钮/状态色是建时写死的；配色变化时重刷整棵（关卡瓦片的 BPLE 绿是
+			// 语义色，UiThemeOwned 标记让通用启发式跳过它们）。
+			if (m_panel == null) return;
+			m_panel.GetComponent<Image>().color = PanelColor;
+			Bpsim.UI.UiThemeApplicator.ApplyTo(base.gameObject);
+			foreach (Button button in m_episodeButtons)
+			{
+				if (button != null) button.GetComponent<Image>().color = button.name == "Episode_" + m_episode ? ButtonActiveColor : ButtonColor;
+			}
+			Button close = m_panel.Find("Close") != null ? m_panel.Find("Close").GetComponent<Button>() : null;
+			if (close != null) close.GetComponent<Image>().color = Bpsim.UI.UiTheme.Current.Danger;
+			Button unload = m_panel.Find("Unload") != null ? m_panel.Find("Unload").GetComponent<Button>() : null;
+			if (unload != null) unload.GetComponent<Image>().color = Bpsim.UI.UiTheme.Current.Mix(Bpsim.UI.UiTheme.Current.Second, 0.5f);
+			RefreshStatus();
 		}
 
 		private void ShowEpisode(string episode)
@@ -338,7 +379,7 @@ namespace Bpsim.Levels
 			}
 			if (!LevelCatalog.IsAvailable)
 			{
-				m_status.text = "<color=#FF9090>找不到 StreamingAssets/BpsimLevels，请先运行 Tools/BPSim/export_levels.py --write</color>";
+				m_status.text = "<color=#FF9090>未找到关卡数据：请启用「BPLE 内置关卡」Mod</color>";
 				return;
 			}
 			int count = LevelCatalog.Levels.Count;
@@ -401,6 +442,8 @@ namespace Bpsim.Levels
 		{
 			RectTransform rectTransform = CreateRect(parent, name, position, new Vector2(TileSize, TileSize), new Vector2(0.5f, 1f));
 			rectTransform.pivot = new Vector2(0.5f, 0.5f);
+			// BPLE 绿瓦片是语义色（关卡选择的品牌观感），不随 UI 配色变化。
+			rectTransform.gameObject.AddComponent<Bpsim.UI.UiThemeOwned>();
 			// Dark outline: an oversized square drawn behind the face.
 			GameObject outlineObject = new GameObject("Outline", typeof(RectTransform));
 			outlineObject.transform.SetParent(rectTransform, false);

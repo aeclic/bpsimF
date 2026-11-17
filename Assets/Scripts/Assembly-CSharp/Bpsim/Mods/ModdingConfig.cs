@@ -134,6 +134,44 @@ namespace Bpsim.Mods
 			}
 		}
 
+		/// <summary>把一个 Mod 文件夹登记成额外扫描目录（已存在则不重复加）。</summary>
+		public bool AddAdditionalDir(string dir)
+		{
+			if (string.IsNullOrWhiteSpace(dir))
+			{
+				return false;
+			}
+			string full = Path.GetFullPath(dir).TrimEnd('\\', '/');
+			foreach (string existing in AdditionalDirs)
+			{
+				if (string.Equals(existing.TrimEnd('\\', '/'), full, StringComparison.OrdinalIgnoreCase))
+				{
+					return false;
+				}
+			}
+			AdditionalDirs.Add(full);
+			return true;
+		}
+
+		/// <summary>移除一个额外扫描目录（按路径比较，大小写不敏感）。</summary>
+		public bool RemoveAdditionalDir(string dir)
+		{
+			if (string.IsNullOrWhiteSpace(dir))
+			{
+				return false;
+			}
+			string full = Path.GetFullPath(dir).TrimEnd('\\', '/');
+			for (int i = AdditionalDirs.Count - 1; i >= 0; i--)
+			{
+				if (string.Equals(AdditionalDirs[i].TrimEnd('\\', '/'), full, StringComparison.OrdinalIgnoreCase))
+				{
+					AdditionalDirs.RemoveAt(i);
+					return true;
+				}
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// 把「迁移期」的隐式状态固化成显式的禁用集合。必须在第一次 Rescan 之后、玩家操作之前调用，
 		/// 否则玩家手动启用的 Mod 会被迁移规则重新判成禁用。

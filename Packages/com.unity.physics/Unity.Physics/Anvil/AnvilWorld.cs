@@ -11,6 +11,7 @@
 // 不匹配则重建该 body（部件增删会导致索引漂移）。
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -24,6 +25,52 @@ namespace Bpsim.Physics.Anvil
 	{
 		const int k_MinCapacity = 256;
 
+		// 默认 def 是纯值类型结构体：从 box3d 读一次即可复用。原来每建 1 个
+		// body / shape / joint 都要 P/Invoke 取默认值，建 2k 刚体场景时是数千次
+		// 跨托管/原生调用 —— 「开始模拟时大量卡顿」的主要来源。
+		static b3WorldDef s_WorldDef;
+		static b3BodyDef s_BodyDef;
+		static b3ShapeDef s_ShapeDef;
+		static b3WeldJointDef s_WeldJointDef;
+		static bool s_DefsCached;
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		delegate float MaterialCombineCallback(float valueA, ulong materialA, float valueB, ulong materialB);
+		// Native workers may call these callbacks. Keep delegates alive and callbacks pure.
+		static readonly MaterialCombineCallback s_FrictionMixer = CombineFriction;
+		static readonly MaterialCombineCallback s_RestitutionMixer = CombineRestitution;
+
+		static void CacheDefs()
+		{
+			if (s_DefsCached) return;
+			s_WorldDef = AnvilNative.b3DefaultWorldDef();
+			s_BodyDef = AnvilNative.b3DefaultBodyDef();
+			s_ShapeDef = AnvilNative.b3DefaultShapeDef();
+			s_WeldJointDef = AnvilNative.b3DefaultWeldJointDef();
+			s_WorldDef.frictionCallback = Marshal.GetFunctionPointerForDelegate(s_FrictionMixer);
+			s_WorldDef.restitutionCallback = Marshal.GetFunctionPointerForDelegate(s_RestitutionMixer);
+			s_DefsCached = true;
+		}
+
+		[AOT.MonoPInvokeCallback(typeof(MaterialCombineCallback))]
+		static float CombineFriction(float a, ulong materialA, float b, ulong materialB) =>
+			CombineCoefficient(a, b, (int)math.max((uint)(materialA & 0xff), (uint)(materialB & 0xff)));
+
+		[AOT.MonoPInvokeCallback(typeof(MaterialCombineCallback))]
+		static float CombineRestitution(float a, ulong materialA, float b, ulong materialB) =>
+			CombineCoefficient(a, b, (int)math.max((uint)((materialA >> 8) & 0xff), (uint)((materialB >> 8) & 0xff)));
+
+		static float CombineCoefficient(float a, float b, int policy)
+		{
+			switch ((Material.CombinePolicy)policy)
+			{
+				case Material.CombinePolicy.GeometricMean: return math.sqrt(a * b);
+				case Material.CombinePolicy.Minimum: return math.min(a, b);
+				case Material.CombinePolicy.Maximum: return math.max(a, b);
+				case Material.CombinePolicy.ArithmeticMean: return (a + b) * 0.5f;
+				default: return 0f;
+			}
+		}
+
 		b3WorldId m_WorldId;
 		bool m_Created;
 		int m_MotionCount;
@@ -33,11 +80,42 @@ namespace Bpsim.Physics.Anvil
 		NativeArray<Entity> m_MotionEntities;
 		NativeArray<IntPtr> m_MotionColliders;
 		NativeArray<float> m_MotionScales;
+		NativeArray<byte> m_MotionColliderVersions;
+		NativeArray<MotionProperties> m_MotionProperties;
+		NativeArray<byte> m_PendingDamping;
 
 		NativeArray<b3BodyId> m_StaticBodies;
 		NativeArray<Entity> m_StaticEntities;
 		NativeArray<IntPtr> m_StaticColliders;
 		NativeArray<float> m_StaticScales;
+		NativeArray<byte> m_StaticColliderVersions;
+		NativeArray<RigidTransform> m_StaticTransforms;
+		List<IntPtr>[] m_StaticMeshHandles = Array.Empty<List<IntPtr>>();
+		int m_BuildingStaticIndex = -1;
+		readonly Dictionary<int, int> m_NativeBodyIndices = new Dictionary<int, int>();
+		float m_LastTimeStep;
+		float3 m_Gravity = new float3(0f, -9.81f, 0f);
+		bool m_GravityChanged;
+
+		struct MotionProperties
+		{
+			public RigidTransform BodyFromMotion;
+			public float3 InverseInertia;
+			public float InverseMass;
+			public float GravityFactor;
+
+			public bool IsKinematic => InverseMass == 0f && !math.any(InverseInertia);
+			public bool HasSameMass(in MotionProperties other) => InverseMass == other.InverseMass
+				&& math.all(InverseInertia == other.InverseInertia) && BodyFromMotion.Equals(other.BodyFromMotion);
+
+			public MotionProperties(in MotionData data, in MotionVelocity velocity)
+			{
+				BodyFromMotion = data.BodyFromMotion;
+				InverseInertia = velocity.InverseInertia;
+				InverseMass = velocity.InverseMass;
+				GravityFactor = velocity.GravityFactor;
+			}
+		}
 
 		NativeArray<b3WorldTransform> m_ScratchTransforms;
 		NativeArray<b3Vec3> m_ScratchLinear;
@@ -46,7 +124,6 @@ namespace Bpsim.Physics.Anvil
 		NativeArray<b3Vec3> m_ScratchPoints;
 
 		// 上次从 box3d 读回的位姿/速度，用来判断 ECS 侧是否被外部改写（瞬移/改速度）。
-		NativeArray<int> m_AwakeIndices;
 		NativeArray<b3WorldTransform> m_LastTransforms;
 		NativeArray<b3Vec3> m_LastLinear;
 		NativeArray<b3Vec3> m_LastAngular;
@@ -61,17 +138,64 @@ namespace Bpsim.Physics.Anvil
 
 		// 关节：索引对齐 PhysicsWorld.Joints（BodyPair 语义见 PhysicsWorldBuilder）
 		NativeArray<b3JointId> m_JointIds;
-		NativeArray<int> m_JointIndexA;
-		NativeArray<int> m_JointIndexB;
-		NativeArray<Entity> m_JointEntities;
-		NativeArray<byte> m_JointVersions;
-		NativeArray<float> m_JointForceThreshold;
-		NativeParallelHashMap<int, Entity> m_JointIdToEntity;
+		NativeArray<JointSettings> m_JointSettings;
+		NativeArray<Joint> m_JointDescriptors;
+		NativeArray<float3> m_JointLinearImpulse;
+		NativeArray<float3> m_JointAngularImpulse;
+		int m_JointCount;
+		readonly Dictionary<ulong, FrameContact> m_FrameContacts = new Dictionary<ulong, FrameContact>(ContactPairComparer.Instance);
+		bool m_HasSubStepContacts;
+
+		sealed class ContactPairComparer : IEqualityComparer<ulong>
+		{
+			public static readonly ContactPairComparer Instance = new ContactPairComparer();
+			public bool Equals(ulong a, ulong b) => a == b;
+			public int GetHashCode(ulong value)
+			{
+				// UInt64's default high-XOR-low hash floods buckets for adjacent/grid body
+				// IDs. Avalanche the full pair, retaining exact equality and sampling order.
+				unchecked
+				{
+					value ^= value >> 33;
+					value *= 0xff51afd7ed558ccdUL;
+					value ^= value >> 33;
+					value *= 0xc4ceb9fe1a85ec53UL;
+					value ^= value >> 33;
+					return (int)(value ^ (value >> 32));
+				}
+			}
+		}
+
+		struct JointSettings
+		{
+			public b3BodyId BodyA, BodyB;
+			public Entity Entity;
+			public byte Version, EnableCollision, EventMask;
+			public Constraint Linear, Angular;
+			public bool HasLinear, HasAngular;
+			public RigidTransform FrameA, FrameB;
+
+			public bool NeedsLinearEvents => (EventMask & 1) != 0;
+			public bool NeedsAngularEvents => (EventMask & 2) != 0;
+			public bool Matches(in JointSettings other) => SameBody(BodyA, other.BodyA) && SameBody(BodyB, other.BodyB)
+				&& Entity == other.Entity && Version == other.Version && EnableCollision == other.EnableCollision
+				&& FrameA.Equals(other.FrameA) && FrameB.Equals(other.FrameB)
+				&& HasLinear == other.HasLinear && HasAngular == other.HasAngular
+				&& (!HasLinear || Linear.Equals(other.Linear)) && (!HasAngular || Angular.Equals(other.Angular));
+		}
+
+		struct FrameContact
+		{
+			public AnvilContactEvent Event;
+			public float PeakImpulse;
+		}
+
+		static bool SameBody(b3BodyId a, b3BodyId b) => a.index1 == b.index1 && a.world0 == b.world0 && a.generation == b.generation;
 
 		Allocator m_Allocator = Allocator.Persistent;
 
 		public int WorkerCount = 1;
-		public int SubStepCount = 1;
+		public int SubStepCount = 4;
 		public float ContactHertz = 60f;
 		public float ContactDampingRatio = 10f;
 		public bool EnableSleep = true;
@@ -79,6 +203,9 @@ namespace Bpsim.Physics.Anvil
 
 		public bool IsCreated => m_Created;
 		public b3WorldId WorldId => m_WorldId;
+
+		/// <summary>当前是否持有 body；模拟间动态体清零时用于判定是否需要整体重建。</summary>
+		public bool HasBodies => m_MotionCount > 0 || m_StaticCount > 0;
 
 		public int MotionCapacity => m_MotionBodies.IsCreated ? m_MotionBodies.Length : 0;
 		public int StaticCapacity => m_StaticBodies.IsCreated ? m_StaticBodies.Length : 0;
@@ -89,13 +216,17 @@ namespace Bpsim.Physics.Anvil
 		{
 			if (m_Created) return;
 
-			b3WorldDef def = AnvilNative.b3DefaultWorldDef();
-			def.gravity = new b3Vec3(0f, -9.81f, 0f);
+			CacheDefs();
+			b3WorldDef def = s_WorldDef;
+			// Gravity is applied once before the outer step, like Unity's solver.
+			def.gravity = b3Vec3.zero;
 			def.workerCount = (uint)math.max(1, WorkerCount);
 			def.enableSleep = (byte)(EnableSleep ? 1 : 0);
 			def.enableContinuous = (byte)(EnableContinuous ? 1 : 0);
 			def.contactHertz = ContactHertz;
 			def.contactDampingRatio = ContactDampingRatio;
+			// Match supplied Unity velocities; the native defaults cap free momentum (F115).
+			def.maximumLinearSpeed = float.MaxValue;
 
 			m_WorldId = AnvilNative.b3CreateWorld(ref def);
 			if (m_WorldId.IsNull)
@@ -110,6 +241,16 @@ namespace Bpsim.Physics.Anvil
 			AnvilNative.b3DestroyWorld(m_WorldId);
 			m_WorldId = default;
 			m_Created = false;
+			ReleaseMeshes();
+			m_MotionCount = m_StaticCount = 0;
+			m_JointCount = 0;
+			m_FrameContacts.Clear();
+			m_HasSubStepContacts = false;
+			m_NativeBodyIndices.Clear();
+			m_UploadIndices.Clear();
+			if (m_MotionBodies.IsCreated) UnsafeUtility.MemClear(m_MotionBodies.GetUnsafePtr(), m_MotionBodies.Length * sizeof(b3BodyId));
+			if (m_StaticBodies.IsCreated) UnsafeUtility.MemClear(m_StaticBodies.GetUnsafePtr(), m_StaticBodies.Length * sizeof(b3BodyId));
+			if (m_JointIds.IsCreated) UnsafeUtility.MemClear(m_JointIds.GetUnsafePtr(), m_JointIds.Length * sizeof(b3JointId));
 		}
 
 		public void Dispose()
@@ -121,10 +262,15 @@ namespace Bpsim.Physics.Anvil
 			DisposeArray(ref m_MotionEntities);
 			DisposeArray(ref m_MotionColliders);
 			DisposeArray(ref m_MotionScales);
+			DisposeArray(ref m_MotionColliderVersions);
+			DisposeArray(ref m_MotionProperties);
+			DisposeArray(ref m_PendingDamping);
 			DisposeArray(ref m_StaticBodies);
 			DisposeArray(ref m_StaticEntities);
 			DisposeArray(ref m_StaticColliders);
 			DisposeArray(ref m_StaticScales);
+			DisposeArray(ref m_StaticColliderVersions);
+			DisposeArray(ref m_StaticTransforms);
 			DisposeArray(ref m_ScratchTransforms);
 			DisposeArray(ref m_ScratchLinear);
 			DisposeArray(ref m_ScratchAngular);
@@ -134,7 +280,6 @@ namespace Bpsim.Physics.Anvil
 			DisposeArray(ref m_LastLinear);
 			DisposeArray(ref m_LastAngular);
 			DisposeArray(ref m_UploadBodies);
-			DisposeArray(ref m_AwakeIndices);
 			DisposeArray(ref m_ScratchRayHits);
 			m_UploadIndices.Clear();
 			DisposeJoints();
@@ -148,8 +293,8 @@ namespace Bpsim.Physics.Anvil
 
 		public void SetGravity(float3 gravity)
 		{
-			if (!m_Created) return;
-			AnvilNative.b3World_SetGravity(m_WorldId, new b3Vec3(gravity.x, gravity.y, gravity.z));
+			m_GravityChanged |= math.any(m_Gravity != gravity);
+			m_Gravity = gravity;
 		}
 
 		public void SetWorkerCount(int workers)
@@ -168,13 +313,15 @@ namespace Bpsim.Physics.Anvil
 			Grow(ref m_MotionEntities, capacity);
 			Grow(ref m_MotionColliders, capacity);
 			Grow(ref m_MotionScales, capacity);
+			Grow(ref m_MotionColliderVersions, capacity);
+			Grow(ref m_MotionProperties, capacity);
+			Grow(ref m_PendingDamping, capacity);
 			Grow(ref m_ScratchTransforms, capacity);
 			Grow(ref m_ScratchLinear, capacity);
 			Grow(ref m_ScratchAngular, capacity);
 			Grow(ref m_LastTransforms, capacity);
 			Grow(ref m_LastLinear, capacity);
 			Grow(ref m_LastAngular, capacity);
-			Grow(ref m_AwakeIndices, capacity);
 		}
 
 		void EnsureUploadCapacity(int needed)
@@ -191,6 +338,9 @@ namespace Bpsim.Physics.Anvil
 			Grow(ref m_StaticEntities, capacity);
 			Grow(ref m_StaticColliders, capacity);
 			Grow(ref m_StaticScales, capacity);
+			Grow(ref m_StaticColliderVersions, capacity);
+			Grow(ref m_StaticTransforms, capacity);
+			Array.Resize(ref m_StaticMeshHandles, capacity);
 		}
 
 		void EnsureContactCapacity(int needed)
@@ -256,21 +406,52 @@ namespace Bpsim.Physics.Anvil
 			Entity* motionEntities = (Entity*)m_MotionEntities.GetUnsafePtr();
 			IntPtr* motionColliders = (IntPtr*)m_MotionColliders.GetUnsafePtr();
 			float* motionScales = (float*)m_MotionScales.GetUnsafePtr();
+			byte* motionColliderVersions = (byte*)m_MotionColliderVersions.GetUnsafePtr();
+			MotionProperties* properties = (MotionProperties*)m_MotionProperties.GetUnsafePtr();
+			byte* pendingDamping = (byte*)m_PendingDamping.GetUnsafePtr();
+			b3WorldTransform* scratchTransforms = (b3WorldTransform*)m_ScratchTransforms.GetUnsafePtr();
+			b3Vec3* scratchLinear = (b3Vec3*)m_ScratchLinear.GetUnsafePtr();
+			b3Vec3* scratchAngular = (b3Vec3*)m_ScratchAngular.GetUnsafePtr();
+			bool topologyChanged = numDynamic != m_MotionCount || numStatic != m_StaticCount;
 
 			int writable = 0;
 			for (int i = 0; i < numDynamic; i++)
 			{
 				RigidBody body = dynamicBodies[i];
 				IntPtr colliderPtr = body.Collider.IsCreated ? (IntPtr)body.Collider.GetUnsafePtr() : IntPtr.Zero;
+				byte colliderVersion = colliderPtr == IntPtr.Zero ? (byte)0 : ((ColliderHeader*)colliderPtr)->Version;
+				MotionProperties current = new MotionProperties(motionDatas[i], motionVelocities[i]);
 
-				if (!motionBodies[i].IsNull && motionEntities[i] == body.Entity && motionColliders[i] == colliderPtr)
+				if (!motionBodies[i].IsNull && motionEntities[i] == body.Entity && motionColliders[i] == colliderPtr
+					&& motionScales[i] == body.Scale && motionColliderVersions[i] == colliderVersion)
 				{
-					if (!trackLast || NeedsUploadFast(lastTransforms, lastLinearArr, lastAngularArr, i, body.WorldFromBody, motionVelocities[i]))
+					bool massChanged = !current.HasSameMass(properties[i]);
+					if (current.IsKinematic != properties[i].IsKinematic)
+						AnvilNative.b3Body_SetType(motionBodies[i], (int)(current.IsKinematic ? b3BodyType.b3_kinematicBody : b3BodyType.b3_dynamicBody));
+					if (massChanged)
 					{
-						m_UploadIndices.Add(writable);
-						m_ScratchTransforms[writable] = ToWorldTransform(body.WorldFromBody);
-						m_ScratchLinear[writable] = ToVec3(motionVelocities[i].LinearVelocity);
-						m_ScratchAngular[writable] = ToVec3(motionVelocities[i].AngularVelocity);
+						ApplyMass(motionBodies[i], motionDatas[i], motionVelocities[i]);
+						AnvilNative.b3Body_SetAwake(motionBodies[i], 1);
+					}
+					if (current.GravityFactor != properties[i].GravityFactor)
+					{
+						AnvilNative.b3Body_SetGravityScale(motionBodies[i], current.GravityFactor);
+						AnvilNative.b3Body_SetAwake(motionBodies[i], 1);
+					}
+					properties[i] = current;
+					bool externalChange = !trackLast
+						|| NeedsUploadFast(lastTransforms, lastLinearArr, lastAngularArr, i, body.WorldFromBody, motionVelocities[i]);
+					if (massChanged || pendingDamping[i] != 0 || !trackLast
+						|| externalChange)
+					{
+						// The raw batch writer cannot allocate a sleeping body's native state.
+						if (externalChange) AnvilNative.b3Body_SetAwake(motionBodies[i], 1);
+						// The compressed slot is not the source body's index (F103).
+						m_UploadIndices.Add(i);
+						scratchTransforms[writable] = ToWorldTransform(body.WorldFromBody);
+						scratchLinear[writable] = ToVec3(motionVelocities[i].LinearVelocity);
+						scratchAngular[writable] = ToVec3(math.rotate(motionDatas[i].WorldFromMotion.rot, motionVelocities[i].AngularVelocity));
+						pendingDamping[i] = 0;
 						writable++;
 					}
 					continue;
@@ -279,30 +460,37 @@ namespace Bpsim.Physics.Anvil
 				// 新刚体或索引漂移：重建
 				if (!motionBodies[i].IsNull)
 				{
-					AnvilNative.b3DestroyBody(motionBodies[i]);
+					if (AnvilNative.b3Body_IsValid(motionBodies[i]) != 0)
+						AnvilNative.b3DestroyBody(motionBodies[i]);
 					motionBodies[i] = default;
 				}
 
 				b3BodyId id = CreateDynamicBody(body, motionDatas[i], motionVelocities[i]);
+				topologyChanged = true;
 				motionBodies[i] = id;
 				motionEntities[i] = body.Entity;
 				motionColliders[i] = colliderPtr;
 				motionScales[i] = body.Scale;
+				motionColliderVersions[i] = colliderVersion;
+				properties[i] = current;
+				pendingDamping[i] = 0;
 
-				m_UploadIndices.Add(writable);
-				m_ScratchTransforms[writable] = ToWorldTransform(body.WorldFromBody);
-				m_ScratchLinear[writable] = ToVec3(motionVelocities[i].LinearVelocity);
-				m_ScratchAngular[writable] = ToVec3(motionVelocities[i].AngularVelocity);
+				m_UploadIndices.Add(i);
+				scratchTransforms[writable] = ToWorldTransform(body.WorldFromBody);
+				scratchLinear[writable] = ToVec3(motionVelocities[i].LinearVelocity);
+				scratchAngular[writable] = ToVec3(math.rotate(motionDatas[i].WorldFromMotion.rot, motionVelocities[i].AngularVelocity));
 				writable++;
 			}
 
 			// 末尾多余的旧 body（数量下降）
 			for (int i = numDynamic; i < m_MotionBodies.Length; i++)
 			{
-				if (motionBodies[i].IsNull) break;
-				AnvilNative.b3DestroyBody(motionBodies[i]);
+				if (motionBodies[i].IsNull) continue;
+				if (AnvilNative.b3Body_IsValid(motionBodies[i]) != 0)
+					AnvilNative.b3DestroyBody(motionBodies[i]);
 				motionBodies[i] = default;
 				motionEntities[i] = Entity.Null;
+				topologyChanged = true;
 			}
 
 			// 静态体：只在新建/漂移时重建，位置每帧不写（静态不会被积分）
@@ -310,33 +498,52 @@ namespace Bpsim.Physics.Anvil
 			Entity* staticEntities = (Entity*)m_StaticEntities.GetUnsafePtr();
 			IntPtr* staticColliders = (IntPtr*)m_StaticColliders.GetUnsafePtr();
 			float* staticScales = (float*)m_StaticScales.GetUnsafePtr();
+			byte* staticColliderVersions = (byte*)m_StaticColliderVersions.GetUnsafePtr();
+			RigidTransform* staticTransforms = (RigidTransform*)m_StaticTransforms.GetUnsafePtr();
 
 			for (int i = 0; i < numStatic; i++)
 			{
 				RigidBody body = staticBodies[i];
 				IntPtr colliderPtr = body.Collider.IsCreated ? (IntPtr)body.Collider.GetUnsafePtr() : IntPtr.Zero;
-				if (!staticBodyIds[i].IsNull && staticEntities[i] == body.Entity && staticColliders[i] == colliderPtr)
+				byte colliderVersion = colliderPtr == IntPtr.Zero ? (byte)0 : ((ColliderHeader*)colliderPtr)->Version;
+				if (!staticBodyIds[i].IsNull && staticEntities[i] == body.Entity && staticColliders[i] == colliderPtr
+					&& staticScales[i] == body.Scale && staticColliderVersions[i] == colliderVersion)
+				{
+					if (!staticTransforms[i].Equals(body.WorldFromBody))
+					{
+						AnvilNative.b3Body_SetTransform(staticBodyIds[i], ToVec3(body.WorldFromBody.pos), ToQuat(body.WorldFromBody.rot));
+						staticTransforms[i] = body.WorldFromBody;
+					}
 					continue;
+				}
 
 				if (!staticBodyIds[i].IsNull)
 				{
-					AnvilNative.b3DestroyBody(staticBodyIds[i]);
+					if (AnvilNative.b3Body_IsValid(staticBodyIds[i]) != 0)
+						AnvilNative.b3DestroyBody(staticBodyIds[i]);
 					staticBodyIds[i] = default;
+					ReleaseMeshesAt(i);
 				}
 
-				b3BodyId id = CreateStaticBody(body);
+				b3BodyId id = CreateStaticBody(body, i);
+				topologyChanged = true;
 				staticBodyIds[i] = id;
 				staticEntities[i] = body.Entity;
 				staticColliders[i] = colliderPtr;
 				staticScales[i] = body.Scale;
+				staticColliderVersions[i] = colliderVersion;
+				staticTransforms[i] = body.WorldFromBody;
 			}
 
 			for (int i = numStatic; i < m_StaticBodies.Length; i++)
 			{
-				if (staticBodyIds[i].IsNull) break;
-				AnvilNative.b3DestroyBody(staticBodyIds[i]);
+				if (staticBodyIds[i].IsNull) continue;
+				if (AnvilNative.b3Body_IsValid(staticBodyIds[i]) != 0)
+					AnvilNative.b3DestroyBody(staticBodyIds[i]);
 				staticBodyIds[i] = default;
 				staticEntities[i] = Entity.Null;
+				topologyChanged = true;
+				ReleaseMeshesAt(i);
 			}
 
 			if (writable > 0)
@@ -357,16 +564,22 @@ namespace Bpsim.Physics.Anvil
 
 			m_MotionCount = numDynamic;
 			m_StaticCount = numStatic;
+			if (topologyChanged)
+			{
+				// Native IDs are pool handles, not PhysicsWorld array ordinals (F108).
+				m_NativeBodyIndices.Clear();
+				for (int i = 0; i < numDynamic; i++)
+					if (!motionBodies[i].IsNull) m_NativeBodyIndices[motionBodies[i].index1] = i;
+				for (int i = 0; i < numStatic; i++)
+					if (!staticBodyIds[i].IsNull) m_NativeBodyIndices[staticBodyIds[i].index1] = numDynamic + i;
+			}
 			return numDynamic;
 		}
 
 		/// <summary>
 		/// ECS 侧的值是否已经偏离 box3d 上次报回的值（= 外部逻辑改写了位姿/速度/或刚生成）。
-		/// 容差取位置 1e-4、速度 1e-3 —— 足以容忍浮点回传误差，又不会漏掉真实瞬移。
-		/// </summary>
-		/// <summary>
-		/// 与 <see cref="NeedsUpload(int, in RigidTransform, in MotionVelocity)"/> 等价，但由调用方
-		/// 传入已缓存的裸指针 —— 逐体调用 GetUnsafePtr 在 10k 刚体上是毫秒级开销。
+		/// Poses allow round-trip arithmetic noise; exported velocities compare exactly so small forces
+		/// are not lost. Cached angular velocities are in Unity motion space, not native world space.
 		/// </summary>
 		static bool NeedsUploadFast(b3WorldTransform* lastTransforms, b3Vec3* lastLinear, b3Vec3* lastAngular,
 			int index, in RigidTransform worldFromBody, in MotionVelocity velocity)
@@ -376,13 +589,14 @@ namespace Bpsim.Physics.Anvil
 			if (math.distancesq(lastPos, worldFromBody.pos) > 1e-8f) return true;
 
 			quaternion lastRot = new quaternion(last.q.x, last.q.y, last.q.z, last.q.w);
-			if (math.abs(math.dot(lastRot.value, worldFromBody.rot.value)) < 1f - 1e-6f) return true;
+			if (math.min(math.distancesq(lastRot.value, worldFromBody.rot.value),
+				math.distancesq(lastRot.value, -worldFromBody.rot.value)) > 1e-12f) return true;
 
 			b3Vec3 ll = lastLinear[index];
-			if (math.distancesq(new float3(ll.x, ll.y, ll.z), velocity.LinearVelocity) > 1e-6f) return true;
+			if (!math.all(new float3(ll.x, ll.y, ll.z) == velocity.LinearVelocity)) return true;
 
 			b3Vec3 la = lastAngular[index];
-			if (math.distancesq(new float3(la.x, la.y, la.z), velocity.AngularVelocity) > 1e-6f) return true;
+			if (!math.all(new float3(la.x, la.y, la.z) == velocity.AngularVelocity)) return true;
 
 			return false;
 		}
@@ -394,48 +608,52 @@ namespace Bpsim.Physics.Anvil
 
 		b3BodyId CreateDynamicBody(in RigidBody body, in MotionData motionData, in MotionVelocity motionVelocity)
 		{
-			b3BodyDef def = AnvilNative.b3DefaultBodyDef();
+			b3BodyDef def = s_BodyDef;
 			def.type = (int)(motionVelocity.IsKinematic ? b3BodyType.b3_kinematicBody : b3BodyType.b3_dynamicBody);
 			def.position = ToVec3(body.WorldFromBody.pos);
 			def.rotation = ToQuat(body.WorldFromBody.rot);
 			def.linearVelocity = ToVec3(motionVelocity.LinearVelocity);
-			def.angularVelocity = ToVec3(motionVelocity.AngularVelocity);
-			def.linearDamping = motionData.LinearDamping;
-			def.angularDamping = motionData.AngularDamping;
+			def.angularVelocity = ToVec3(math.rotate(motionData.WorldFromMotion.rot, motionVelocity.AngularVelocity));
+			// Unity damps after integration/constraints; applying native damping as well double-counts it.
+			def.linearDamping = 0f;
+			def.angularDamping = 0f;
+			def.gravityScale = motionVelocity.GravityFactor;
+			def.allowFastRotation = 1;
 			def.enableSleep = (byte)(EnableSleep ? 1 : 0);
 
 			b3BodyId id = AnvilNative.b3CreateBody(m_WorldId, ref def);
-			if (id.IsNull) return id;
+			if (id.IsNull) throw new InvalidOperationException("Anvil: dynamic body creation failed for " + body.Entity);
 
-			ApplyMass(id, motionData, motionVelocity);
 			AddShapes(id, body, false);
+			ApplyMass(id, motionData, motionVelocity);
 			return id;
 		}
 
-		b3BodyId CreateStaticBody(in RigidBody body)
+		b3BodyId CreateStaticBody(in RigidBody body, int staticIndex)
 		{
-			b3BodyDef def = AnvilNative.b3DefaultBodyDef();
+			b3BodyDef def = s_BodyDef;
 			def.type = (int)b3BodyType.b3_staticBody;
 			def.position = ToVec3(body.WorldFromBody.pos);
 			def.rotation = ToQuat(body.WorldFromBody.rot);
 			def.enableSleep = 0;
 
 			b3BodyId id = AnvilNative.b3CreateBody(m_WorldId, ref def);
-			if (id.IsNull) return id;
+			if (id.IsNull) throw new InvalidOperationException("Anvil: static body creation failed for " + body.Entity);
 
-			AddShapes(id, body, true);
+			m_BuildingStaticIndex = staticIndex;
+			try
+			{
+				AddShapes(id, body, true);
+			}
+			finally
+			{
+				m_BuildingStaticIndex = -1;
+			}
 			return id;
 		}
 
 		void ApplyMass(b3BodyId id, in MotionData motionData, in MotionVelocity motionVelocity)
 		{
-			if (motionVelocity.InverseMass == 0f)
-			{
-				// 静态/运动学：box3d 侧由 body type 决定，无需质量数据
-				return;
-			}
-
-			float3x3 principal = float3x3.identity;
 			float3 inverseInertia = new float3(
 				motionVelocity.InverseInertia.x,
 				motionVelocity.InverseInertia.y,
@@ -444,9 +662,17 @@ namespace Bpsim.Physics.Anvil
 				inverseInertia.x > 0f ? 1f / inverseInertia.x : 0f,
 				inverseInertia.y > 0f ? 1f / inverseInertia.y : 0f,
 				inverseInertia.z > 0f ? 1f / inverseInertia.z : 0f);
+			if (math.any(inverseInertia > 0f) && !math.all(inverseInertia > 0f))
+			{
+				// Zero inverse inertia means an infinite moment, not a zero moment (F109).
+				// The native API only inverts nonsingular matrices. A well-conditioned finite
+				// approximation retains free-axis response instead of disabling every axis.
+				float infiniteMoment = math.max(1e-6f, math.cmax(inertiaPrincipal)) * 1e4f;
+				inertiaPrincipal = math.select(new float3(infiniteMoment), inertiaPrincipal, inverseInertia > 0f);
+			}
 
 			// Unity.Physics 的主轴空间 → body 空间
-			float3x3 rotation = math.mul(new float3x3(motionData.BodyFromMotion.rot), principal);
+			float3x3 rotation = new float3x3(motionData.BodyFromMotion.rot);
 			float3x3 inertiaMatrix = math.mul(math.mul(rotation, new float3x3(
 				inertiaPrincipal.x, 0f, 0f,
 				0f, inertiaPrincipal.y, 0f,
@@ -454,7 +680,7 @@ namespace Bpsim.Physics.Anvil
 
 			var massData = new b3MassData
 			{
-				mass = 1f / motionVelocity.InverseMass,
+				mass = motionVelocity.InverseMass > 0f ? 1f / motionVelocity.InverseMass : 0f,
 				center = ToVec3(motionData.BodyFromMotion.pos),
 				inertia = new b3Matrix3
 				{
@@ -519,17 +745,13 @@ namespace Bpsim.Physics.Anvil
 				case ColliderType.Convex:
 				{
 					ConvexCollider* convex = (ConvexCollider*)collider;
-					// ConvexHull 是 public 类型，靠 AssemblyInfo 的 InternalsVisibleTo 访问
-					var hull = convex->ConvexHull;
-					int count = hull.Vertices.Length;
-					if (count < 4) return;
-					EnsurePointCapacity(count);
-					for (int i = 0; i < count; i++)
-					{
-						float3 v = hull.Vertices[i];
-						m_ScratchPoints[i] = ToVec3(TransformPoint(offset, v * scale));
-					}
-					CreateHullShape(bodyId, collider, m_ScratchPoints, count);
+					AddConvexHull(bodyId, collider, ref convex->ConvexHull, scale, offset);
+					break;
+				}
+				case ColliderType.Cylinder:
+				{
+					CylinderCollider* cylinder = (CylinderCollider*)collider;
+					AddConvexHull(bodyId, collider, ref cylinder->ConvexHull, scale, offset);
 					break;
 				}
 				case ColliderType.Mesh:
@@ -545,21 +767,36 @@ namespace Bpsim.Physics.Anvil
 					var accessor = compound->Children;
 					for (int i = 0; i < children; i++)
 					{
-						CompoundCollider.Child child = accessor[i];
-						RigidTransform childOffset = math.mul(offset, child.CompoundFromChild);
+						// Child.Collider is self-relative: copying Child would relocate its pointer.
+						ref CompoundCollider.Child child = ref accessor[i];
+						RigidTransform childFrame = child.CompoundFromChild;
+						childFrame.pos *= scale;
+						RigidTransform childOffset = math.mul(offset, childFrame);
 						AddShapeRecursive(bodyId, child.Collider, scale, childOffset, isStatic);
 					}
 					break;
 				}
 				default:
-					// Cylinder / Terrain / Triangle / Quad 不参与本工程的部件碰撞
+					// Terrain / standalone Triangle / Quad require dedicated native geometry.
 					break;
 			}
 		}
 
+		void AddConvexHull(b3BodyId bodyId, Collider* collider, ref ConvexHull hull, float scale, RigidTransform offset)
+		{
+			// Blob array offsets are relative to hull's actual address, not a stack copy (F117).
+			var vertices = hull.Vertices;
+			int count = vertices.Length;
+			if (count < 4) return;
+			EnsurePointCapacity(count);
+			for (int i = 0; i < count; i++)
+				m_ScratchPoints[i] = ToVec3(TransformPoint(offset, vertices[i] * scale));
+			CreateHullShape(bodyId, collider, m_ScratchPoints, count);
+		}
+
 		b3ShapeDef BuildShapeDef(Collider* collider)
 		{
-			b3ShapeDef def = AnvilNative.b3DefaultShapeDef();
+			b3ShapeDef def = s_ShapeDef;
 			CollisionFilter filter = collider->GetCollisionFilter();
 			def.filter.categoryBits = filter.BelongsTo;
 			def.filter.maskBits = filter.CollidesWith;
@@ -569,12 +806,15 @@ namespace Bpsim.Physics.Anvil
 			Material material = collider->GetMaterial(ColliderKey.Empty);
 			def.baseMaterial.friction = material.Friction;
 			def.baseMaterial.restitution = material.Restitution;
+			def.baseMaterial.userMaterialId = (ulong)material.FrictionCombinePolicy
+				| ((ulong)material.RestitutionCombinePolicy << 8);
 
 			CollisionResponsePolicy response = collider->GetCollisionResponse();
 			bool isTrigger = response == CollisionResponsePolicy.RaiseTriggerEvents;
 
 			// 只有明确要求发碰撞事件的碰撞体才开事件，避免全局额外开销
-			def.isSensor = (byte)(isTrigger ? 1 : 0);
+			// None still participates in queries, but must not transfer collision momentum.
+			def.isSensor = (byte)(isTrigger || response == CollisionResponsePolicy.None ? 1 : 0);
 			def.enableSensorEvents = (byte)(isTrigger ? 1 : 0);
 			def.enableContactEvents = (byte)(response == CollisionResponsePolicy.CollideRaiseCollisionEvents ? 1 : 0);
 			def.enableHitEvents = 0;
@@ -624,7 +864,7 @@ namespace Bpsim.Physics.Anvil
 			// 地形网格只挂在静态体上（box3d 的 mesh shape 也只在静态体上稳定）
 			if (!isStatic) return;
 
-			Mesh mesh = meshCollider->Mesh;
+			ref Mesh mesh = ref meshCollider->Mesh;
 			var sections = mesh.Sections;
 			int sectionCount = sections.Length;
 			if (sectionCount == 0) return;
@@ -632,7 +872,7 @@ namespace Bpsim.Physics.Anvil
 			int vertexTotal = 0, triangleTotal = 0;
 			for (int s = 0; s < sectionCount; s++)
 			{
-				var section = sections[s];
+				ref var section = ref sections[s];
 				vertexTotal += section.Vertices.Length;
 				var flags = section.PrimitiveFlags;
 				for (int p = 0; p < flags.Length; p++)
@@ -647,7 +887,7 @@ namespace Bpsim.Physics.Anvil
 				int vertexBase = 0, indexCursor = 0;
 				for (int s = 0; s < sectionCount; s++)
 				{
-					var section = sections[s];
+					ref var section = ref sections[s];
 					var sectionVertices = section.Vertices;
 					int sectionVertexCount = sectionVertices.Length;
 					for (int v = 0; v < sectionVertexCount; v++)
@@ -704,13 +944,26 @@ namespace Bpsim.Physics.Anvil
 
 		void TrackMesh(IntPtr mesh)
 		{
-			m_MeshHandles.Add(mesh);
+			if (m_BuildingStaticIndex < 0 || m_BuildingStaticIndex >= m_StaticMeshHandles.Length)
+				throw new InvalidOperationException("Anvil: mesh created outside static body construction.");
+			if (m_StaticMeshHandles[m_BuildingStaticIndex] == null)
+				m_StaticMeshHandles[m_BuildingStaticIndex] = new List<IntPtr>();
+			m_StaticMeshHandles[m_BuildingStaticIndex].Add(mesh);
 		}
 
 		void ReleaseMeshes()
 		{
-			for (int i = 0; i < m_MeshHandles.Count; i++) AnvilNative.b3DestroyMesh(m_MeshHandles[i]);
-			m_MeshHandles.Clear();
+			for (int i = 0; i < m_StaticMeshHandles.Length; i++) ReleaseMeshesAt(i);
+		}
+
+		void ReleaseMeshesAt(int staticIndex)
+		{
+			if (staticIndex < 0 || staticIndex >= m_StaticMeshHandles.Length) return;
+			List<IntPtr> meshes = m_StaticMeshHandles[staticIndex];
+			if (meshes == null) return;
+			for (int i = 0; i < meshes.Count; i++) AnvilNative.b3DestroyMesh(meshes[i]);
+			meshes.Clear();
+			m_StaticMeshHandles[staticIndex] = null;
 		}
 
 		// ── step ────────────────────────────────────────────────────────────────
@@ -719,9 +972,91 @@ namespace Bpsim.Physics.Anvil
 		public b3Profile Step(float timeStep)
 		{
 			if (!m_Created) return default;
-			b3Profile profile;
-			AnvilNative.anvil_StepProfile(m_WorldId, timeStep, SubStepCount, &profile);
+			if (!math.isfinite(timeStep) || timeStep <= 0f) throw new ArgumentOutOfRangeException(nameof(timeStep));
+			if (SubStepCount < 1) throw new ArgumentOutOfRangeException(nameof(SubStepCount));
+			m_LastTimeStep = timeStep;
+			bool hasGravity = math.any(m_Gravity != float3.zero);
+			MotionProperties* motionProperties = m_MotionCount > 0 ? (MotionProperties*)m_MotionProperties.GetUnsafePtr() : null;
+			b3BodyId* motionBodies = m_MotionCount > 0 ? (b3BodyId*)m_MotionBodies.GetUnsafePtr() : null;
+			for (int i = 0; (hasGravity || m_GravityChanged) && i < m_MotionCount; i++)
+			{
+				MotionProperties properties = motionProperties[i];
+				if (properties.InverseMass <= 0f || properties.GravityFactor == 0f) continue;
+				if (m_GravityChanged) AnvilNative.b3Body_SetAwake(motionBodies[i], 1);
+				if (hasGravity)
+				{
+					float3 impulse = m_Gravity * (timeStep * properties.GravityFactor / properties.InverseMass);
+					// Do not wake resting bodies solely to reapply their balanced gravity load.
+					AnvilNative.b3Body_ApplyLinearImpulseToCenter(motionBodies[i], ToVec3(impulse), 0);
+				}
+			}
+			m_GravityChanged = false;
+			if (m_JointCount > 0)
+			{
+				UnsafeUtility.MemClear(m_JointLinearImpulse.GetUnsafePtr(), m_JointCount * sizeof(float3));
+				UnsafeUtility.MemClear(m_JointAngularImpulse.GetUnsafePtr(), m_JointCount * sizeof(float3));
+			}
+			m_FrameContacts.Clear();
+			m_HasSubStepContacts = SubStepCount > 1;
+			// The world is exclusively stepped after ECS dependencies complete. Check each
+			// buffer once here instead of repeating NativeArray safety checks per joint/substep.
+			b3JointId* jointIds = m_JointCount > 0 ? (b3JointId*)m_JointIds.GetUnsafePtr() : null;
+			JointSettings* jointSettings = m_JointCount > 0 ? (JointSettings*)m_JointSettings.GetUnsafePtr() : null;
+			float3* linearImpulses = m_JointCount > 0 ? (float3*)m_JointLinearImpulse.GetUnsafePtr() : null;
+			float3* angularImpulses = m_JointCount > 0 ? (float3*)m_JointAngularImpulse.GetUnsafePtr() : null;
+			b3Profile profile = default;
+			float h = timeStep / SubStepCount;
+			for (int subStep = 0; subStep < SubStepCount; subStep++)
+			{
+				b3Profile subProfile;
+				AnvilNative.anvil_StepProfile(m_WorldId, h, 1, &subProfile);
+				float* total = (float*)&profile;
+				float* sample = (float*)&subProfile;
+				for (int i = 0; i < sizeof(b3Profile) / sizeof(float); i++) total[i] += sample[i];
+				for (int i = 0; i < m_JointCount; i++)
+				{
+					b3JointId id = jointIds[i];
+					if (id.IsNull) continue;
+					ref JointSettings settings = ref jointSettings[i];
+					// Native getters return reaction force = impulse / h. Sum impulses,
+					// not peak substep forces, so solver substeps cannot change break strength.
+					if (settings.NeedsLinearEvents)
+					{
+						b3Vec3 force = AnvilNative.b3Joint_GetConstraintForce(id);
+						linearImpulses[i] += new float3(force.x, force.y, force.z) * h;
+					}
+					if (settings.NeedsAngularEvents)
+					{
+						b3Vec3 torque = AnvilNative.b3Joint_GetConstraintTorque(id);
+						angularImpulses[i] += new float3(torque.x, torque.y, torque.z) * h;
+					}
+				}
+				if (m_HasSubStepContacts) CollectSubStepContacts();
+			}
 			return profile;
+		}
+
+		void CollectSubStepContacts()
+		{
+			EnsureContactCapacity(math.max(64, AnvilNative.b3World_GetCounters(m_WorldId).contactCount));
+			b3AnvilContact* contacts = (b3AnvilContact*)m_ScratchContacts.GetUnsafePtr();
+			int count = AnvilNative.anvil_CollectAllContacts(m_WorldId, contacts, m_ScratchContacts.Length);
+			for (int i = 0; i < count; i++)
+			{
+				b3AnvilContact c = contacts[i];
+				ulong key = ((ulong)(uint)c.bodyA << 32) | (uint)c.bodyB;
+				bool exists = m_FrameContacts.TryGetValue(key, out FrameContact value);
+				if (!exists || c.normalImpulse > value.PeakImpulse)
+				{
+					value.Event.EntityA = new Entity { Index = c.bodyA };
+					value.Event.EntityB = new Entity { Index = c.bodyB };
+					value.Event.Position = new float3(c.point.x, c.point.y, c.point.z);
+					value.Event.Normal = new float3(c.normal.x, c.normal.y, c.normal.z);
+					value.PeakImpulse = c.normalImpulse;
+				}
+				value.Event.Impulse += c.normalImpulse;
+				m_FrameContacts[key] = value;
+			}
 		}
 
 		/// <summary>把 box3d 的结果写回 PhysicsWorld（随后 ExportPhysicsWorld 会同步到 ECS）。</summary>
@@ -736,24 +1071,9 @@ namespace Bpsim.Physics.Anvil
 			b3WorldTransform* transforms = (b3WorldTransform*)m_ScratchTransforms.GetUnsafePtr();
 			b3Vec3* linear = (b3Vec3*)m_ScratchLinear.GetUnsafePtr();
 			b3Vec3* angular = (b3Vec3*)m_ScratchAngular.GetUnsafePtr();
-			b3WorldTransform* lastReported = m_LastTransforms.IsCreated ? (b3WorldTransform*)m_LastTransforms.GetUnsafePtr() : null;
-			int* awakeIndices = m_AwakeIndices.IsCreated ? (int*)m_AwakeIndices.GetUnsafePtr() : null;
-
-			// 只回读「本步真的会有变化」的刚体：box3d 睡眠中的刚体没有 body state，
-			// 位姿也不会动，ECS 侧保留上一帧的值即可。大批量堆稳的场景下这条路径能省掉
-			// 绝大部分回写（也是 2000+ 刚体时的主要开销）。
-			int changed = 0;
-			if (lastReported != null && awakeIndices != null)
-			{
-				changed = AnvilNative.anvil_ReadAwakeFast(m_WorldId, bodies, numDynamic, lastReported,
-					awakeIndices, transforms, linear, angular, m_AwakeIndices.Length);
-			}
-			else
-			{
-				AnvilNative.anvil_ReadBatchFast(m_WorldId, bodies, numDynamic, transforms, linear, angular);
-				changed = numDynamic;
-				for (int i = 0; i < changed; i++) awakeIndices[i] = i;
-			}
+			// Read sleeping velocities too: a sleep transition can zero velocity without changing
+			// the last reported pose. Omitting it leaves stale ECS momentum and damping state.
+			AnvilNative.anvil_ReadBatchFast(m_WorldId, bodies, numDynamic, transforms, linear, angular);
 
 			// 裸指针批量写回：NativeArray 索引器每次访问都要过一遍 job safety 检查，
 			// 2000 个刚体 x 约 7 次访问 = 1.4 万次原子检查，实测就要 1 ms 量级。
@@ -763,11 +1083,18 @@ namespace Bpsim.Physics.Anvil
 			b3WorldTransform* lastTransforms = track ? (b3WorldTransform*)m_LastTransforms.GetUnsafePtr() : null;
 			b3Vec3* lastLinear = track ? (b3Vec3*)m_LastLinear.GetUnsafePtr() : null;
 			b3Vec3* lastAngular = track ? (b3Vec3*)m_LastAngular.GetUnsafePtr() : null;
+			byte* pendingDamping = (byte*)m_PendingDamping.GetUnsafePtr();
 
-			for (int k = 0; k < changed; k++)
+			for (int i = 0; i < numDynamic; i++)
 			{
-				int i = awakeIndices[k];
-				b3WorldTransform t = transforms[k];
+				b3WorldTransform t = transforms[i];
+				if (track && SameTransform(t, lastTransforms[i]) && IsZero(linear[i]) && IsZero(angular[i])
+					&& IsZero(lastLinear[i]) && IsZero(lastAngular[i])
+					&& !math.any(motionVelocities[i].LinearVelocity) && !math.any(motionVelocities[i].AngularVelocity))
+				{
+					pendingDamping[i] = 0;
+					continue;
+				}
 				RigidTransform worldFromBody = new RigidTransform(
 					new quaternion(t.q.x, t.q.y, t.q.z, t.q.w),
 					new float3(t.p.x, t.p.y, t.p.z));
@@ -775,23 +1102,33 @@ namespace Bpsim.Physics.Anvil
 				MotionData md = motionDatas[i];
 				// box3d 的 body transform 就是 world-from-body
 				md.WorldFromMotion = math.mul(worldFromBody, md.BodyFromMotion);
-				// box3d 的质心即其 body 原点 —— 与 md.BodyFromMotion.pos 对齐
+				// BodyFromMotion carries the scaled COM and principal-inertia frame.
 				motionDatas[i] = md;
 
 				MotionVelocity mv = motionVelocities[i];
-				mv.LinearVelocity = new float3(linear[k].x, linear[k].y, linear[k].z);
-				mv.AngularVelocity = new float3(angular[k].x, angular[k].y, angular[k].z);
+				float3 rawLinear = new float3(linear[i].x, linear[i].y, linear[i].z);
+				float3 rawAngular = math.rotate(math.inverse(md.WorldFromMotion.rot), new float3(angular[i].x, angular[i].y, angular[i].z));
+				mv.LinearVelocity = rawLinear * math.clamp(1f - md.LinearDamping * m_LastTimeStep, 0f, 1f);
+				mv.AngularVelocity = rawAngular * math.clamp(1f - md.AngularDamping * m_LastTimeStep, 0f, 1f);
 				motionVelocities[i] = mv;
+				// Flush the post-integration damping before the next native step, without
+				// confusing that correction with externally applied small impulses.
+				pendingDamping[i] = (byte)(math.any(mv.LinearVelocity != rawLinear) || math.any(mv.AngularVelocity != rawAngular) ? 1 : 0);
 
 				// 记住 box3d 的权威值，供下一帧 NeedsUpload 判断 ECS 是否被外部改写。
 				if (track)
 				{
 					lastTransforms[i] = t;
-					lastLinear[i] = linear[k];
-					lastAngular[i] = angular[k];
+					lastLinear[i] = ToVec3(mv.LinearVelocity);
+					lastAngular[i] = ToVec3(mv.AngularVelocity);
 				}
 			}
 		}
+
+		static bool IsZero(b3Vec3 v) => v.x == 0f && v.y == 0f && v.z == 0f;
+		static bool SameTransform(in b3WorldTransform a, in b3WorldTransform b) =>
+			a.p.x == b.p.x && a.p.y == b.p.y && a.p.z == b.p.z
+			&& a.q.x == b.q.x && a.q.y == b.q.y && a.q.z == b.q.z && a.q.w == b.q.w;
 
 		// ── 查询 ────────────────────────────────────────────────────────────────
 
@@ -853,14 +1190,14 @@ namespace Bpsim.Physics.Anvil
 				Entity entity = EntityFromNativeIndex(h.bodyIndex);
 				if (entity == Entity.Null) continue;
 
-				bool duplicate = false;
+				int duplicate = -1;
 				for (int k = 0; k < output.Length; k++)
 				{
-					if (output[k].Entity == entity) { duplicate = true; break; }
+					if (output[k].Entity == entity) { duplicate = k; break; }
 				}
-				if (duplicate) continue;
+				if (duplicate >= 0 && output[duplicate].Fraction <= h.fraction) continue;
 
-				output.Add(new RaycastHit
+				RaycastHit hit = new RaycastHit
 				{
 					Fraction = h.fraction,
 					RigidBodyIndex = BodyIndexFromNativeIndex(h.bodyIndex),
@@ -868,7 +1205,9 @@ namespace Bpsim.Physics.Anvil
 					Entity = entity,
 					Position = new float3(h.point.x, h.point.y, h.point.z),
 					SurfaceNormal = new float3(h.normal.x, h.normal.y, h.normal.z),
-				});
+				};
+				if (duplicate >= 0) output[duplicate] = hit;
+				else output.Add(hit);
 			}
 
 			// box3d 的回调不保证顺序；三个消费点都按 Fraction 取最近，这里统一升序省掉一次扫描。
@@ -890,7 +1229,7 @@ namespace Bpsim.Physics.Anvil
 		/// <summary>b3BodyId.index1 → Entity。越界返回 Entity.Null。</summary>
 		public Entity EntityFromNativeIndex(int nativeIndex)
 		{
-			int index = nativeIndex - 1;
+			int index = BodyIndexFromNativeIndex(nativeIndex);
 			if (index < 0) return Entity.Null;
 			if (index < m_MotionCount) return m_MotionEntities[index];
 			int staticIndex = index - m_MotionCount;
@@ -900,39 +1239,35 @@ namespace Bpsim.Physics.Anvil
 
 		// ── 关节 ────────────────────────────────────────────────────────────────
 
-		public int NumJoints => m_JointIds.IsCreated ? m_JointIds.Length : 0;
+		public int NumJoints => m_JointCount;
 
 		void EnsureJointCapacity(int needed)
 		{
 			if (m_JointIds.IsCreated && m_JointIds.Length >= needed) return;
 			int capacity = math.max(k_MinCapacity, math.ceilpow2(math.max(1, needed)));
 			Grow(ref m_JointIds, capacity);
-			Grow(ref m_JointIndexA, capacity);
-			Grow(ref m_JointIndexB, capacity);
-			Grow(ref m_JointEntities, capacity);
-			Grow(ref m_JointVersions, capacity);
-			Grow(ref m_JointForceThreshold, capacity);
-			if (!m_JointIdToEntity.IsCreated)
-				m_JointIdToEntity = new NativeParallelHashMap<int, Entity>(capacity, m_Allocator);
+			Grow(ref m_JointSettings, capacity);
+			Grow(ref m_JointDescriptors, capacity);
+			Grow(ref m_JointLinearImpulse, capacity);
+			Grow(ref m_JointAngularImpulse, capacity);
 		}
 
 		void DisposeJoints()
 		{
-			if (m_Created)
+			if (m_Created && m_JointIds.IsCreated)
 			{
 				for (int i = 0; i < m_JointIds.Length; i++)
 				{
-					if (!m_JointIds[i].IsNull) AnvilNative.b3DestroyJoint(m_JointIds[i]);
+					if (!m_JointIds[i].IsNull && AnvilNative.b3Joint_IsValid(m_JointIds[i]) != 0)
+						AnvilNative.b3DestroyJoint(m_JointIds[i], 0);
 				}
 			}
 			DisposeArray(ref m_JointIds);
-			DisposeArray(ref m_JointIndexA);
-			DisposeArray(ref m_JointIndexB);
-			DisposeArray(ref m_JointEntities);
-			DisposeArray(ref m_JointVersions);
-			DisposeArray(ref m_JointForceThreshold);
-			if (m_JointIdToEntity.IsCreated) m_JointIdToEntity.Dispose();
-			m_JointIdToEntity = default;
+			DisposeArray(ref m_JointSettings);
+			DisposeArray(ref m_JointDescriptors);
+			DisposeArray(ref m_JointLinearImpulse);
+			DisposeArray(ref m_JointAngularImpulse);
+			m_JointCount = 0;
 		}
 
 		/// <summary>
@@ -953,11 +1288,11 @@ namespace Bpsim.Physics.Anvil
 
 			// 与 SyncToNative/SyncFromNative 同理：用裸指针避开索引器的 job safety 检查。
 			b3JointId* jointIds = (b3JointId*)m_JointIds.GetUnsafePtr();
-			int* jointIndexA = (int*)m_JointIndexA.GetUnsafePtr();
-			int* jointIndexB = (int*)m_JointIndexB.GetUnsafePtr();
-			Entity* jointEntities = (Entity*)m_JointEntities.GetUnsafePtr();
-			byte* jointVersions = (byte*)m_JointVersions.GetUnsafePtr();
-			float* jointThresholds = (float*)m_JointForceThreshold.GetUnsafePtr();
+			JointSettings* settings = (JointSettings*)m_JointSettings.GetUnsafePtr();
+			Joint* descriptors = (Joint*)m_JointDescriptors.GetUnsafePtr();
+			b3BodyId* motionBodies = m_MotionBodies.IsCreated ? (b3BodyId*)m_MotionBodies.GetUnsafePtr() : null;
+			b3BodyId* staticBodies = m_StaticBodies.IsCreated ? (b3BodyId*)m_StaticBodies.GetUnsafePtr() : null;
+			int motionCapacity = m_MotionBodies.Length, staticCapacity = m_StaticBodies.Length;
 
 			for (int i = 0; i < numJoints; i++)
 			{
@@ -965,47 +1300,50 @@ namespace Bpsim.Physics.Anvil
 				int indexA = joint.BodyPair.BodyIndexA;
 				int indexB = joint.BodyPair.BodyIndexB;
 
-				if (indexA < 0 || indexB < 0)
+				if (indexA < 0 || indexB < 0 || indexA == indexB
+					|| (indexA >= numDynamic && indexB >= numDynamic))
 				{
 					DestroyJointAt(i);
 					continue;
 				}
 
-				b3BodyId bodyA = BodyIdForIndex(indexA, numDynamic, numStatic);
-				b3BodyId bodyB = BodyIdForIndex(indexB, numDynamic, numStatic);
-				if (bodyA.IsNull || bodyB.IsNull)
+				b3BodyId bodyA = BodyIdForIndex(indexA, numDynamic, numStatic, motionBodies, staticBodies, motionCapacity, staticCapacity);
+				b3BodyId bodyB = BodyIdForIndex(indexB, numDynamic, numStatic, motionBodies, staticBodies, motionCapacity, staticCapacity);
+				if (bodyA.IsNull || bodyB.IsNull
+					|| AnvilNative.b3Body_IsValid(bodyA) == 0
+					|| AnvilNative.b3Body_IsValid(bodyB) == 0)
 				{
 					DestroyJointAt(i);
 					continue;
 				}
 
-				// 线性冲量阈值：box3d 比的是「力」= 冲量 / dt，故阈值要除以 dt。
-				// 注意 Joint 是运行期结构（不是 authoring 的 PhysicsJoint），
-				// 其约束块是 internal 的 ConstraintBlock3；本项目代码在 Unity.Physics 程序集内，可直接取。
-				float threshold = float.MaxValue;
-				ConstraintBlock3 block = joint.Constraints;
-				if (block.Length > 0)
-				{
-					// fixed joint 只有一条 Linear 约束；取第一条的 MaxImpulse.x 即 PartSimulator 传入的 maxImpulse。
-					Constraint c = block.GetConstraints()[0];
-					if (!float.IsInfinity(c.MaxImpulse.x) && c.MaxImpulse.x > 0f)
-						threshold = c.MaxImpulse.x / math.max(1e-5f, timeStep);
-				}
+				// Joint/ConstraintBlock3 contain only inline value data, not self-relative
+				// collider blobs. Exact source bytes include frames, atoms, thresholds,
+				// collision, version and entity. Keep all native validity/generation checks.
+				if (!jointIds[i].IsNull && AnvilNative.b3Joint_IsValid(jointIds[i]) != 0
+					&& SameBody(settings[i].BodyA, bodyA) && SameBody(settings[i].BodyB, bodyB)
+					&& UnsafeUtility.MemCmp(joints + i, descriptors + i, sizeof(Joint)) == 0)
+					continue;
 
-				byte version = joint.Version;
+				JointSettings current = ReadJointSettings(joint, bodyA, bodyB);
 				if (!jointIds[i].IsNull
-					&& jointEntities[i] == joint.Entity
-					&& jointVersions[i] == version
-					&& jointIndexA[i] == indexA
-					&& jointIndexB[i] == indexB
-					&& math.abs(jointThresholds[i] - threshold) <= 1e-3f * math.max(1f, threshold))
+					&& AnvilNative.b3Joint_IsValid(jointIds[i]) != 0
+					&& settings[i].Matches(current))
 				{
+					UnsafeUtility.MemCpy(descriptors + i, joints + i, sizeof(Joint));
 					continue;
 				}
 
+				if (!jointIds[i].IsNull && AnvilNative.b3Joint_IsValid(jointIds[i]) != 0
+					&& settings[i].EnableCollision != current.EnableCollision)
+				{
+					// Recreating a weld alone does not refilter unmoved shape proxies.
+					// The setter queues new pairs on enable and removes old contacts on disable.
+					AnvilNative.b3Joint_SetCollideConnected(jointIds[i], (byte)(current.EnableCollision != 0 ? 1 : 0));
+				}
 				DestroyJointAt(i);
 
-				b3WeldJointDef def = AnvilNative.b3DefaultWeldJointDef();
+				b3WeldJointDef def = s_WeldJointDef;
 				def.baseDef.bodyIdA = bodyA;
 				def.baseDef.bodyIdB = bodyB;
 				// 方向约定（两个引擎一致，直接赋值）：
@@ -1017,74 +1355,153 @@ namespace Bpsim.Physics.Anvil
 				// 两者语义相同 → 直接赋值；取逆会让锚点镜像到 body 另一侧，部件会被拽穿地面。
 				def.baseDef.localFrameA = ToTransform(joint.AFromJoint);
 				def.baseDef.localFrameB = ToTransform(joint.BFromJoint);
-				def.baseDef.forceThreshold = threshold;
+				// Native scalar/magnitude force thresholds are not Unity's per-component
+				// impulse thresholds. Evaluate full-frame impulses in CollectJointEvents instead.
+				def.baseDef.forceThreshold = float.MaxValue;
 				def.baseDef.torqueThreshold = float.MaxValue;
 				def.baseDef.collideConnected = (byte)(joint.EnableCollision != 0 ? 1 : 0);
-				// hertz = 0 → 用世界默认 constraintSoftness（最刚），与 PhysicsJoint 的默认弹簧一致
-				def.linearHertz = 0f;
-				def.angularHertz = 0f;
+				// Weld hertz=0 means fallback, not "most rigid". Use authored springs directly;
+				// a missing/zero-frequency atom falls back to zero softness (disabled), not 60 Hz.
+				def.baseDef.constraintHertz = 0f;
+				def.linearHertz = current.HasLinear ? current.Linear.SpringFrequency : 0f;
+				def.angularHertz = current.HasAngular ? current.Angular.SpringFrequency : 0f;
+				def.linearDampingRatio = current.HasLinear ? current.Linear.SpringDamping : 0f;
+				def.angularDampingRatio = current.HasAngular ? current.Angular.SpringDamping : 0f;
+				if (current.HasLinear && current.HasAngular
+					&& current.Linear.SpringFrequency == Constraint.DefaultSpringFrequency
+					&& current.Angular.SpringFrequency == Constraint.DefaultSpringFrequency
+					&& current.Linear.SpringDamping == Constraint.DefaultSpringDamping
+					&& current.Angular.SpringDamping == Constraint.DefaultSpringDamping)
+				{
+					// Unity's enormous default constants encode its per-iteration rigid constraint,
+					// not a physical 74 kHz spring. Native positive hertz keeps bias enabled even in
+					// the relaxation pass, which pumps energy into off-centre rigid assemblies.
+					def.baseDef.constraintHertz = s_WeldJointDef.baseDef.constraintHertz;
+					def.baseDef.constraintDampingRatio = s_WeldJointDef.baseDef.constraintDampingRatio;
+					def.linearHertz = def.angularHertz = 0f;
+				}
 
 				b3JointId id = AnvilNative.b3CreateWeldJoint(m_WorldId, ref def);
+				if (id.IsNull) throw new InvalidOperationException("Anvil: weld creation failed for " + joint.Entity);
 				jointIds[i] = id;
-				jointIndexA[i] = indexA;
-				jointIndexB[i] = indexB;
-				jointEntities[i] = joint.Entity;
-				jointVersions[i] = version;
-				jointThresholds[i] = threshold;
-
-				if (!id.IsNull) m_JointIdToEntity.TryAdd(id.index1, joint.Entity);
+				settings[i] = current;
+				UnsafeUtility.MemCpy(descriptors + i, joints + i, sizeof(Joint));
 			}
 
 			for (int i = numJoints; i < m_JointIds.Length; i++)
 			{
-				if (jointIds[i].IsNull) break;
+				if (jointIds[i].IsNull) continue;
 				DestroyJointAt(i);
 			}
 
+			m_JointCount = numJoints;
 			return numJoints;
+		}
+
+		static JointSettings ReadJointSettings(in Joint joint, b3BodyId bodyA, b3BodyId bodyB)
+		{
+			var settings = new JointSettings
+			{
+				BodyA = bodyA, BodyB = bodyB, Entity = joint.Entity, Version = joint.Version,
+				EnableCollision = joint.EnableCollision,
+				FrameA = new RigidTransform(new quaternion(joint.AFromJoint.Rotation), joint.AFromJoint.Translation),
+				FrameB = new RigidTransform(new quaternion(joint.BFromJoint.Rotation), joint.BFromJoint.Translation)
+			};
+			var atoms = joint.Constraints.GetConstraints();
+			for (int i = 0; i < atoms.Length; i++)
+			{
+				Constraint c = atoms[i];
+				if (!math.all(c.ConstrainedAxes) || c.Min != 0f || c.Max != 0f
+					|| !math.isfinite(c.SpringFrequency) || c.SpringFrequency < 0f
+					|| !math.isfinite(c.SpringDamping) || c.SpringDamping < 0f)
+					throw new NotSupportedException("Anvil: only fixed/fully locked joint atoms are supported: " + joint.Entity);
+				if (c.Type == ConstraintType.Linear && !settings.HasLinear)
+				{
+					settings.Linear = c;
+					settings.HasLinear = true;
+				}
+				else if (c.Type == ConstraintType.Angular && !settings.HasAngular)
+				{
+					settings.Angular = c;
+					settings.HasAngular = true;
+				}
+				else throw new NotSupportedException("Anvil: unsupported joint atom instead of silently welding it: " + joint.Entity);
+			}
+			// Derive once per sync, including edits made without a joint-version increment.
+			if (settings.HasLinear && math.any(math.isfinite(settings.Linear.MaxImpulse))) settings.EventMask |= 1;
+			if (settings.HasAngular && math.any(math.isfinite(settings.Angular.MaxImpulse))) settings.EventMask |= 2;
+			return settings;
 		}
 
 		void DestroyJointAt(int i)
 		{
 			if (m_JointIds[i].IsNull) return;
-			m_JointIdToEntity.Remove(m_JointIds[i].index1);
-			AnvilNative.b3DestroyJoint(m_JointIds[i]);
+			b3JointId id = m_JointIds[i];
+			// 句柄可能已被 b3DestroyBody 隐式释放（body 销毁时其关节一并销毁）；
+			// 只有仍然有效的句柄才能交给 b3DestroyJoint，否则会 SIGSEGV（二次模拟崩溃）。
+			if (AnvilNative.b3Joint_IsValid(id) != 0)
+				AnvilNative.b3DestroyJoint(id, 1);
 			m_JointIds[i] = default;
-			m_JointEntities[i] = Entity.Null;
+			m_JointSettings[i] = default;
+			m_JointDescriptors[i] = default;
+			m_JointLinearImpulse[i] = float3.zero;
+			m_JointAngularImpulse[i] = float3.zero;
 		}
 
-		b3BodyId BodyIdForIndex(int index, int numDynamic, int numStatic)
+		static b3BodyId BodyIdForIndex(int index, int numDynamic, int numStatic,
+			b3BodyId* motionBodies, b3BodyId* staticBodies, int motionCapacity, int staticCapacity)
 		{
+			if (index < 0) return default;
 			if (index < numDynamic)
-				return index < m_MotionBodies.Length ? m_MotionBodies[index] : default;
+				return motionBodies != null && index < motionCapacity ? motionBodies[index] : default;
 
 			int staticIndex = index - numDynamic;
-			if (staticIndex < 0 || staticIndex >= numStatic || staticIndex >= m_StaticBodies.Length)
+			if (staticBodies == null || staticIndex < 0 || staticIndex >= numStatic || staticIndex >= staticCapacity)
 				return default;
-			return m_StaticBodies[staticIndex];
+			return staticBodies[staticIndex];
 		}
 
 		/// <summary>
-		/// 读回 box3d 的关节事件（阈值超限的关节），把 jointId 映射回 Joint Entity。
+		/// Evaluate accumulated full-frame impulses using the authored per-axis event thresholds.
 		/// 返回写入 output 的条数。
 		/// </summary>
 		public unsafe int CollectJointEvents(NativeList<Entity> output)
 		{
 			output.Clear();
-			if (!m_Created || !m_JointIdToEntity.IsCreated) return 0;
-
-			b3JointEvents events = AnvilNative.b3World_GetJointEvents(m_WorldId);
-			if (events.count <= 0 || events.jointEvents == IntPtr.Zero) return 0;
-
-			b3JointEvent* items = (b3JointEvent*)events.jointEvents;
-			int written = 0;
-			for (int i = 0; i < events.count; i++)
+			if (!m_Created || m_JointCount == 0) return 0;
+			b3JointId* jointIds = (b3JointId*)m_JointIds.GetUnsafePtr();
+			JointSettings* jointSettings = (JointSettings*)m_JointSettings.GetUnsafePtr();
+			float3* linearImpulses = (float3*)m_JointLinearImpulse.GetUnsafePtr();
+			float3* angularImpulses = (float3*)m_JointAngularImpulse.GetUnsafePtr();
+			for (int i = 0; i < m_JointCount; i++)
 			{
-				if (!m_JointIdToEntity.TryGetValue(items[i].jointId.index1, out Entity entity)) continue;
-				output.Add(entity);
-				written++;
+				if (jointIds[i].IsNull) continue;
+				ref JointSettings settings = ref jointSettings[i];
+				bool exceeded = settings.NeedsLinearEvents && math.any(math.abs(linearImpulses[i]) > settings.Linear.MaxImpulse);
+				if (!exceeded && settings.NeedsAngularEvents)
+				{
+					float3 angularImpulse = angularImpulses[i];
+					// A zero vector is unchanged by a valid joint frame; do not look up and
+					// rotate every resting/torque-free joint. Negative/zero thresholds still compare.
+					if (math.any(angularImpulse != float3.zero))
+					{
+						quaternion bodyRotation = quaternion.identity;
+						if (m_NativeBodyIndices.TryGetValue(settings.BodyB.index1, out int index))
+						{
+							if (index < m_MotionCount)
+							{
+								b3Quat q = m_LastTransforms[index].q;
+								bodyRotation = new quaternion(q.x, q.y, q.z, q.w);
+							}
+							else bodyRotation = m_StaticTransforms[index - m_MotionCount].rot;
+						}
+						angularImpulse = math.rotate(math.inverse(math.mul(bodyRotation, settings.FrameB.rot)), angularImpulse);
+					}
+					exceeded = math.any(math.abs(angularImpulse) > settings.Angular.MaxImpulse);
+				}
+				if (exceeded) output.Add(settings.Entity);
 			}
-			return written;
+			return output.Length;
 		}
 
 		// ── 接触事件 ────────────────────────────────────────────────────────────
@@ -1102,6 +1519,15 @@ namespace Bpsim.Physics.Anvil
 		{
 			output.Clear();
 			if (!m_Created || capacity <= 0) return 0;
+			if (m_HasSubStepContacts)
+			{
+				foreach (FrameContact value in m_FrameContacts.Values)
+				{
+					if (output.Length >= capacity) break;
+					output.Add(value.Event);
+				}
+				return output.Length;
+			}
 
 			// 快路径：直接遍历 world 的接触数组，每个 manifold 只输出一个代表点。
 			// bodyA/bodyB 里存的是 box3d 的 b3BodyId.index1（= bodyIndex + 1），
@@ -1136,15 +1562,7 @@ namespace Bpsim.Physics.Anvil
 		/// </summary>
 		public int BodyIndexFromNativeIndex(int nativeIndex)
 		{
-			int index = nativeIndex - 1;
-			if (index < 0) return -1;
-
-			int numDynamic = m_MotionCount;
-			if (index < numDynamic) return index;
-
-			int staticIndex = index - numDynamic;
-			if (staticIndex < m_StaticCount) return numDynamic + staticIndex;
-			return -1;
+			return m_NativeBodyIndices.TryGetValue(nativeIndex, out int index) ? index : -1;
 		}
 
 				public int CollectContacts(NativeList<AnvilContactPair> output, int capacity)
@@ -1155,7 +1573,7 @@ namespace Bpsim.Physics.Anvil
 
 			b3BodyId* bodies = (b3BodyId*)m_MotionBodies.GetUnsafePtr();
 			b3AnvilContact* contacts = (b3AnvilContact*)m_ScratchContacts.GetUnsafePtr();
-			int written = AnvilNative.anvil_CollectContacts(bodies, math.min(MotionCapacity, m_MotionBodies.Length), contacts, capacity);
+			int written = AnvilNative.anvil_CollectContacts(bodies, m_MotionCount, contacts, capacity);
 
 			for (int i = 0; i < written; i++)
 			{

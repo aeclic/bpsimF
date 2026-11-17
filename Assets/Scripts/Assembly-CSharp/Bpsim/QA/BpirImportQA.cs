@@ -9,7 +9,9 @@ using Bpsim.Parts;
 using Bpsim.Parts.Simulation;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Bpsim.QA
@@ -216,6 +218,82 @@ namespace Bpsim.QA
 			Schematics.Unit first = schematics.Units[0];
 			Check("first row imported", first.Type == 6 && first.Index == 10 && first.X == 107 && first.Y == 633 && first.Layer == 2, Describe(first));
 
+			// ---- 3b. 模式码部件的 rotation 不能折进连续角 ----
+			// 铰接板（Rope 4-7）的 rotation 是 0..5 的布局码：5 → 布局 3（90*1），
+			// 不是「rot 5 再多 45 度」。旧实现会把它折成 rot=1 + rotZ=45。
+			Schematics.Unit hinge5 = FindUnit(schematics, 113, 631, 26, 4);
+			Check("hinge plate layout code kept", hinge5.Type == 26 && hinge5.Index == 4 && hinge5.Rotation == 3 && Near(hinge5.RotationDegrees, 0f), Describe(hinge5));
+			Schematics.Unit hinge4 = FindUnit(schematics, 105, 630, 26, 4);
+			Check("hinge plate layout 4 -> 2", hinge4.Type == 26 && hinge4.Rotation == 2 && Near(hinge4.RotationDegrees, 0f), Describe(hinge4));
+
+			// ---- 3c. 合成行：模式码 / 窄格式 / 自动识别 ----
+			// 这些件在采样存档里没有（或只有单一种），用合成行钉住映射规则，免得回归时没人发现。
+			Check("mode code table", SchematicsBpirCsvLoader.UsesRotationAsModeCode(new PartTypeInfo(PartType.Rope, 5))
+				&& SchematicsBpirCsvLoader.UsesRotationAsModeCode(new PartTypeInfo(PartType.ElectricalPart, 1))
+				&& SchematicsBpirCsvLoader.UsesRotationAsModeCode(new PartTypeInfo(PartType.ElectricalPart, 42))
+				&& !SchematicsBpirCsvLoader.UsesRotationAsModeCode(new PartTypeInfo(PartType.Rope, 2))
+				&& !SchematicsBpirCsvLoader.UsesRotationAsModeCode(new PartTypeInfo(PartType.MetalFrame, 0)));
+
+			Check("point charge polarity", LoadSynthetic(loader, "47,42,10,10,1,0").Rotation == 1, "polarity is rotation % 2; bpsim's CircuitSystem reads %4==0 as positive");
+			Check("resistor %2", LoadSynthetic(loader, "47,6,10,10,3,0").Rotation == 1, "BPIR ResistorPart does rotation % Deg_180");
+			Check("capacitor %2", LoadSynthetic(loader, "47,15,10,10,2,0").Rotation == 0, "BPIR CapacitorPart does rotation % Deg_180");
+			Check("magnetic field sign", LoadSynthetic(loader, "47,44,10,10,3,0").Rotation == 0 && LoadSynthetic(loader, "47,44,10,10,1,0").Rotation == 2, "1/2 -> 2, 0/3 -> 0");
+			Check("hinge layout 0 stays", LoadSynthetic(loader, "26,4,10,10,0,0").Rotation == 0 && LoadSynthetic(loader, "26,4,10,10,1,0").Rotation == 1, "layouts 0/1 are the side-by-side pair");
+
+			// 7 列是 BPIR 的窄导出：members 落在第 7 列（INContraptionDataManager.LoadDataFromCsv）。
+			Schematics.Unit narrow = LoadSynthetic(loader, "26,4,10,10,0,0,@offX=0.5;@offY=-0.25");
+			Check("narrow csv keeps members", Near(narrow.OffsetX, 0.5f) && Near(narrow.OffsetY, -0.25f), Describe(narrow));
+			Schematics.Unit narrow6 = LoadSynthetic(loader, "6,28,43,18,0,0");
+			Check("6 column csv still parses", narrow6.Type == 6 && narrow6.Index == 28 && narrow6.X == 43 && narrow6.Y == 18, Describe(narrow6));
+
+			Check("detect bpir wide", Schematics.DetectTextFormat("6,10,107,633,0,0,-1,-1,-1,-1,-1,-1,,2") == SchematicsFormat.BpirCsv);
+			Check("detect bpir narrow", Schematics.DetectTextFormat("6,28,43,18,0,0") == SchematicsFormat.BpirCsv);
+			Check("detect bpir members", Schematics.DetectTextFormat("26,4,10,10,0,0,@offX=0.5") == SchematicsFormat.BpirCsv);
+			Check("detect bpsim csv", Schematics.DetectTextFormat("6,10,107,633,0,0,0,0,0,1,1,2,0") == SchematicsFormat.Csv);
+			Check("detect json", Schematics.DetectTextFormat("{\"Units\":[]}") == SchematicsFormat.Json);
+			Check("detect xml", Schematics.DetectTextFormat("<ContraptionDataset />") == SchematicsFormat.Xml);
+			Check("detect empty", Schematics.DetectTextFormat("") == SchematicsFormat.None);
+			Check("detect comments only", Schematics.DetectTextFormat("# no units\n  \n") == SchematicsFormat.None);
+			// savefile/ 里的四个真实存档都是 BPIR 导出，两种列宽各占一半：
+			// Level_Sandbox_04_4 是 14 列宽档，其余三个是 6 列窄档。自动识别必须
+			// 对两种都落到 BpirCsv，否则「点开就能读」只在宽档上成立。
+			StringBuilder detectText = new StringBuilder();
+			bool detectAllOk = true;
+			string[] realSaves = Directory.GetFiles(Path.GetDirectoryName(path), "*", SearchOption.TopDirectoryOnly);
+			Array.Sort(realSaves, StringComparer.Ordinal);
+			foreach (string realSave in realSaves)
+			{
+				if (realSave.EndsWith(".meta", StringComparison.Ordinal))
+				{
+					continue;
+				}
+				SchematicsFormat detected;
+				int parsed;
+				try
+				{
+					using (Stream detectStream = File.OpenRead(realSave))
+					{
+						detected = Schematics.DetectFormat(detectStream);
+					}
+					using (Stream parseStream = File.OpenRead(realSave))
+					{
+						parsed = SchematicsBpirCsvLoader.Default.Read(parseStream).Units.Count;
+					}
+				}
+				catch (Exception exception)
+				{
+					detectAllOk = false;
+					detectText.Append(Path.GetFileName(realSave)).Append("=throw:").Append(exception.GetType().Name).Append(' ');
+					continue;
+				}
+				if (detected != SchematicsFormat.BpirCsv || parsed <= 0)
+				{
+					detectAllOk = false;
+				}
+				detectText.Append(Path.GetFileName(realSave)).Append('=').Append(detected).Append('/').Append(parsed).Append(' ');
+			}
+			Check("detect every real savefile", detectAllOk && realSaves.Length >= 4, detectText.ToString());
+
 			// ---- 4. 整份存档放进场景 ----
 			PartScene scene = LoadEmptySceneSelected(manager, "BpirImportQA");
 			yield return null;
@@ -268,6 +346,85 @@ namespace Bpsim.QA
 			bool placed178 = loaded.Unmanaged.FindPartAt(143, 630, 1, out Entity entity178);
 			PartFreeTransform free178 = placed178 ? loaded.Unmanaged.GetPartFreeTransform(entity178) : PartFreeTransform.Identity;
 			Check("placed part keeps free transform", placed178 && Near(free178.Offset.y, 1f) && Near(free178.Scale.x, 15f) && Near(free178.Scale.y, 4f), "found=" + placed178 + " offset=" + free178.Offset + " scale=" + free178.Scale);
+			yield return null;
+
+			// ---- 4b. 自动识别：同一个文件不指定格式也能读成 BPIR ----
+			PartScene autoLoaded = null;
+			SchematicsFormat autoUsed = SchematicsFormat.None;
+			Exception autoError = null;
+			try
+			{
+				using Stream stream = File.OpenRead(path);
+				autoLoaded = LoadSceneSelected(manager, stream, "Level_Sandbox_04_4_auto", SchematicsFormat.Auto, out autoUsed);
+			}
+			catch (Exception exception)
+			{
+				autoError = exception;
+			}
+			yield return null;
+			yield return null;
+			Check("auto detect load", autoError == null, autoError?.ToString() ?? string.Empty);
+			Check("auto detect picked bpir", autoUsed == SchematicsFormat.BpirCsv, "used=" + autoUsed);
+			Check("auto detect placed parts", autoLoaded != null && autoLoaded.Unmanaged.Parts.Length == 286, "placed=" + (autoLoaded?.Unmanaged.Parts.Length ?? (-1)));
+			yield return null;
+
+			// 包装流常见于压缩包/网络导入，不能 seek；Auto 仍必须让检测和 loader
+			// 看到同一份数据，而不是检测读到 EOF 后再解析空流。
+			PartScene nonSeekLoaded = null;
+			SchematicsFormat nonSeekUsed = SchematicsFormat.None;
+			Exception nonSeekError = null;
+			try
+			{
+				using Stream stream = new NonSeekableReadStream(Encoding.UTF8.GetBytes("6,28,43,18,0,0\n"));
+				nonSeekLoaded = LoadSceneSelected(manager, stream, "BpirNonSeekAuto", SchematicsFormat.Auto, out nonSeekUsed);
+			}
+			catch (Exception exception)
+			{
+				nonSeekError = exception;
+			}
+			yield return null;
+			Check("auto detect non-seek stream", nonSeekError == null && nonSeekUsed == SchematicsFormat.BpirCsv
+				&& nonSeekLoaded != null && nonSeekLoaded.Unmanaged.Parts.Length == 1,
+				"error=" + (nonSeekError?.Message ?? "none") + " used=" + nonSeekUsed + " placed=" + (nonSeekLoaded?.Unmanaged.Parts.Length ?? (-1)));
+
+			// ---- 4c. 翻转（flip）必须原样落到场景：BPIR 的 BasePart.SetFlipped 没有白名单，
+			//      任何一件都可能带 flipped=1（天使座里有 4 件 SPDT 47,5 就是这种）。
+			//      造两件同型号同朝向、只差 flip 的部件，读档后它们的 LocalTransform.Rotation
+			//      必须不同，且 PartTransform.Flipped 保留 —— 只看导入后的离散朝向，
+			//      因为 bpsim 目前没有把 Flipped 变成视觉镜像的渲染路径（已知 backlog）。
+			string flipCsv = "47,5,10,10,0,0\n47,5,12,10,0,1\n";
+			PartScene flipScene = null;
+			Exception flipError = null;
+			try
+			{
+				using MemoryStream flipStream = new MemoryStream(Encoding.UTF8.GetBytes(flipCsv), writable: false);
+				flipScene = LoadSceneSelected(manager, flipStream, "BpirFlipProbe", SchematicsFormat.BpirCsv);
+			}
+			catch (Exception exception)
+			{
+				flipError = exception;
+			}
+			yield return null;
+			yield return null;
+			Check("flip probe load", flipError == null && flipScene != null,
+				"error=" + (flipError?.Message ?? "none") + " scene=" + (flipScene != null ? "loaded" : "null"));
+			if (flipScene != null)
+			{
+				EntityManager flipEm = manager.System.World.EntityManager;
+				bool plainFound = flipScene.Unmanaged.FindPartAt(10, 10, 1, out Entity plainPart);
+				bool flippedFound = flipScene.Unmanaged.FindPartAt(12, 10, 1, out Entity flippedPart);
+				bool plainFlipped = plainFound && flipEm.GetComponentData<PartTransform>(plainPart).Flipped;
+				bool flippedFlipped = flippedFound && flipEm.GetComponentData<PartTransform>(flippedPart).Flipped;
+				quaternion plainRotation = plainFound ? flipEm.GetComponentData<LocalTransform>(plainPart).Rotation : quaternion.identity;
+				quaternion flippedRotation = flippedFound ? flipEm.GetComponentData<LocalTransform>(flippedPart).Rotation : quaternion.identity;
+				// PartTransformSystem 每帧把 RotateTo 的结果写进 LocalTransform；两件的朝向必须不同，
+				// 否则说明 flip 又被 CanFlip 白名单挡掉了（这正是本次修复前的行为）。
+				float rotationDelta = math.degrees(math.acos(math.clamp(math.abs(math.dot(plainRotation, flippedRotation)), 0f, 1f))) * 2f;
+				Check("flip flag survives import", plainFound && flippedFound && !plainFlipped && flippedFlipped,
+					"found=" + plainFound + "/" + flippedFound + " flipped=" + plainFlipped + "/" + flippedFlipped);
+				Check("flip changes orientation", math.abs(rotationDelta - 180f) <= 1f,
+					"deltaDegrees=" + rotationDelta.ToString("0.###") + " plain=" + plainRotation.value + " flipped=" + flippedRotation.value);
+			}
 			yield return null;
 
 			// ---- 5. 跨层连接规则（回归「不该连的连上了」）----
@@ -379,8 +536,10 @@ namespace Bpsim.QA
 
 		/// <summary>
 		/// 同 <see cref="LoadEmptySceneSelected" />：读档后把新场景选中再返回。
+		/// <paramref name="format" /> 传 <see cref="SchematicsFormat.Auto" /> 时，实际用到的格式
+		/// 会从 <paramref name="usedFormat" /> 带出来，供断言「自动识别真的选中了 BPIR」。
 		/// </summary>
-		private static PartScene LoadSceneSelected(PartManager manager, Stream stream, string name, SchematicsFormat format)
+		private static PartScene LoadSceneSelected(PartManager manager, Stream stream, string name, SchematicsFormat format, out SchematicsFormat usedFormat)
 		{
 			PartScene created = null;
 			Action<PartScene> handler = delegate(PartScene scene)
@@ -390,7 +549,7 @@ namespace Bpsim.QA
 			manager.SceneLoaded += handler;
 			try
 			{
-				manager.LoadScene(stream, name, format);
+				usedFormat = manager.LoadScene(stream, name, format);
 			}
 			finally
 			{
@@ -401,6 +560,11 @@ namespace Bpsim.QA
 				manager.SelectScene(created.SceneID);
 			}
 			return created;
+		}
+
+		private static PartScene LoadSceneSelected(PartManager manager, Stream stream, string name, SchematicsFormat format)
+		{
+			return LoadSceneSelected(manager, stream, name, format, out _);
 		}
 
 		private IEnumerator ResetScene(PartManager manager, string name)
@@ -615,6 +779,33 @@ namespace Bpsim.QA
 			return default(Schematics.Unit);
 		}
 
+		/// <summary>
+		/// 同一格可能叠着多件（例如 (113,631) 既是铰接板又是金属框），
+		/// 按坐标找会拿到哪件取决于文件顺序，所以按部件身份找。
+		/// </summary>
+		private static Schematics.Unit FindUnit(Schematics schematics, int x, int y, int type, int index)
+		{
+			foreach (Schematics.Unit unit in schematics.Units)
+			{
+				if (unit.X == x && unit.Y == y && unit.Type == type && unit.Index == index)
+				{
+					return unit;
+				}
+			}
+			return default(Schematics.Unit);
+		}
+
+		/// <summary>
+		/// 读一行合成 CSV。模式码与窄格式的采样存档里没有足够样本，
+		/// 所以这些规则要靠合成行钉住，回归时不至于悄悄失效。
+		/// </summary>
+		private static Schematics.Unit LoadSynthetic(SchematicsBpirCsvLoader loader, string line)
+		{
+			using StringReader reader = new StringReader(line);
+			Schematics schematics = loader.Read(reader);
+			return schematics.Units.Count > 0 ? schematics.Units[0] : default(Schematics.Unit);
+		}
+
 		private static string Describe(Schematics.Unit unit)
 		{
 			return "type=" + unit.Type + " index=" + unit.Index + " @" + unit.X + "," + unit.Y + " rot=" + unit.Rotation
@@ -625,6 +816,38 @@ namespace Bpsim.QA
 		private static bool Near(float a, float b)
 		{
 			return Mathf.Abs(a - b) <= 0.002f;
+		}
+
+		private sealed class NonSeekableReadStream : Stream
+		{
+			private readonly MemoryStream m_inner;
+
+			public NonSeekableReadStream(byte[] bytes)
+			{
+				m_inner = new MemoryStream(bytes, writable: false);
+			}
+
+			public override bool CanRead => true;
+			public override bool CanSeek => false;
+			public override bool CanWrite => false;
+			public override long Length => m_inner.Length;
+			public override long Position
+			{
+				get => throw new NotSupportedException();
+				set => throw new NotSupportedException();
+			}
+
+			public override int Read(byte[] buffer, int offset, int count) => m_inner.Read(buffer, offset, count);
+			public override void Flush() { }
+			public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+			public override void SetLength(long value) => throw new NotSupportedException();
+			public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+			protected override void Dispose(bool disposing)
+			{
+				if (disposing) m_inner.Dispose();
+				base.Dispose(disposing);
+			}
 		}
 
 		private void Finish()

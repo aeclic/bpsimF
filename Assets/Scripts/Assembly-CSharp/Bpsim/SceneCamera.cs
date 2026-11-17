@@ -21,8 +21,6 @@ namespace Bpsim
 
 		private Vector2 m_movementVelocity;
 
-		private float m_scalingSpeed;
-
 		private float m_targetSize;
 
 		private Vector2 m_originalCameraTargetPoint;
@@ -51,20 +49,18 @@ namespace Bpsim
 		public void ScaleTo(float size)
 		{
 			m_targetSize = size;
-			m_scalingSpeed = 0f;
 			m_camera.orthographicSize = size;
 		}
 
 		/// <summary>
 		/// Smooth zoom to a target orthographic size: only writes the target of the
-		/// LateUpdate zoom spring, so the camera eases over instead of snapping.
-		/// Unlike <see cref="ScaleTo"/> it never touches orthographicSize -- this is what
-		/// the build-screen magnifier button uses to mimic the BPSS overview zoom-out.
+		/// LateUpdate zoom easing, so the camera eases over instead of snapping.
+		/// Unlike <see cref="ScaleTo"/> it never touches orthographicSize, allowing callers
+		/// to animate a zoom without snapping.
 		/// </summary>
 		public void ZoomTo(float size)
 		{
 			m_targetSize = Math.Clamp(size, m_minSize, m_maxSize);
-			m_scalingSpeed = 0f;
 		}
 
 		protected override void Awake()
@@ -215,16 +211,10 @@ namespace Bpsim
 				m_originalCameraTargetPoint.x = float.NaN;
 				base.transform.position = m_targetPoint.WithZ(base.transform.position.z);
 			}
-			// 同上：镜头缩放的弹簧也不吃时间倍速，否则 0.1x 时镜头几乎不动。
+			// Match BPLE's camera easing: close about 4/second using unscaled time.
 			float deltaTime = Time.unscaledDeltaTime;
-			for (float num = 0f; num < deltaTime; num += 0.02f)
-			{
-				float num2 = Math.Min(0.02f, deltaTime - num);
-				float orthographicSize = m_camera.orthographicSize;
-				float num3 = 144f * (m_targetSize - orthographicSize) - 24f * m_scalingSpeed;
-				m_scalingSpeed += num3 * num2;
-				m_camera.orthographicSize = orthographicSize + m_scalingSpeed * num2;
-			}
+			float zoomBlend = 1f - MathF.Exp(-4f * deltaTime);
+			m_camera.orthographicSize = Mathf.Lerp(m_camera.orthographicSize, m_targetSize, zoomBlend);
 		}
 	}
 }

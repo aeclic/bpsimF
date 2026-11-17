@@ -1,9 +1,23 @@
-// DshBridge.cs — DeepSeek Harness -> Unity Editor 桥接层(最小验证版)
+// DshBridge.cs — DeepSeek Harness -> Unity Editor 桥接层(多实例版 v0.2)
 // 安装:把本文件放到任意 Unity 项目的 Assets/Editor/ 下,打开项目即自动启动。
-// 服务:HTTP 127.0.0.1:8790
-//   GET  /ping                存活探针(工作线程直接应答,编译中也可用)
+// 服务:HTTP 127.0.0.1:<自动分配端口,默认从 8790 起找空位>
+//   GET  /ping                存活探针(工作线程直接应答,编译中也可用;自报 projectId/port)
+//   GET  /status              状态 + 日志 + 最新截图
 //   GET  /file?path=<相对路径>  读取项目内文件(png/log/txt/cs/json/meta)
+//   GET  /shot/latest         最新截图 PNG
 //   POST /api {method, params}  在主线程执行 Unity API,返回 {ok, result | error}
+//
+// 多工程共存约定(同一编辑器版本常同时开多个工程副本):
+//   1) 端口不写死:显式 DSH_BRIDGE_PORT 时严格使用;否则 8790-8799 里找空闲端口,
+//      再不行让系统分配。绝不静默复用别人已占用的端口。
+//   2) 每个工程落地两份自述文件,内容一致:
+//        <project>/Temp/DshBridge/instance.json   (随工程走,slot 场景下最可靠)
+//        %LOCALAPPDATA%/DshBridge/instances/<projectId>.json  (全局,用于发现所有运行中的编辑器)
+//      心跳 4s 刷新一次;进程退出/正常关闭时删除;启动时顺手清理 pid 已死的残留条目。
+//   3) 身份校验:请求头 X-Dsh-Project 或 /api 请求体里的 "project" 字段(projectId 或
+//      工程绝对路径)与本地不符时返回 409,绝不执行——防止 agent 把命令发进"另一个工程"。
+//   4) EditorPrefs / SessionState 键按 projectId 加命名空间:它们是整个编辑器版本共享的,
+//      不加前缀时多工程会互相串设置。
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,20 +40,223 @@ namespace DshBridge
     [InitializeOnLoad]
     public static class DshBridgeServer
     {
-        // bpsim-main instance: 8790 is taken by the main BPRC editor.
-        // DSH_BRIDGE_PORT overrides the port. Needed because a killed editor can leave an orphaned
-        // LISTENING socket on the default port that keeps swallowing connections.
-        static readonly int Port = ReadPort();
+        // ---------- 实例身份 / 端口 ----------
+        // 端口不写死:同机多工程(副本、兄弟工程)会撞端口,撞了就有一条命令发进别的工程。
+        public const string Version = "0.2";
+        public const string ServerName = "DshBridge v0.2";
+        const int PortScanFrom = 8790;
+        const int PortScanCount = 10;
 
-        static int ReadPort()
+        static string _projectId = "";
+        static int _port = 0;
+        static string _instanceDir;
+        static string _instanceFile;
+        static string _portFile;
+        static string _registryDir;
+        static string _registryFile;
+        static string _startedAt = "";
+        static long _lastInstanceWrite = -1;
+        static string _unityVersion = "";
+        static bool _batchMode;
+
+        public static int Port { get { return _port; } }
+        public static string ProjectId { get { return _projectId; } }
+        public static string ProjectPath { get { return _projectPath; } }
+
+        public static string RegistryDir
         {
-            var raw = System.Environment.GetEnvironmentVariable("DSH_BRIDGE_PORT");
-            int parsed;
-            if (!string.IsNullOrEmpty(raw) && int.TryParse(raw, out parsed) && parsed > 0 && parsed < 65536)
+            get
             {
-                return parsed;
+                if (_registryDir == null)
+                    _registryDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DshBridge", "instances");
+                return _registryDir;
             }
-            return 8791;
+        }
+
+        // 路径哈希:FNV-1a 64 位取前 12 位十六进制。跨进程稳定,不用引 System.Security.Cryptography。
+        static string ShortHash(string s)
+        {
+            ulong h = 14695981039346656037UL;
+            string lower = s.ToLowerInvariant();
+            for (int i = 0; i < lower.Length; i++) { h ^= lower[i]; h *= 1099511628211UL; }
+            return h.ToString("x16").Substring(0, 12);
+        }
+
+        static void InitIdentity()
+        {
+            if (string.IsNullOrEmpty(_projectPath))
+                _projectPath = Directory.GetParent(Application.dataPath).FullName;
+            _projectPath = _projectPath.TrimEnd('\\', '/');
+            _projectId = ShortHash(_projectPath);
+            // 这两个值会被工作线程(/ping)读取,Unity API 不能跨线程碰,主线程取好缓存。
+            _unityVersion = Application.unityVersion;
+            _batchMode = Application.isBatchMode;
+            _instanceDir = Path.Combine(_projectPath, "Temp", "DshBridge");
+            _instanceFile = Path.Combine(_instanceDir, "instance.json");
+            _portFile = Path.Combine(_instanceDir, "port.txt");
+            _registryFile = Path.Combine(RegistryDir, _projectId + ".json");
+            if (string.IsNullOrEmpty(_startedAt)) _startedAt = DateTime.UtcNow.ToString("o");
+        }
+
+        // 端口上真的有人在监听?能连上就算占用(含被 kill 后残留的孤儿 socket)。
+        static bool PortIsOpen(int p)
+        {
+            try
+            {
+                using (TcpClient c = new TcpClient())
+                {
+                    IAsyncResult ar = c.BeginConnect(IPAddress.Loopback, p, null, null);
+                    if (!ar.AsyncWaitHandle.WaitOne(250)) return false;
+                    c.EndConnect(ar);
+                    return true;
+                }
+            }
+            catch { return false; }
+        }
+
+        // 上次这个工程用的端口优先复用:域重载/编译器刷新后端口不跳动,agent 少踩一次"端口变了"。
+        static int PreviousPort()
+        {
+            try
+            {
+                if (!File.Exists(_instanceFile)) return 0;
+                Dictionary<string, object> d = Json.Parse(File.ReadAllText(_instanceFile)) as Dictionary<string, object>;
+                if (d == null || !d.ContainsKey("project")) return 0;
+                string owner = d["project"].ToString().TrimEnd('\\', '/');
+                if (!string.Equals(owner, _projectPath, StringComparison.OrdinalIgnoreCase)) return 0;
+                return Convert.ToInt32(d.ContainsKey("port") ? d["port"] : 0);
+            }
+            catch { return 0; }
+        }
+
+        static TcpListener BindListener(out int port, out string error)
+        {
+            error = null;
+            port = 0;
+            string raw = Environment.GetEnvironmentVariable("DSH_BRIDGE_PORT");
+            int forced = 0;
+            bool hasForced = !string.IsNullOrEmpty(raw) && int.TryParse(raw, out forced) && forced > 0 && forced < 65536;
+            List<int> candidates = new List<int>();
+            if (hasForced) candidates.Add(forced);
+            else
+            {
+                int prev = PreviousPort();
+                if (prev > 0) candidates.Add(prev);
+                for (int i = 0; i < PortScanCount; i++) candidates.Add(PortScanFrom + i);
+                candidates.Add(0); // 全被占就让系统分配,至少能起来
+            }
+            foreach (int p in candidates)
+            {
+                if (p != 0 && PortIsOpen(p)) continue;
+                try
+                {
+                    TcpListener l = new TcpListener(IPAddress.Loopback, p);
+                    // 独占:避免两个编辑器同时"绑定成功"到同一端口后再互相抢连接。
+                    l.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, true);
+                    l.Start();
+                    port = ((IPEndPoint)l.LocalEndpoint).Port;
+                    return l;
+                }
+                catch (Exception e)
+                {
+                    if (hasForced)
+                    {
+                        error = "端口 " + p + " 不可用（DSH_BRIDGE_PORT 显式指定，不会自动换端口）：" + e.Message;
+                        break;
+                    }
+                }
+            }
+            if (error == null) error = "没有可用端口（" + PortScanFrom + "-" + (PortScanFrom + PortScanCount - 1) + " 均被占用，系统分配也失败）";
+            return null;
+        }
+
+        static Dictionary<string, object> InstanceData(int port, string error)
+        {
+            return new Dictionary<string, object>
+            {
+                { "bridge", "DshBridge" },
+                { "version", Version },
+                { "project", _projectPath },
+                { "projectId", _projectId },
+                { "port", port },
+                { "pid", Process.GetCurrentProcess().Id },
+                { "unity", _unityVersion },
+                { "batchMode", _batchMode },
+                { "startedAt", _startedAt },
+                { "updatedAt", DateTime.UtcNow.ToString("o") },
+                { "instanceFile", _instanceFile },
+                { "registryFile", _registryFile },
+                { "log", _logFile },
+                { "error", error },
+            };
+        }
+
+        static void WriteAtomic(string file, string text)
+        {
+            try
+            {
+                string tmp = file + ".tmp-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                File.WriteAllText(tmp, text);
+                if (File.Exists(file)) File.Delete(file);
+                File.Move(tmp, file);
+            }
+            catch { }
+        }
+
+        static void WriteInstanceFiles(int port, string error)
+        {
+            try
+            {
+                Directory.CreateDirectory(_instanceDir);
+                Directory.CreateDirectory(RegistryDir);
+                string json = Json.Serialize(InstanceData(port, error));
+                WriteAtomic(_instanceFile, json);
+                WriteAtomic(_registryFile, json);
+                WriteAtomic(_portFile, port > 0 ? port.ToString() : "");
+                _lastInstanceWrite = Watch.ElapsedMilliseconds;
+            }
+            catch (Exception e) { Log("write instance files failed: " + e.Message); }
+        }
+
+        static void RemoveInstanceFiles()
+        {
+            try { if (_instanceFile != null && File.Exists(_instanceFile)) File.Delete(_instanceFile); } catch { }
+            try { if (_portFile != null && File.Exists(_portFile)) File.Delete(_portFile); } catch { }
+            try { if (_registryFile != null && File.Exists(_registryFile)) File.Delete(_registryFile); } catch { }
+        }
+
+        static bool PidAlive(int pid)
+        {
+            if (pid <= 0) return false;
+            try { Process p = Process.GetProcessById(pid); return !p.HasExited; }
+            catch { return false; }
+        }
+
+        // 启动时清理:pid 已死(崩溃/被 kill)的其它工程条目留着会误导客户端。
+        static void SweepRegistry()
+        {
+            try
+            {
+                if (!Directory.Exists(RegistryDir)) return;
+                foreach (string f in Directory.GetFiles(RegistryDir, "*.json"))
+                {
+                    if (_registryFile != null && string.Equals(f, _registryFile, StringComparison.OrdinalIgnoreCase)) continue;
+                    bool dead = true;
+                    try
+                    {
+                        Dictionary<string, object> d = Json.Parse(File.ReadAllText(f)) as Dictionary<string, object>;
+                        dead = d == null || !PidAlive(Convert.ToInt32(d.ContainsKey("pid") ? d["pid"] : 0));
+                    }
+                    catch { dead = true; }
+                    if (dead) { try { File.Delete(f); Log("sweep dead instance " + Path.GetFileName(f)); } catch { } }
+                }
+            }
+            catch { }
+        }
+
+        static void OnQuitting()
+        {
+            RemoveInstanceFiles();
         }
         const int MaxBodyBytes = 8 * 1024 * 1024;
         const int DispatchTimeoutMs = 60000;
@@ -77,6 +294,7 @@ namespace DshBridge
             EditorApplication.delayCall += Start; // harmless retry, Start() is idempotent
             Application.logMessageReceived += OnLog;
             AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+            try { EditorApplication.quitting += OnQuitting; } catch { }
         }
 
         static void OnDomainUnload(object sender, EventArgs e)
@@ -90,21 +308,31 @@ namespace DshBridge
             try
             {
                 if (_listener != null && _acceptThread != null && _acceptThread.IsAlive) return;
-                _projectPath = Directory.GetParent(Application.dataPath).FullName;
-                string tempDir = Path.Combine(_projectPath, "Temp", "DshBridge");
-                Directory.CreateDirectory(tempDir);
-                _logFile = Path.Combine(tempDir, "bridge.log");
-                Log("starting server, project=" + _projectPath + ", port=" + Port);
+                InitIdentity();
+                Directory.CreateDirectory(_instanceDir);
+                _logFile = Path.Combine(_instanceDir, "bridge.log");
+                Log("== boot pid=" + Process.GetCurrentProcess().Id + " project=" + _projectPath +
+                    " id=" + _projectId + " unity=" + Application.unityVersion + " batch=" + Application.isBatchMode);
+                SweepRegistry();
 
+                int port;
+                string error;
+                TcpListener listener = BindListener(out port, out error);
+                if (listener == null)
+                {
+                    Log("bind failed: " + error);
+                    WriteInstanceFiles(-1, error);
+                    return;
+                }
+                _port = port;
+                _listener = listener;
                 _stopping = false;
-                _listener = new TcpListener(IPAddress.Loopback, Port);
-                _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                _listener.Start();
                 _acceptThread = new Thread(AcceptLoop) { IsBackground = true, Name = "DshBridgeAcceptor" };
                 _acceptThread.Start();
                 EditorApplication.update -= Update;
                 EditorApplication.update += Update;
-                Log("server started on 127.0.0.1:" + Port);
+                Log("server started on 127.0.0.1:" + _port);
+                WriteInstanceFiles(_port, null);
                 // Do NOT auto-open the status window.
                 // A custom EditorWindow that is open when the editor saves its layout gets written
                 // into <layout>.dwlt; on the next startup Unity cannot resolve the class early
@@ -113,10 +341,10 @@ namespace DshBridge
                 // closed by default keeps the console clean. Open it from the menu when wanted:
                 // DshBridge/Status Window. (Opt back in with EditorPrefs key below.)
                 bool autoOpen = false;
-                try { autoOpen = EditorPrefs.GetBool("DshBridge.AutoOpenStatusWindow", false); } catch { }
-                if (autoOpen && !Application.isBatchMode && !SessionState.GetBool("DshBridge.WindowOpened", false))
+                try { autoOpen = EditorPrefs.GetBool(PrefKey("AutoOpenStatusWindow"), false); } catch { }
+                if (autoOpen && !_batchMode && !SessionState.GetBool(PrefKey("WindowOpened"), false))
                 {
-                    SessionState.SetBool("DshBridge.WindowOpened", true);
+                    SessionState.SetBool(PrefKey("WindowOpened"), true);
                     EditorApplication.delayCall += delegate { DshBridgeWindow.ShowWindow(); };
                 }
             }
@@ -131,7 +359,9 @@ namespace DshBridge
             _stopping = true;
             try { if (_listener != null) _listener.Stop(); } catch { }
             _listener = null;
+            _port = 0;
             EditorApplication.update -= Update;
+            RemoveInstanceFiles();
         }
 
         public static void Restart() { Stop(); Start(); }
@@ -192,6 +422,43 @@ namespace DshBridge
             catch { }
         }
 
+        // EditorPrefs / SessionState 是"整个编辑器版本"共享的:多工程不加前缀会互相串设置。
+        static string PrefKey(string key) { return "DshBridge." + _projectId + "." + key; }
+
+        static string HeaderValue(string[] lines, string name)
+        {
+            foreach (string line in lines)
+            {
+                int i = line.IndexOf(':');
+                if (i <= 0) continue;
+                if (line.Substring(0, i).Trim().Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return line.Substring(i + 1).Trim();
+            }
+            return null;
+        }
+
+        static bool ProjectMatches(string want)
+        {
+            if (string.IsNullOrEmpty(want)) return true;
+            string w = want.Trim().Replace('/', '\\').TrimEnd('\\');
+            if (string.IsNullOrEmpty(w)) return false;
+            return string.Equals(w, _projectId, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(w, _projectPath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        static string WrongProjectJson()
+        {
+            return Json.Serialize(new Dictionary<string, object>
+            {
+                { "ok", false },
+                { "projectError", true },
+                { "error", "项目不匹配：本实例是 " + _projectPath + "（projectId=" + _projectId + "），请求的目标不是它" },
+                { "project", _projectPath },
+                { "projectId", _projectId },
+                { "port", _port },
+            });
+        }
+
         static void AcceptLoop()
         {
             while (!_stopping)
@@ -232,6 +499,15 @@ namespace DshBridge
                         while (off < contentLength) { int r = s.Read(body, off, contentLength - off); if (r <= 0) return; off += r; }
                     }
 
+                    // 身份校验:调用方可带 X-Dsh-Project(工程绝对路径或 projectId)。
+                    // 不符时直接 409 —— 宁可让 agent 报错,也不能把命令执行进别的工程。
+                    string wantProject = HeaderValue(lines, "X-Dsh-Project");
+                    if (!string.IsNullOrEmpty(wantProject) && !ProjectMatches(wantProject))
+                    {
+                        Respond(s, "409 Conflict", Encoding.UTF8.GetBytes(WrongProjectJson()));
+                        return;
+                    }
+
                     string status = "200 OK";
                     byte[] respBody;
                     string contentType = "application/json; charset=utf-8";
@@ -269,7 +545,7 @@ namespace DshBridge
                     Respond(s, status, respBody, contentType);
                 }
             }
-            catch { }
+            catch (Exception e) { Log("handle client error: " + e.Message); }
             finally { try { client.Close(); } catch { } }
         }
 
@@ -460,9 +736,13 @@ setInterval(tick, 1500);
             return new Dictionary<string, object>
             {
                 { "ok", true },
-                { "server", "DshBridge v0.1" },
-                { "unity", Application.unityVersion },
+                { "server", ServerName },
+                { "unity", _unityVersion },
                 { "project", _projectPath },
+                { "projectId", _projectId },
+                { "port", _port },
+                { "pid", Process.GetCurrentProcess().Id },
+                { "batchMode", _batchMode },
                 { "playing", EditorApplication.isPlaying },
                 { "changing", EditorApplication.isPlayingOrWillChangePlaymode },
                 { "compiling", EditorApplication.isCompiling },
@@ -519,9 +799,13 @@ setInterval(tick, 1500);
             return Json.Serialize(new Dictionary<string, object>
             {
                 { "ok", true },
-                { "server", "DshBridge v0.1" },
-                { "unity", Application.unityVersion },
+                { "server", ServerName },
+                { "unity", _unityVersion },
                 { "project", _projectPath },
+                { "projectId", _projectId },
+                { "port", _port },
+                { "pid", Process.GetCurrentProcess().Id },
+                { "batchMode", _batchMode },
                 { "playing", _cachedPlaying },
                 { "changing", _cachedChanging },
                 { "compiling", _cachedCompiling },
@@ -536,9 +820,13 @@ setInterval(tick, 1500);
             Dictionary<string, object> info = new Dictionary<string, object>
             {
                 { "ok", true },
-                { "server", "DshBridge v0.1" },
-                { "unity", Application.unityVersion },
+                { "server", ServerName },
+                { "unity", _unityVersion },
                 { "project", _projectPath },
+                { "projectId", _projectId },
+                { "port", _port },
+                { "pid", Process.GetCurrentProcess().Id },
+                { "batchMode", _batchMode },
                 { "playing", _cachedPlaying },
                 { "changing", _cachedChanging },
                 { "compiling", _cachedCompiling },
@@ -624,6 +912,9 @@ setInterval(tick, 1500);
             _cachedChanging = EditorApplication.isPlayingOrWillChangePlaymode;
             _cachedCompiling = EditorApplication.isCompiling;
             Volatile.Write(ref _lastMainTickMs, Watch.ElapsedMilliseconds);
+            // 心跳:让外部工具能判断"这个工程的 bridge 还活着",崩溃残留靠 pid 兜底。
+            if (_listener != null && _port > 0 && Watch.ElapsedMilliseconds - _lastInstanceWrite > 4000)
+                WriteInstanceFiles(_port, null);
             List<PendingRequest> batch = null;
             lock (QueueLock)
             {
@@ -649,6 +940,9 @@ setInterval(tick, 1500);
             string method = Commands.ToStr(Commands.Get(req, "method"), "");
             Dictionary<string, object> p = Commands.Get(req, "params") as Dictionary<string, object>;
             if (p == null) p = new Dictionary<string, object>();
+            // 请求体里也可以声明目标工程(projectId 或绝对路径);不符时绝不执行。
+            object want = req.ContainsKey("project") ? req["project"] : null;
+            if (want != null && !ProjectMatches(want.ToString())) return WrongProjectJson();
             try
             {
                 object result = Commands.Dispatch(method, p);
@@ -688,6 +982,7 @@ setInterval(tick, 1500);
                     case "compile_status": return CmdCompileStatus(p);
                     case "set_status": return CmdSetStatus(p);
                     case "console": return CmdConsole(p);
+                    case "profiler": return Bpsim.Perf.EditorProfiler.Read(p);
                     case "playmode": return CmdPlaymode(p);
                     case "playmode_state": return CmdPlaymodeState(p);
                     case "screenshot": return CmdScreenshot(p);
@@ -1525,7 +1820,9 @@ setInterval(tick, 1500);
             GUI.color = running ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.95f, 0.3f, 0.3f);
             GUILayout.Label("●", GUILayout.Width(18));
             GUI.color = Color.white;
-            EditorGUILayout.LabelField("桥接服务", running ? "运行中 · http://127.0.0.1:8790" : "未启动");
+            EditorGUILayout.LabelField("桥接服务", running
+                ? ("运行中 · http://127.0.0.1:" + DshBridgeServer.Port + "  ·  " + DshBridgeServer.ProjectId)
+                : "未启动");
             if (GUILayout.Button("重启服务", GUILayout.Width(90))) DshBridgeServer.Restart();
             EditorGUILayout.EndHorizontal();
 

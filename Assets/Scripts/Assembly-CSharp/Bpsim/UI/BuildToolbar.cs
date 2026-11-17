@@ -55,13 +55,22 @@ namespace Bpsim.UI
 		/// </summary>
 		private const float LongPressSeconds = 0.5f;
 
-		private static readonly Color BaseColor = new Color(0f, 0.196875f, 0.4f, 1f);
+		// 工具栏颜色全部走 UiTheme：默认配色下 BaseColor 就是原版深蓝，切换配色即时生效。
+		private static Color BaseColor => UiTheme.Current.ToolbarButton;
 
-		private static readonly Color ActiveColor = new Color(0f, 0.48235294f, 0.72156864f, 1f);
+		private static Color ActiveColor => UiTheme.Current.IsSai ? UiTheme.Current.Selection : UiTheme.Current.Success;
 
-		private static readonly Color DisabledColor = new Color(0.18f, 0.18f, 0.18f, 1f);
+		private static Color DisabledColor => UiTheme.Current.Shade(1.15f);
 
-		private static readonly Color HintColor = new Color(0.05f, 0.05f, 0.05f, 0.9f);
+		private static Color HintColor
+		{
+			get
+			{
+				Color c = UiTheme.Current.Shade(0.35f);
+				c.a = 0.9f;
+				return c;
+			}
+		}
 
 		/// <summary>九宫格圆角底板。从场景里已有按钮上借一张，见 <see cref="FindPlateSprite" />。</summary>
 		private Sprite m_plateSprite;
@@ -95,6 +104,8 @@ namespace Bpsim.UI
 		private Button m_gridButton;
 
 		private Button m_undoButton;
+
+		private Button m_clearButton;
 
 		private Image m_gridImage;
 
@@ -142,6 +153,9 @@ namespace Bpsim.UI
 		/// <summary>分组的第一颗按钮在 <see cref="m_layout" /> 里的下标（这些位置前面多留一段空隙）。</summary>
 		private readonly List<int> m_groupStarts = new List<int>();
 
+		private readonly List<Image> m_dividers = new List<Image>();
+		private Image m_bottomLine;
+
 		/// <summary>上一次排版依据的顶栏宽度（0 表示还没按真实宽度排过）。</summary>
 		private float m_reflowWidth;
 
@@ -151,6 +165,8 @@ namespace Bpsim.UI
 			m_controller = controller;
 			GameObject gameObject = root.ActionBar.GameObject;
 			m_actionBar = (RectTransform)gameObject.transform;
+			// 工具栏底板色由本组件的 ApplyIconSkin/Refresh 管理，通用 applicator 不要插手。
+			gameObject.AddComponent<UiThemeOwned>();
 			Button template = root.ActionBar.TemplateButton;
 			if (template == null)
 			{
@@ -189,10 +205,32 @@ namespace Bpsim.UI
 			m_undoImage = m_undoButton.GetComponent<Image>();
 			m_undoIcon = FindIcon(m_undoButton.transform);
 			m_undoButton.onClick.AddListener(m_controller.Undo);
+			m_clearButton = CreateToolButton(template, "BuildClearButton", "清除全部部件", string.Empty, ref x, BuildTool.None);
+			CreateTrashIcon(m_clearButton.transform);
+			m_clearButton.onClick.AddListener(OpenClearConfirmation);
+			CreateChrome();
 			Reflow();
 			CreateHint();
 			m_controller.StateChanged += Refresh;
+			UiTheme.Changed += OnThemeChanged;
 			Refresh();
+		}
+
+		private void OnThemeChanged(UiPalette palette)
+		{
+			// 换色不是重新安装皮肤：新增按钮的图标映射不在 IconNameFor 中，重装会清空图标。
+			foreach (RectTransform rect in m_layout)
+			{
+				if (rect == null) continue;
+				Image image = rect.GetComponent<Image>();
+				if (image != null) image.color = BaseColor;
+			}
+			RefreshChrome();
+			Refresh();
+			if (m_hintImage != null)
+			{
+				m_hintImage.color = HintColor;
+			}
 		}
 
 		private void OnDestroy()
@@ -201,6 +239,7 @@ namespace Bpsim.UI
 			{
 				m_controller.StateChanged -= Refresh;
 			}
+			UiTheme.Changed -= OnThemeChanged;
 		}
 
 		private void Update()
@@ -317,6 +356,131 @@ namespace Bpsim.UI
 			Refresh();
 		}
 
+		private void OpenClearConfirmation()
+		{
+			if (m_controller == null || m_controller.CurrentScene == null || m_controller.CurrentScene.Unmanaged.Parts.Length == 0)
+			{
+				return;
+			}
+			Transform parent = m_root.SubCanvas.transform;
+			GameObject overlay = new GameObject("ClearPartsConfirmation", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+			overlay.transform.SetParent(parent, false);
+			overlay.transform.SetAsLastSibling();
+			RectTransform overlayRect = (RectTransform)overlay.transform;
+			overlayRect.anchorMin = Vector2.zero;
+			overlayRect.anchorMax = Vector2.one;
+			overlayRect.offsetMin = Vector2.zero;
+			overlayRect.offsetMax = Vector2.zero;
+			Image backdrop = overlay.GetComponent<Image>();
+			backdrop.color = UiTheme.Current.Backdrop;
+			backdrop.raycastTarget = true;
+
+			GameObject panel = new GameObject("Panel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+			panel.transform.SetParent(overlay.transform, false);
+			RectTransform panelRect = (RectTransform)panel.transform;
+			panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+			panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+			panelRect.sizeDelta = new Vector2(460f, 220f);
+			panel.GetComponent<Image>().color = UiTheme.Current.Panel;
+			Font font = FindFont(m_root.ActionBar.TemplateButton.transform);
+			CreateModalText(panel.transform, font, "Title", "确认删除", 28, new Vector2(0f, 62f), new Vector2(400f, 48f));
+			CreateModalText(panel.transform, font, "Message", "确定清除全部部件吗？此操作可通过撤销恢复。", 20, new Vector2(0f, 12f), new Vector2(420f, 40f));
+			CreateModalButton(panel.transform, font, "Cancel", "取消", new Vector2(-100f, -65f), UiTheme.Current.ButtonMuted, delegate { Object.Destroy(overlay); });
+			CreateModalButton(panel.transform, font, "Confirm", "确认", new Vector2(100f, -65f), UiTheme.Current.DangerStrong, delegate
+			{
+				Object.Destroy(overlay);
+				m_controller.ClearAllParts();
+			});
+		}
+
+		private static void CreateModalText(Transform parent, Font font, string name, string value, int fontSize, Vector2 position, Vector2 size)
+		{
+			GameObject textObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+			textObject.transform.SetParent(parent, false);
+			RectTransform rect = (RectTransform)textObject.transform;
+			rect.anchorMin = new Vector2(0.5f, 0.5f);
+			rect.anchorMax = new Vector2(0.5f, 0.5f);
+			rect.anchoredPosition = position;
+			rect.sizeDelta = size;
+			Text text = textObject.GetComponent<Text>();
+			text.text = value;
+			text.font = font;
+			text.fontSize = fontSize;
+			text.alignment = TextAnchor.MiddleCenter;
+			text.color = Color.white;
+			text.raycastTarget = false;
+		}
+
+		private void CreateModalButton(Transform parent, Font font, string name, string label, Vector2 position, Color color, UnityEngine.Events.UnityAction action)
+		{
+			Button button = Object.Instantiate(m_root.ActionBar.TemplateButton, parent, false);
+			button.name = name;
+			button.onClick.RemoveAllListeners();
+			button.transition = Selectable.Transition.None;
+			button.transform.SetAsLastSibling();
+			RectTransform rect = (RectTransform)button.transform;
+			rect.anchorMin = new Vector2(0.5f, 0.5f);
+			rect.anchorMax = new Vector2(0.5f, 0.5f);
+			rect.anchoredPosition = position;
+			rect.sizeDelta = new Vector2(150f, 52f);
+			Image plate = button.GetComponent<Image>();
+			if (plate != null)
+			{
+				plate.sprite = null;
+				plate.type = Image.Type.Simple;
+				plate.color = color;
+			}
+			Transform iconTransform = button.transform.Find("Icon");
+			if (iconTransform != null)
+			{
+				iconTransform.gameObject.SetActive(false);
+			}
+			Transform labelTransform = button.transform.Find("Text");
+			Text text = labelTransform != null ? labelTransform.GetComponent<Text>() : null;
+			if (text != null)
+			{
+				labelTransform.gameObject.SetActive(true);
+				text.text = label;
+				text.font = font;
+				text.fontSize = 20;
+				text.color = Color.white;
+				text.alignment = TextAnchor.MiddleCenter;
+			}
+			button.onClick.AddListener(action);
+		}
+
+		private static void CreateTrashIcon(Transform button)
+		{
+			Image icon = FindIcon(button);
+			if (icon != null)
+			{
+				icon.enabled = false;
+			}
+			CreateIconPart(button, "TrashLid", new Vector2(0f, 11f), new Vector2(27f, 4f));
+			CreateIconPart(button, "TrashHandle", new Vector2(0f, 15f), new Vector2(10f, 3f));
+			CreateIconPart(button, "TrashRim", new Vector2(0f, 9f), new Vector2(22f, 3f));
+			CreateIconPart(button, "TrashSideLeft", new Vector2(-8f, -2f), new Vector2(3f, 19f));
+			CreateIconPart(button, "TrashSideRight", new Vector2(8f, -2f), new Vector2(3f, 19f));
+			CreateIconPart(button, "TrashBottom", new Vector2(0f, -12f), new Vector2(17f, 3f));
+			CreateIconPart(button, "TrashSlot1", new Vector2(-4f, -2f), new Vector2(2f, 11f));
+			CreateIconPart(button, "TrashSlot2", new Vector2(0f, -2f), new Vector2(2f, 11f));
+			CreateIconPart(button, "TrashSlot3", new Vector2(4f, -2f), new Vector2(2f, 11f));
+		}
+
+		private static void CreateIconPart(Transform parent, string name, Vector2 position, Vector2 size)
+		{
+			GameObject part = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+			part.transform.SetParent(parent, false);
+			RectTransform rect = (RectTransform)part.transform;
+			rect.anchorMin = new Vector2(0.5f, 0.5f);
+			rect.anchorMax = new Vector2(0.5f, 0.5f);
+			rect.anchoredPosition = position;
+			rect.sizeDelta = size;
+			Image image = part.GetComponent<Image>();
+			image.color = Color.white;
+			image.raycastTarget = false;
+		}
+
 		private RectTransform FindHintAt(Vector2 point)
 		{
 			foreach (KeyValuePair<RectTransform, string> hint in m_hints)
@@ -345,6 +509,7 @@ namespace Bpsim.UI
 					continue;
 				}
 				string iconName = IconNameFor(item.name);
+				if (string.IsNullOrEmpty(iconName)) continue;
 				string label = LabelFor(item.name);
 				if (label != null)
 				{
@@ -503,6 +668,14 @@ namespace Bpsim.UI
 				PlaceAt(m_layout[i], x, size);
 				x += step;
 			}
+			for (int i = 0; i < m_dividers.Count; i++)
+			{
+				int index = m_groupStarts[i];
+				if (index <= 0 || index >= m_layout.Count) continue;
+				float middle = (m_layout[index - 1].anchoredPosition.x + m_layout[index].anchoredPosition.x) * 0.5f;
+				m_dividers[i].rectTransform.anchoredPosition = new Vector2(middle, 0f);
+				m_dividers[i].rectTransform.sizeDelta = new Vector2(1f, size * 0.58f);
+			}
 			float icon = Mathf.Min(IconSize, size * 0.5625f);
 			foreach (RectTransform rect in m_layout)
 			{
@@ -520,6 +693,44 @@ namespace Bpsim.UI
 		private static float NextGroup(float lastCenter)
 		{
 			return lastCenter + ButtonStep * 0.5f + GroupGap + ButtonSize * 0.5f;
+		}
+
+		private void CreateChrome()
+		{
+			foreach (int index in m_groupStarts)
+			{
+				var go = new GameObject("GroupDivider_" + index, typeof(RectTransform), typeof(Image));
+				go.transform.SetParent(m_actionBar, false);
+				Image image = go.GetComponent<Image>();
+				image.raycastTarget = false;
+				image.rectTransform.anchorMin = image.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+				m_dividers.Add(image);
+			}
+			var line = new GameObject("ToolbarBottomLine", typeof(RectTransform), typeof(Image));
+			line.transform.SetParent(m_actionBar, false);
+			m_bottomLine = line.GetComponent<Image>();
+			m_bottomLine.raycastTarget = false;
+			RectTransform rect = m_bottomLine.rectTransform;
+			rect.anchorMin = Vector2.zero;
+			rect.anchorMax = new Vector2(1f, 0f);
+			rect.pivot = new Vector2(0.5f, 0f);
+			rect.sizeDelta = new Vector2(0f, 1f);
+			RefreshChrome();
+		}
+
+		private void RefreshChrome()
+		{
+			Graphic background = m_actionBar.GetComponent<Graphic>();
+			if (background != null) background.color = UiTheme.Current.Panel;
+			foreach (Image divider in m_dividers) if (divider != null) divider.color = UiTheme.Current.Divider;
+			if (m_bottomLine != null) m_bottomLine.color = UiTheme.Current.Divider;
+			var fps = m_actionBar.Find("Text")?.GetComponent<Text>();
+			if (fps != null) fps.color = UiTheme.Current.TextMuted;
+			foreach (RectTransform rect in m_layout)
+			{
+				var outline = rect != null ? rect.GetComponent<Outline>() : null;
+				if (outline != null) outline.effectColor = UiTheme.Current.Divider;
+			}
 		}
 
 		private static void PlaceAt(RectTransform rect, float x)
@@ -549,6 +760,11 @@ namespace Bpsim.UI
 			Button button = target.GetComponent<Button>();
 			if (button != null)
 			{
+				if (target.GetComponent<ToolbarButtonFeedback>() == null) target.AddComponent<ToolbarButtonFeedback>();
+				var outline = target.GetComponent<Outline>() ?? target.AddComponent<Outline>();
+				outline.effectColor = UiTheme.Current.Divider;
+				outline.effectDistance = new Vector2(0f, -1f);
+				button.transition = Selectable.Transition.None;
 				ColorBlock colors = button.colors;
 				colors.disabledColor = Color.white;
 				button.colors = colors;
@@ -609,7 +825,12 @@ namespace Bpsim.UI
 			PlaceAt((RectTransform)button.transform, x);
 			m_layout.Add((RectTransform)button.transform);
 			x += ButtonStep;
-			Image plate = ApplyIconSkin(button.gameObject, iconName, false);
+			// ApplyIconSkin 返回的是图标层，不是底板。底板必须单独取 button 自身的 Image，
+			// 否则 m_toolImages 会和 m_toolIcons 指向同一个对象：SetToolVisual 先给底板
+			// 上激活色、紧接着又被图标的近白色覆盖，工具按钮永远停在深蓝底。
+			// 网格/撤销按钮也是这样分别取的，见 Initialize()。
+			ApplyIconSkin(button.gameObject, iconName, false);
+			Image plate = button.GetComponent<Image>();
 			Image icon = FindIcon(button.transform);
 			m_hints[(RectTransform)button.transform] = label;
 			if (tool != BuildTool.None)
@@ -618,6 +839,7 @@ namespace Bpsim.UI
 				button.onClick.AddListener(delegate
 				{
 					m_controller.SetTool(captured);
+					Refresh();
 				});
 				m_toolButtons.Add(button);
 				m_toolImages.Add(plate);
@@ -760,6 +982,12 @@ namespace Bpsim.UI
 
 		// ------------------------------------------------------------- 悬停提示
 
+		/// <summary>供验收探针调用：把按钮底板/图标重刷成当前工具状态。</summary>
+		internal void RefreshForTest()
+		{
+			Refresh();
+		}
+
 		private void CreateHint()
 		{
 			// 提示条挂在 ActionBar 的父物体（Panel）上并置为最后一个子物体，而不是挂在 ActionBar 里：
@@ -847,5 +1075,35 @@ namespace Bpsim.UI
 			m_hintRect.anchoredPosition = new Vector2(x, 0f - HintOffsetY);
 			m_hintRoot.SetActive(true);
 		}
+	}
+
+	// 底板仍由 Toolbar.Refresh 管理，悬停/按下只用 renderer 的相对明暗乘数。
+	internal sealed class ToolbarButtonFeedback : MonoBehaviour,
+		UnityEngine.EventSystems.IPointerEnterHandler, UnityEngine.EventSystems.IPointerExitHandler,
+		UnityEngine.EventSystems.IPointerDownHandler, UnityEngine.EventSystems.IPointerUpHandler
+	{
+		private bool m_hovered;
+		private Image m_image;
+		private Button m_button;
+		private void Awake() { m_image = GetComponent<Image>(); m_button = GetComponent<Button>(); }
+		private void Tint(float value)
+		{
+			if (m_image != null) m_image.CrossFadeColor(new Color(value, value, value, 1f), 0.1f, true, true);
+		}
+		public void OnPointerEnter(UnityEngine.EventSystems.PointerEventData e)
+		{ m_hovered = true; if (m_button.IsInteractable()) Tint(UiTheme.Current.IsSai ? 1f : 1.12f); }
+		public void OnPointerExit(UnityEngine.EventSystems.PointerEventData e) { m_hovered = false; Tint(1f); }
+		public void OnPointerDown(UnityEngine.EventSystems.PointerEventData e)
+		{
+			if (e.button != UnityEngine.EventSystems.PointerEventData.InputButton.Left || !m_button.IsInteractable()) return;
+			if (!UiTheme.Current.IsSai) { Tint(.88f); return; }
+			Color baseColor = m_image.color;
+			Color pressed = new Color(121f / 255f, 121f / 255f, 207f / 255f, 1f);
+			m_image.CrossFadeColor(new Color(pressed.r / Mathf.Max(.01f, baseColor.r),
+				pressed.g / Mathf.Max(.01f, baseColor.g), pressed.b / Mathf.Max(.01f, baseColor.b), 1), 0, true, true);
+		}
+		public void OnPointerUp(UnityEngine.EventSystems.PointerEventData e)
+		{ Tint(m_hovered && m_button.IsInteractable() && !UiTheme.Current.IsSai ? 1.12f : 1f); }
+		private void OnDisable() { m_hovered = false; if (m_image != null) m_image.CrossFadeColor(Color.white, 0f, true, true); }
 	}
 }

@@ -7,6 +7,7 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
+using Collider = Unity.Physics.Collider;
 
 namespace Bpsim.Parts.Simulation
 {
@@ -81,6 +82,7 @@ namespace Bpsim.Parts.Simulation
 				// 不能用 using 声明：using 变量是只读的，NativeArray 的索引器是属性，
 				// 对它赋值会报 CS1654，所以这里 try/finally 手动 Dispose。
 				NativeArray<LocalTransform> localTransforms = new NativeArray<LocalTransform>(count, Allocator.Temp);
+				NativeArray<PostTransformScale> visualScales = new NativeArray<PostTransformScale>(count, Allocator.Temp);
 				NativeArray<bool> hasLocalTransform = new NativeArray<bool>(count, Allocator.Temp);
 				try
 				{
@@ -95,6 +97,14 @@ namespace Bpsim.Parts.Simulation
 						LocalTransform localTransform = EntityManager.GetComponentData<LocalTransform>(part);
 						localTransform.Position = BasePart.MoveTo(in aspect);
 						localTransform.Rotation = BasePart.RotateTo(ref aspect);
+						// Reconstruct from authoritative build data, including edits made earlier in this frame.
+						// Copying the previous LocalTransform is stale; using only the grid pose loses machine spacing.
+						PartFreeTransform free = EntityManager.HasComponent<PartFreeTransform>(part)
+							? EntityManager.GetComponentData<PartFreeTransform>(part) : PartFreeTransform.Identity;
+						int layer = EntityManager.HasComponent<PartBuildLayer>(part)
+							? EntityManager.GetComponentData<PartBuildLayer>(part).Value : PartBuildLayer.MinLayer;
+						localTransform = PartFreeTransform.Compose(localTransform, in free, layer);
+						visualScales[i] = PartFreeTransform.VisualScale(in free);
 						localTransforms[i] = localTransform;
 						hasLocalTransform[i] = true;
 					}
@@ -107,6 +117,11 @@ namespace Bpsim.Parts.Simulation
 						Entity part = Simulator.Value.Parts[i];
 						LocalTransform localTransform = localTransforms[i];
 						EntityManager.SetComponentData(part, localTransform);
+						if (EntityManager.HasComponent<PostTransformScale>(part))
+							EntityManager.SetComponentData(part, visualScales[i]);
+						else EntityManager.AddComponentData(part, visualScales[i]);
+						if (!EntityManager.HasComponent<PropagateLocalToWorld>(part))
+							EntityManager.AddComponent<PropagateLocalToWorld>(part);
 						WorldTransform worldTransform = (WorldTransform)localTransform;
 						if (EntityManager.HasComponent<WorldTransform>(part))
 						{
@@ -121,6 +136,7 @@ namespace Bpsim.Parts.Simulation
 				finally
 				{
 					localTransforms.Dispose();
+					visualScales.Dispose();
 					hasLocalTransform.Dispose();
 				}
 			}
@@ -275,7 +291,7 @@ namespace Bpsim.Parts.Simulation
 					{
 						PartTypeInfo value = PartTypeLookup[part].Value;
 						bool kinematic = IsKinematic(value);
-						float mass = value.PartType == PartType.Umbrella ? .5f : ExtensionMap[value].Mass;
+						float mass = ExtensionMap[value].Mass;
 						PartSimulatorUnmanaged.AddPhysicsComponents(CommandBuffer, LocalTransformLookup, PhysicsColliderLookup, part, kinematic, mass, 0.2f, 0f);
 					}
 				}
@@ -448,6 +464,11 @@ namespace Bpsim.Parts.Simulation
 
 		private Reference<PartSimulatorUnmanaged> m_unmanaged;
 
+		/// <summary>taffy 式「超平坦」运动学地面实体，仅空/沙盒场景生成。</summary>
+		private Entity m_ground;
+
+		private BlobAssetReference<Collider> m_groundCollider;
+
 		public ref PartSimulatorUnmanaged Unmanaged => ref m_unmanaged.Value;
 
 		public Reference<PartSimulatorUnmanaged> UnmanagedRef => m_unmanaged;
@@ -460,9 +481,19 @@ namespace Bpsim.Parts.Simulation
 			PartSceneSystem system = PartManager.Instance.System;
 			EntityManager entityManager = (m_entityManager = partScene.Value.EntityManager);
 			CreatePhysicsStep(entityManager);
+			// 超平坦场景：补一整块运动学地面（视觉地面顶边 y = -10，物理盒顶面与之对齐）。
+			// 与 bpsimtaffy 的 PartSimulator.CreateSandboxGround 等价：center (0,-12,0)、
+			// size (100000,4,1)。只有 LoadEmptyScene 建的空场景带 UseFlatGround 标记，
+			// 关卡场景有自己的地形，绝不生成这块地面。
+			PartManager pm = PartManager.Instance;
+			if (pm != null && pm.ActiveScene != null && pm.ActiveScene.State.UseFlatGround)
+			{
+				CreateSandboxGround(entityManager);
+			}
 			// 用 PartFactory.ToNativeExtensionMap：它会把 Mod 变体按基部件参数补进表里，
 			// 否则变体在 ApplyPartsJob 里 ExtensionMap[value] 会抛 KeyNotFoundException。
 			using NativeParallelHashMap<PartTypeInfo, PartExtensionData> extensionMap = PartManager.Instance.Factory.ToNativeExtensionMap(Allocator.TempJob);
+			SuspensionRuntime.ConfigureMasses(extensionMap);
 			entityManager.CompleteAllTrackedJobs();
 			IJobExtensions.Run(new InstantiatePartsJob
 			{
@@ -504,9 +535,10 @@ namespace Bpsim.Parts.Simulation
 				// compound body cannot represent release, elastic links or team collisions.
 				foreach (Entity part in m_unmanaged.Value.Parts)
 				{
-					if (entityManager.GetComponentData<PartTypeValue>(part).Value.PartType != PartType.Kicker) continue;
+					PartType type = entityManager.GetComponentData<PartTypeValue>(part).BaseType;
+					if (type != PartType.Kicker && type != PartType.Spring && !SuspensionRuntime.IsSuspension(type)) continue;
 					mega = false;
-					UnityEngine.Debug.Log("[PartSimulation] 分离器/队伍标记需要独立刚体，本次模拟停用巨构合并（不修改设置）。");
+					UnityEngine.Debug.Log("[PartSimulation] 分离器/弹簧/气球/沙袋需要独立刚体，本次模拟停用巨构合并（不修改设置）。");
 					break;
 				}
 			}
@@ -559,6 +591,17 @@ namespace Bpsim.Parts.Simulation
 				MegaStructure.Build(entityManager, m_unmanaged, extensionMap, simulationSettings);
 				return;
 			}
+			// BPLE initializes split suspension bodies and joints BEFORE the first physics step.
+			// Existing welds have State=0 until the first system update. Register them now,
+			// otherwise bootstrapping would miss lower spring partners and erase weld connectivity.
+			SuspensionRuntime.RegisterPendingJoints(entityManager);
+			entityManager.World.GetOrCreateSystemManaged<BalloonSystem>().InitializeParts();
+			entityManager.World.GetOrCreateSystemManaged<SandbagSystem>().InitializeParts();
+			entityManager.World.GetOrCreateSystemManaged<ElasticSpringSystem>().InitializeParts();
+			using (var components = PartSimulation.FindConnectedComponents(m_unmanaged,
+				system.GetComponentLookup<PhysicsConstrainedBodyPair>(true)))
+				PartSimulation.UpdateConnectedComponents(m_unmanaged, system.GetComponentLookup<PartConnectedComponent>(),
+					system.GetComponentLookup<PartExtensionComponent>(true), components);
 			// 焊接完成的连通块内部不再需要碰撞检测：Unity.Physics 会按速度膨胀 AABB，
 			// 大载具高速旋转时 1600+ 个部件的膨胀体会互相吞掉对方，宽相位与推测接触数量爆炸。
 			// 但过滤是存在碰撞体 blob 里的，Instantiate 出来的部件共用 prefab 那份 blob
@@ -583,8 +626,40 @@ namespace Bpsim.Parts.Simulation
 			m_physicsStep = entity;
 		}
 
+		/// <summary>
+		/// 移植自 bpsimtaffy 的 <c>PartSimulator.CreateSandboxGround</c>：一整块运动学
+		/// 物理地面。盒子 center y = -12 / 半高 2 → 顶面 y = -10，正好对齐
+		/// <see cref="Bpsim.SandboxMap"/> 画的灰色地面顶边。
+		/// </summary>
+		private void CreateSandboxGround(EntityManager entityManager)
+		{
+			m_groundCollider = PartPhysics.CreateBox(float3.zero, new float3(100000f, 4f, 1f));
+			m_ground = entityManager.CreateEntity();
+			entityManager.SetName(m_ground, "SandboxGround");
+			entityManager.AddComponentData(m_ground, new LocalTransform
+			{
+				Position = new float3(0f, -12f, 0f),
+				Rotation = quaternion.identity,
+				Scale = 1f
+			});
+			entityManager.AddComponentData(m_ground, new PhysicsCollider { Value = m_groundCollider });
+			entityManager.AddComponentData(m_ground, PhysicsMass.CreateKinematic(m_groundCollider.Value.MassProperties));
+			entityManager.AddComponentData(m_ground, PhysicsVelocity.Zero);
+			entityManager.AddSharedComponent(m_ground, new PhysicsWorldIndex(0u));
+		}
+
 		public void Dispose()
 		{
+			m_entityManager.World.GetExistingSystemManaged<BalloonSystem>()?.ClearRuntimeResources();
+			m_entityManager.World.GetExistingSystemManaged<SuspensionPresentationSystem>()?.ClearRuntimeResources();
+			m_entityManager.World.GetExistingSystemManaged<ElasticSpringSystem>()?.ClearRuntimeResources();
+			if (m_groundCollider.IsCreated)
+			{
+				m_entityManager.DestroyEntity(m_ground);
+				m_groundCollider.Dispose();
+				m_ground = Entity.Null;
+				m_groundCollider = default;
+			}
 			MegaStructure.Dispose(m_entityManager);
 			m_entityManager.DestroyEntity(m_physicsStep);
 			m_unmanaged.Value.Dispose(m_entityManager);

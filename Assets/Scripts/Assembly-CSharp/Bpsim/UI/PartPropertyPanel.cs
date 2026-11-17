@@ -32,9 +32,9 @@ namespace Bpsim.UI
 		private bool m_refreshing;
 		internal bool IsClosing { get; private set; }
 		public new void Close() { IsClosing = true; base.Close(); }
-		private static readonly Color Plate = new Color(.16f, .16f, .16f, 1f);
-		private static readonly Color Field = new Color(.2f, .2f, .2f, 1f);
-		private static readonly Color Blue = new Color(44f / 255, 89f / 255, 149f / 255, 1f);
+		private static Color Plate => UiTheme.Current.Panel;
+		private static Color Field => UiTheme.Current.Field;
+		private static Color Blue => UiTheme.Current.Header;
 		private sealed class PropertySection
 		{
 			public RectTransform Rect;
@@ -162,9 +162,16 @@ namespace Bpsim.UI
 			statusRect.anchoredPosition = new Vector2(30, 100); statusRect.sizeDelta = new Vector2(-60, 30);
 			m_footer = Rect("Actions", body); m_footer.anchorMin = Vector2.zero; m_footer.anchorMax = new Vector2(1, 0); m_footer.pivot = Vector2.zero;
 			var erase = CopyButton("EraseButton", "Erase", Erase);
-			erase.targetGraphic.color = new Color(43f / 255, 77f / 255, 123f / 255, 1);
+			erase.targetGraphic.color = UiTheme.Current.Button;
 			CopyButton("CloseButton", "Close", Close);
 			m_editors.Add(erase);
+			UiTheme.Changed += OnThemeChanged;
+			UiThemeApplicator.ApplyTo(gameObject);
+		}
+
+		private void OnThemeChanged(UiPalette palette)
+		{
+			UiThemeApplicator.ApplyTo(gameObject);
 		}
 
 		private Button CopyButton(string source, string name, Action action)
@@ -290,7 +297,7 @@ namespace Bpsim.UI
 			Close();
 		}
 		private void CloseSkin() { if (m_skinPart != Entity.Null) { SkinPanelHost.Instance.Close(); m_skinPart = Entity.Null; } }
-		private void OnDestroy() => CloseSkin();
+		private void OnDestroy() { UiTheme.Changed -= OnThemeChanged; CloseSkin(); }
 
 		private void Section(string name, string title, int column)
 		{
@@ -331,13 +338,13 @@ namespace Bpsim.UI
 			if (!bare)
 			{
 				var sliderRect = Rect("Slider", rect); Top(sliderRect, 90, 5, 62, 12);
-				var track = Rect("Background", sliderRect); Stretch(track, 0, 0, 0, 0); Image(track, new Color(.1248f, .1248f, .1248f, 1));
+				var track = Rect("Background", sliderRect); Stretch(track, 0, 0, 0, 0); Image(track, UiTheme.Current.SliderTrack);
 				var fillArea = Rect("Fill Area", sliderRect); Stretch(fillArea, 6, 0, 6, 0);
-				var fill = Rect("Fill", fillArea); Stretch(fill, 0, 0, 0, 0); Image(fill, new Color(47f / 255, 128f / 255, 237f / 255, 1));
+				var fill = Rect("Fill", fillArea); Stretch(fill, 0, 0, 0, 0); Image(fill, UiTheme.Current.SliderFill);
 				var area = Rect("Handle Slide Area", sliderRect); Stretch(area, 6, 0, 6, 0);
 				var knob = Rect("Handle", area); knob.sizeDelta = new Vector2(14, 0);
 				slider = sliderRect.gameObject.AddComponent<PropertyValueSlider>(); slider.handleRect = knob; slider.fillRect = fill;
-				slider.targetGraphic = Image(knob, new Color(.93f, .93f, .94f, 1));
+				slider.targetGraphic = Image(knob, UiTheme.Current.Handle);
 				slider.minValue = min; slider.maxValue = max; slider.wholeNumbers = integer; slider.navigation = new Navigation { mode = Navigation.Mode.None };
 			}
 			var row = new NumericRow { Input = input, Slider = slider, Read = read, Write = write }; m_rows.Add(row);
@@ -374,13 +381,13 @@ namespace Bpsim.UI
 		private Text Label(Transform parent, string value, int size, Color? color = null)
 		{
 			var rect = Rect("Text", parent); Stretch(rect, 0, 0, 0, 0);
-			var text = rect.gameObject.AddComponent<Text>(); text.font = m_font; text.fontSize = size; text.color = color ?? new Color(.93f, .93f, .93f, 1);
-			text.fontStyle = FontStyle.Bold; text.color = color ?? Color.white;
+			var text = rect.gameObject.AddComponent<Text>(); text.font = m_font; text.fontSize = size;
+			text.fontStyle = FontStyle.Bold; text.color = color ?? UiTheme.Current.Text;
 			text.text = value; text.alignment = TextAnchor.MiddleLeft; text.raycastTarget = false; return text;
 		}
 		private Button Button(Transform parent, string name, string text, Action action)
 		{
-			var rect = Rect(name, parent); var button = rect.gameObject.AddComponent<Button>(); button.targetGraphic = Image(rect, new Color(.3f, .3f, .3f, 1));
+			var rect = Rect(name, parent); var button = rect.gameObject.AddComponent<Button>(); button.targetGraphic = Image(rect, UiTheme.Current.ButtonMuted);
 			var label = Label(rect, text, 24); label.alignment = TextAnchor.MiddleCenter;
 			button.onClick.AddListener(() => action()); button.navigation = new Navigation { mode = Navigation.Mode.None }; return button;
 		}

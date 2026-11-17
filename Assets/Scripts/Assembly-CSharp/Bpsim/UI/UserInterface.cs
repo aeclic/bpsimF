@@ -90,7 +90,17 @@ namespace Bpsim.UI
 			private void SaveScene()
 			{
 				SceneLoader sceneLoader = UnityEngine.Object.Instantiate(m_sceneLoaderPrefab);
-				sceneLoader.Mode = SceneLoaderMode.Write;
+				// 保存入口也打开同一个合并面板：顶部固定显示加载控件，
+				// 下方场景卡片的「保存」按钮再切换到写入模式并打开文件选择器。
+				sceneLoader.Mode = SceneLoaderMode.Read;
+				sceneLoader.transform.SetParent(m_root.SubCanvas.transform, worldPositionStays: false);
+			}
+
+			/// <summary>打开统一的场景文件读写对话框。</summary>
+			public void OpenSceneLoader(SceneLoaderMode mode)
+			{
+				SceneLoader sceneLoader = UnityEngine.Object.Instantiate(m_sceneLoaderPrefab);
+				sceneLoader.Mode = mode;
 				sceneLoader.transform.SetParent(m_root.SubCanvas.transform, worldPositionStays: false);
 			}
 
@@ -243,7 +253,7 @@ namespace Bpsim.UI
 		/// <summary>Besiege 式的常驻抬头：播放键 + 镜头滑条，模拟中仍然显示。</summary>
 		public BuildHud BuildHud => m_buildHud;
 
-		/// <summary>左侧边栏那颗「放大镜」镜头按钮（概览缩放开关）。</summary>
+		/// <summary>左侧边栏那颗「放大镜」镜头按钮（预览状态开关）。</summary>
 		public BuildMagnifier Magnifier => m_magnifier;
 
 		/// <summary>放大镜预览期间，场景指针归相机所有，不进入建造笔刷或工具。</summary>
@@ -267,6 +277,15 @@ namespace Bpsim.UI
 			// 左侧边栏第 5 颗按钮：放大镜镜头按钮，排在「框选」右边。
 			m_magnifier = gameObject.AddComponent<BuildMagnifier>();
 			m_magnifier.Initialize(this);
+			// 全局界面配色：订阅 UiTheme.Changed，把当前配色刷到整棵主 UI 上。
+			if (PartSelector != null)
+			{
+				foreach (Toggle toggle in PartSelector.transform.parent.GetComponentsInChildren<Toggle>(true))
+					if (toggle.gameObject.activeSelf && !toggle.name.Contains("Template")) UiThemeToggleCard.Attach(toggle);
+				UiThemeApplicator.StyleSurface(PartSelector.transform.parent.GetComponent<Graphic>(), UiSurfaceRole.Panel);
+			}
+			UiThemeApplicator.StyleSurface(m_rightSidebar.GameObject.GetComponent<Graphic>(), UiSurfaceRole.Panel);
+			gameObject.AddComponent<UiThemeApplicator>();
 		}
 
 		private void Update()

@@ -2416,10 +2416,11 @@ namespace Bpsim.QA
 
 		private static string VerifySpring(PartScene scene)
 		{
-			PartGameplayManager manager = PartGameplayManager.Instance;
-			string state = (manager != null) ? manager.Describe() : "no manager";
-			bool fired = state.Contains("punches=1") || state.Contains("punches=2");
-			return (fired ? "PASS" : "FAIL") + " spring fired=" + fired + " state=" + state.Replace("\n", " | ");
+			Entity part = FindPart(PartType.Spring, 0);
+			EntityManager em = PartGameplayUtil.Em;
+			ElasticSpring spring = em.HasComponent<ElasticSpring>(part) ? em.GetComponentData<ElasticSpring>(part) : default;
+			bool passive = spring.Initialized && em.Exists(spring.Joint) && em.Exists(spring.ConnectedBody);
+			return (passive ? "PASS" : "FAIL") + " spring passive=" + passive + " length=" + spring.Length.ToString("F3");
 		}
 
 		private static string VerifyKicker(PartScene scene)

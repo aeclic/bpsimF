@@ -1,0 +1,314 @@
+{
+  "balloons": [
+    {
+      "family": "Balloon",
+      "index": 0,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloon",
+      "index": 1,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloon",
+      "index": 2,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloon",
+      "index": 3,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloon",
+      "index": 4,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloon",
+      "index": 5,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloon",
+      "index": 6,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloon",
+      "index": 7,
+      "count": 1,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": true
+    },
+    {
+      "family": "Balloons2",
+      "index": 0,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons2",
+      "index": 1,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons2",
+      "index": 2,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons2",
+      "index": 3,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons2",
+      "index": 4,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons2",
+      "index": 5,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons2",
+      "index": 6,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons2",
+      "index": 7,
+      "count": 2,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": true
+    },
+    {
+      "family": "Balloons3",
+      "index": 0,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons3",
+      "index": 1,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons3",
+      "index": 2,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons3",
+      "index": 3,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons3",
+      "index": 4,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons3",
+      "index": 5,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons3",
+      "index": 6,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": false
+    },
+    {
+      "family": "Balloons3",
+      "index": 7,
+      "count": 3,
+      "mass": 0.0,
+      "force": 11.5,
+      "maxSpeed": 10.0,
+      "ghost": true
+    }
+  ],
+  "sandbags": [
+    {
+      "family": "Sandbag",
+      "index": 0,
+      "count": 1,
+      "mass": 1.1
+    },
+    {
+      "family": "Sandbag",
+      "index": 1,
+      "count": 1,
+      "mass": 1.1
+    },
+    {
+      "family": "Sandbag",
+      "index": 2,
+      "count": 1,
+      "mass": 1.1
+    },
+    {
+      "family": "Sandbag",
+      "index": 3,
+      "count": 1,
+      "mass": 1.1
+    },
+    {
+      "family": "Sandbag",
+      "index": 4,
+      "count": 1,
+      "mass": 5.0
+    },
+    {
+      "family": "Sandbag",
+      "index": 5,
+      "count": 1,
+      "mass": 1.1
+    },
+    {
+      "family": "Sandbag2",
+      "index": 0,
+      "count": 2,
+      "mass": 1.5
+    },
+    {
+      "family": "Sandbag2",
+      "index": 1,
+      "count": 2,
+      "mass": 1.5
+    },
+    {
+      "family": "Sandbag2",
+      "index": 2,
+      "count": 2,
+      "mass": 1.5
+    },
+    {
+      "family": "Sandbag2",
+      "index": 3,
+      "count": 2,
+      "mass": 1.5
+    },
+    {
+      "family": "Sandbag3",
+      "index": 0,
+      "count": 3,
+      "mass": 1.5
+    },
+    {
+      "family": "Sandbag3",
+      "index": 1,
+      "count": 3,
+      "mass": 1.5
+    },
+    {
+      "family": "Sandbag3",
+      "index": 2,
+      "count": 3,
+      "mass": 1.5
+    },
+    {
+      "family": "Sandbag3",
+      "index": 3,
+      "count": 3,
+      "mass": 1.5
+    }
+  ],
+  "settings": {
+    "balloonForce": 2.0,
+    "rotatableBalloon": true,
+    "unpoppableBalloon": true,
+    "balloonConnectionDistance": 10,
+    "rotatableSandbag": true,
+    "sandbagConnectionDistance": 10
+  }
+}

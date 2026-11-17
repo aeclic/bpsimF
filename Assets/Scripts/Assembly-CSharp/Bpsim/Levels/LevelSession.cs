@@ -160,7 +160,7 @@ namespace Bpsim.Levels
 					// blank path does.
 					if (!string.IsNullOrEmpty(levelScene) && PartManager.Instance != null && !PartManager.Instance.HasActiveScene())
 					{
-						PartManager.Instance.LoadEmptyScene("Empty");
+						PartManager.Instance.LoadEmptyScene("Empty", flatGround: true);
 					}
 				}
 			}
@@ -189,10 +189,25 @@ namespace Bpsim.Levels
 				created = scene;
 			};
 			partManager.SceneLoaded += handler;
+			SchematicsFormat used = format;
 			try
 			{
 				using Stream stream = FileAPI.ReadFileAsStream(path);
-				partManager.LoadScene(stream, Path.GetFileNameWithoutExtension(path), format);
+				used = partManager.LoadScene(stream, Path.GetFileNameWithoutExtension(path), format);
+			}
+			catch (Exception) when (format != SchematicsFormat.Auto)
+			{
+				// 显式格式读不动时按内容重试一次，并把实际格式记进会话，下次恢复才不会又踩同一个坑。
+				try
+				{
+					using Stream stream = FileAPI.ReadFileAsStream(path);
+					used = partManager.LoadScene(stream, Path.GetFileNameWithoutExtension(path), SchematicsFormat.Auto);
+				}
+				catch (Exception retryException)
+				{
+					error = retryException.Message;
+					return false;
+				}
 			}
 			catch (Exception exception)
 			{
@@ -202,6 +217,11 @@ namespace Bpsim.Levels
 			finally
 			{
 				partManager.SceneLoaded -= handler;
+			}
+
+			if (used != format)
+			{
+				RecordScene(path, used);
 			}
 
 			if (created == null)

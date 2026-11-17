@@ -28,14 +28,14 @@ namespace Bpsim.UI
 		private const float TextureRowStep = 62f;
 		private const float MaxTextureRows = 40f;
 
-		private static readonly Color PanelColor = new Color(0.15f, 0.15f, 0.15f, 0.99f);
-		private static readonly Color HeaderColor = new Color(0f, 0.2f, 0.4f, 1f);
-		private static readonly Color FieldColor = new Color(0.075f, 0.085f, 0.11f, 1f);
-		private static readonly Color SwitchOff = new Color(0.17f, 0.19f, 0.23f, 1f);
-		private static readonly Color SwitchOn = new Color(0.16f, 0.45f, 0.92f, 1f);
-		private static readonly Color PreviewBack = new Color(0.05f, 0.06f, 0.08f, 1f);
-		private static readonly Color SelectedRow = new Color(0.16f, 0.32f, 0.58f, 0.92f);
-		private static readonly Color NormalRow = new Color(0.17f, 0.19f, 0.23f, 1f);
+		private static Color PanelColor { get { Color c = UiTheme.Current.Panel; c.a = 0.99f; return c; } }
+		private static Color HeaderColor => UiTheme.Current.Header;
+		private static Color FieldColor => UiTheme.Current.Field;
+		private static Color SwitchOff => UiTheme.Current.Shade(1.35f);
+		private static Color SwitchOn => UiTheme.Current.Accent;
+		private static Color PreviewBack => UiTheme.Current.Shade(0.4f);
+		private static Color SelectedRow { get { Color c = UiTheme.Current.Mix(UiTheme.Current.Accent, 0.45f); c.a = 0.92f; return c; } }
+		private static Color NormalRow => UiTheme.Current.Entry;
 
 		private static SkinPanelHost s_instance;
 
@@ -113,6 +113,19 @@ namespace Bpsim.UI
 		{
 			if (s_instance != null && s_instance != this) { Destroy(gameObject); return; }
 			s_instance = this;
+			UiTheme.Changed += OnThemeChanged;
+		}
+
+		private void OnThemeChanged(UiPalette palette)
+		{
+			// 面板骨架与卡片里的色都是建时写死的；配色变化时整棵销毁重建，
+			// 重建只在下次 Open 时发生（关着的面板不必立即重建）。
+			if (!m_built || m_root == null) return;
+			bool wasOpen = m_root.activeSelf;
+			Destroy(m_root);
+			m_root = null;
+			m_built = false;
+			if (wasOpen && m_part != Entity.Null) Open(m_part);
 		}
 
 		private void Update()
@@ -124,6 +137,7 @@ namespace Bpsim.UI
 
 		private void OnDestroy()
 		{
+			UiTheme.Changed -= OnThemeChanged;
 			if (s_instance == this) s_instance = null;
 			if (m_root != null)
 			{
@@ -144,13 +158,13 @@ namespace Bpsim.UI
 			panel.sizeDelta = new Vector2(PanelWidth, PanelHeight);
 			panel.anchoredPosition = new Vector2(-18f, 18f);
 
-			// 标题栏：与用户设置面板同色（0, 0.2, 0.4）。
+			// 标题栏：与用户设置面板同走主题 Header 色。
 			RectTransform header = ModUiKit.Panel(panel, HeaderColor, 10);
 			SetRect(header, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -60f), Vector2.zero);
 			Text title = ModUiKit.Label(header, "蒙皮参数", 22, Color.white);
 			title.fontStyle = FontStyle.Bold;
 			SetRect(title.rectTransform, Vector2.zero, Vector2.one, new Vector2(22f, 0f), new Vector2(-72f, 0f));
-			Button close = ModUiKit.Button(header, "×", new Color(0.22f, 0.25f, 0.30f, 1f), Close, 22);
+			Button close = ModUiKit.Button(header, "×", UiTheme.Current.ButtonMuted, Close, 22);
 			SetRight(close.GetComponent<RectTransform>(), 10f, 42f, 40f);
 
 			m_scroll = ModUiKit.ScrollList(panel, out m_content);
@@ -170,7 +184,7 @@ namespace Bpsim.UI
 			Image barImage = bar.GetComponent<Image>();
 			barImage.sprite = ModUiKit.Rounded(4);
 			barImage.type = Image.Type.Sliced;
-			barImage.color = new Color(1f, 1f, 1f, 0.05f);
+			barImage.color = UiTheme.Current.ScrollTrack;
 			RectTransform handle = new GameObject("Handle", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
 			handle.SetParent(bar, false);
 			// Handle 的位置完全由 Scrollbar 改写 anchors 得出，这里必须把新建
@@ -182,7 +196,7 @@ namespace Bpsim.UI
 			Image handleImage = handle.GetComponent<Image>();
 			handleImage.sprite = ModUiKit.Rounded(4);
 			handleImage.type = Image.Type.Sliced;
-			handleImage.color = new Color(1f, 1f, 1f, 0.22f);
+			handleImage.color = UiTheme.Current.ScrollHandle;
 			Scrollbar scrollbar = bar.GetComponent<Scrollbar>();
 			scrollbar.handleRect = handle;
 			scrollbar.targetGraphic = handleImage;
@@ -201,7 +215,7 @@ namespace Bpsim.UI
 			SetRect(footer, Vector2.zero, new Vector2(1f, 0f), new Vector2(16f, 12f), new Vector2(-16f, 56f));
 			m_status = ModUiKit.Label(footer, "就绪", 14, ModUiKit.TextDim);
 			SetRect(m_status.rectTransform, Vector2.zero, Vector2.one, new Vector2(4f, 0f), new Vector2(-290f, 0f));
-			Button cancel = ModUiKit.Button(footer, "关闭", new Color(0.28f, 0.31f, 0.36f, 1f), Close, 18);
+			Button cancel = ModUiKit.Button(footer, "关闭", UiTheme.Current.ButtonMuted, Close, 18);
 			SetRight(cancel.GetComponent<RectTransform>(), 0f, 92f, 36f);
 			Button apply = ModUiKit.Button(footer, "应用更改", ModUiKit.Primary, ApplyFromUi, 18);
 			SetRight(apply.GetComponent<RectTransform>(), 102f, 130f, 36f);
@@ -283,9 +297,9 @@ namespace Bpsim.UI
 			m_textureMeta = ModUiKit.Label(card, "使用部件默认材质", 13, ModUiKit.TextDim);
 			Row(m_textureMeta.rectTransform, PreviewRightX, PreviewTop + 30f, 16f, 22f);
 
-			m_cropButton = ModUiKit.Button(card, "图集裁剪", new Color(0.12f, 0.52f, 0.74f, 1f), OpenCrop, 18);
+			m_cropButton = ModUiKit.Button(card, "图集裁剪", UiTheme.Current.Button, OpenCrop, 18);
 			Fixed(m_cropButton.GetComponent<RectTransform>(), PreviewRightX, PreviewTop + 58f, 118f, 36f);
-			Button clear = ModUiKit.Button(card, "清除贴图", new Color(0.24f, 0.27f, 0.31f, 1f), () => ApplyTextureId(string.Empty), 18);
+			Button clear = ModUiKit.Button(card, "清除贴图", UiTheme.Current.ButtonMuted, () => ApplyTextureId(string.Empty), 18);
 			Fixed(clear.GetComponent<RectTransform>(), PreviewRightX + 126f, PreviewTop + 58f, 112f, 36f);
 
 			Text listTitle = ModUiKit.Label(card, "可用贴图", 14, ModUiKit.TextDim);
@@ -330,7 +344,7 @@ namespace Bpsim.UI
 			string captured = id;
 			button.onClick.AddListener(() => ApplyTextureId(captured));
 
-			RectTransform thumb = ModUiKit.Panel(go.transform, new Color(0.03f, 0.04f, 0.05f, 1f), 5);
+			RectTransform thumb = ModUiKit.Panel(go.transform, UiTheme.Current.Shade(0.25f), 5);
 			Fixed(thumb, 6f, 6f, 44f, 44f);
 			RawImage raw = new GameObject("Thumb", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
 			raw.transform.SetParent(thumb, false);
@@ -414,7 +428,7 @@ namespace Bpsim.UI
 			{
 				Field(card, "uv" + i, 16f + i * 142f, 48f, 126f, hints[i]);
 			}
-			Button reset = ModUiKit.Button(card, "重置", new Color(0.24f, 0.27f, 0.31f, 1f), ResetUv, 16);
+			Button reset = ModUiKit.Button(card, "重置", UiTheme.Current.ButtonMuted, ResetUv, 16);
 			Fixed(reset.GetComponent<RectTransform>(), 580f, 48f, 86f, 34f);
 		}
 
@@ -448,7 +462,7 @@ namespace Bpsim.UI
 			Stretch(text.rectTransform, 9f, 2f, 9f, 2f);
 			field.textComponent = text;
 
-			Text placeholder = ModUiKit.Label(go.transform, hint, 14, new Color(0.45f, 0.50f, 0.58f, 1f));
+			Text placeholder = ModUiKit.Label(go.transform, hint, 14, UiTheme.Current.TextMuted);
 			Stretch(placeholder.rectTransform, 9f, 2f, 9f, 2f);
 			field.placeholder = placeholder;
 

@@ -20,11 +20,11 @@ namespace Bpsim.UI
 			Move
 		}
 
-		private static readonly Color PanelColor = new Color(0.15f, 0.15f, 0.15f, 0.99f);
-		private static readonly Color HeaderColor = new Color(0f, 0.2f, 0.4f, 1f);
-		private static readonly Color FieldColor = new Color(0.075f, 0.085f, 0.11f, 1f);
-		private static readonly Color PreviewBack = new Color(0.04f, 0.05f, 0.07f, 1f);
-		private static readonly Color Accent = new Color(0.12f, 0.52f, 0.74f, 1f);
+		private static Color PanelColor { get { Color c = UiTheme.Current.Panel; c.a = 0.99f; return c; } }
+		private static Color HeaderColor => UiTheme.Current.Header;
+		private static Color FieldColor => UiTheme.Current.Field;
+		private static Color PreviewBack => UiTheme.Current.Shade(0.35f);
+		private static Color Accent => UiTheme.Current.Button;
 
 		private const float SidebarWidth = 288f;
 		private const float SidebarGap = 12f;
@@ -76,6 +76,32 @@ namespace Bpsim.UI
 		}
 
 		public bool IsOpen => m_root != null && m_root.activeSelf;
+
+		private void Awake()
+		{
+			UiTheme.Changed += OnThemeChanged;
+		}
+
+		private void OnDestroy()
+		{
+			UiTheme.Changed -= OnThemeChanged;
+		}
+
+		private void OnThemeChanged(UiPalette palette)
+		{
+			// 选框/边线颜色是建时写死的；开着时整棵重刷，关着时下次 Open 前重建。
+			if (!m_built || m_root == null) return;
+			if (m_root.activeSelf)
+			{
+				UiThemeApplicator.ApplyTo(m_root);
+			}
+			else
+			{
+				Destroy(m_root);
+				m_root = null;
+				m_built = false;
+			}
+		}
 
 		public void Open(Texture2D source, Action<string> onApply)
 		{
@@ -131,7 +157,7 @@ namespace Bpsim.UI
 			m_root.SetActive(false);
 
 			// 半透明遮罩：点空白处关闭。
-			RectTransform backdrop = ModUiKit.Panel(canvas.transform, new Color(0f, 0f, 0f, 0.55f), 2);
+			RectTransform backdrop = ModUiKit.Panel(canvas.transform, UiTheme.Current.Backdrop, 2);
 			SetRect(backdrop, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
 			Button backdropButton = backdrop.gameObject.AddComponent<Button>();
 			backdropButton.transition = Selectable.Transition.None;
@@ -149,7 +175,7 @@ namespace Bpsim.UI
 			Text title = ModUiKit.Label(header, "图片切片选择器", 22, Color.white);
 			title.fontStyle = FontStyle.Bold;
 			SetRect(title.rectTransform, Vector2.zero, Vector2.one, new Vector2(22f, 0f), new Vector2(-72f, 0f));
-			Button close = ModUiKit.Button(header, "×", new Color(0.22f, 0.25f, 0.30f, 1f), Close, 22);
+			Button close = ModUiKit.Button(header, "×", UiTheme.Current.ButtonMuted, Close, 22);
 			SetRight(close.GetComponent<RectTransform>(), 10f, 42f, 40f);
 
 			RectTransform body = new GameObject("Body", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -217,12 +243,13 @@ namespace Bpsim.UI
 			m_selection = selectionGo.GetComponent<RectTransform>();
 			m_selection.SetParent(m_imageView, false);
 			Image fill = selectionGo.GetComponent<Image>();
-			fill.color = new Color(0.20f, 0.75f, 0.95f, 0.16f);
+			Color accent = UiTheme.Current.Accent;
+			fill.color = new Color(accent.r, accent.g, accent.b, 0.16f);
 			fill.raycastTarget = false;
 
 			// Outline 的四份偏移拷贝不受 Image alpha 影响，会把选框填成实色，
 			// 这里改用四条 2px 边线画选框。
-			Color border = new Color(0.35f, 0.85f, 1f, 1f);
+			Color border = Color.Lerp(accent, Color.white, 0.35f);
 			Edge(m_selection, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -2f), Vector2.zero, border);
 			Edge(m_selection, new Vector2(0f, 0f), new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, 2f), border);
 			Edge(m_selection, new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, new Vector2(2f, 0f), border);
@@ -248,9 +275,9 @@ namespace Bpsim.UI
 
 			Button use = ModUiKit.Button(footer, "使用裁剪", Accent, ApplyCrop, 18);
 			SetRight(use.GetComponent<RectTransform>(), 0f, 132f, 36f);
-			Button cancel = ModUiKit.Button(footer, "取消", new Color(0.28f, 0.31f, 0.36f, 1f), Close, 18);
+			Button cancel = ModUiKit.Button(footer, "取消", UiTheme.Current.ButtonMuted, Close, 18);
 			SetRight(cancel.GetComponent<RectTransform>(), 140f, 96f, 36f);
-			Button all = ModUiKit.Button(footer, "全选", new Color(0.24f, 0.27f, 0.31f, 1f), SelectAll, 18);
+			Button all = ModUiKit.Button(footer, "全选", UiTheme.Current.ButtonMuted, SelectAll, 18);
 			SetRight(all.GetComponent<RectTransform>(), 244f, 96f, 36f);
 		}
 

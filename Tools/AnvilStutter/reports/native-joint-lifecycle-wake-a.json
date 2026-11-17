@@ -1,0 +1,31 @@
+{
+  "label": "wake-a",
+  "runId": "5f70bae3a02c40ac9ba51f8a63b54870",
+  "nativeSha256": "a6172b234bdc2fb5687ed75c5c15aa7b68603d4b8d7c948d688ea3ec1b3ccdc6",
+  "probeSha256": "317f45ec0d5e2d73b893a874c4438d409d50ad24bb230670250690851f95250c",
+  "cases": [
+    {
+      "wakeAttached": 0,
+      "beforeAwake": [
+        0,
+        0
+      ],
+      "afterAwake": [
+        0,
+        0
+      ]
+    },
+    {
+      "wakeAttached": 1,
+      "beforeAwake": [
+        0,
+        0
+      ],
+      "afterAwake": [
+        1,
+        1
+      ]
+    }
+  ],
+  "failures": []
+}

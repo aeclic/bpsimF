@@ -46,7 +46,8 @@ namespace Bpsim.EditorTools
             // --- Keep Mono (fast packaging) and everything else stable ---
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.Mono2x);
             PlayerSettings.Android.minSdkVersion    = AndroidSdkVersions.AndroidApiLevel22;
-            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+            // This editor's enum stops at API 32, but its Android toolchain supports installed API 33.
+            PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)33;
             PlayerSettings.Android.useAPKExpansionFiles = false;
 
             EditorUserBuildSettings.buildAppBundle = false; // plain .apk, not .aab
@@ -63,6 +64,7 @@ namespace Bpsim.EditorTools
         /// <summary>Batch/menu entry: apply settings then build the APK.</summary>
         public static void Build()
         {
+            BeeEnvironment.CollapseCaseDuplicates();
             ApplyAndroidSettings();
 
             var scenes = new List<string>();
@@ -74,14 +76,18 @@ namespace Bpsim.EditorTools
             string outPath = Path.Combine(ApkDir, ApkName).Replace('\\', '/');
 
             var sw = Stopwatch.StartNew();
-            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            BuildReport report;
+            using (new AndroidBuildEnvironment.SdkNetworkTimeout())
             {
-                scenes           = scenes.ToArray(),
-                locationPathName = outPath,
-                target           = BuildTarget.Android,
-                targetGroup      = BuildTargetGroup.Android,
-                options          = BuildOptions.None,
-            });
+                report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+                {
+                    scenes           = scenes.ToArray(),
+                    locationPathName = outPath,
+                    target           = BuildTarget.Android,
+                    targetGroup      = BuildTargetGroup.Android,
+                    options          = BuildOptions.None,
+                });
+            }
             sw.Stop();
 
             var r = report.summary;

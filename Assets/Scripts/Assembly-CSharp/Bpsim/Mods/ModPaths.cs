@@ -18,6 +18,9 @@ namespace Bpsim.Mods
 		/// <summary>全局配置 <c>Mods/Modding.xml</c>（禁用列表、维护版本、严格扫描）。</summary>
 		public static string ConfigPath => Path.Combine(Root, ModdingConfig.FileName);
 
+		/// <summary>每个 Mod 自己声明的可调设置值（<c>Mods/ModSettings.xml</c>）。</summary>
+		public static string ModSettingsPath => Path.Combine(Root, ModSettingsStore.FileName);
+
 		/// <summary>工坊安装目录（每个子目录是一个已下载的 Mod）。</summary>
 		public static string WorkshopInstalledRoot => Path.Combine(WorkshopRoot, "installed");
 

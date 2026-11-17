@@ -183,6 +183,7 @@ namespace Bpsim.Parts
 			}
 			// FuelBox.Initialize has eight orientation modes, including imported diagonal modes.
 			if ((partType == PartType.JetEngine && info.PartIndex == 4) || partType == PartType.Kicker) return true;
+			if (partType == PartType.PointLight && info.PartIndex == 6) return true;
 			return false;
 		}
 
@@ -234,6 +235,11 @@ namespace Bpsim.Parts
 		{
 			int rotation = part.Rotation;
 			bool flipped = part.Flipped;
+			if (part.BaseTypeInfo.PartType == PartType.PointLight && part.BaseTypeInfo.PartIndex == 6)
+			{
+				rotation = part.Rotation = (rotation % 5 + 5) % 5;
+				return Quaternion.Euler(0, 0, 90 * (rotation % 4));
+			}
 			if (part.PartType == PartType.ElectricalPart)
 			{
 				rotation = part.Rotation = CircuitPart.NormalizeRotation(part.PartIndex, rotation);
@@ -241,11 +247,14 @@ namespace Bpsim.Parts
 				if (part.PartIndex == 1 || part.PartIndex == 3 || part.PartIndex == 38 || part.PartIndex == 39) return Quaternion.identity;
 				// Extra meter orientations select probe/ohmmeter mode, keeping physical ports orthogonal.
 				if (part.PartIndex == 18 || part.PartIndex == 19) rotation %= 4;
-				if (flipped && CanFlip(in part))
+				// BPIR's BasePart.SetFlipped has no whitelist: any stored part may be mirrored,
+				// so the flag has to survive the import even when CanFlip (an editor affordance) says no.
+				if (flipped)
 					return Quaternion.Euler(rotation % 2 == 0 ? 180f : 0f, rotation % 2 == 1 ? 180f : 0f, rotation * 90f);
 				return Quaternion.Euler(0f, 0f, rotation * 90f);
 			}
-			if (CanFlip(in part))
+			bool eightWay = IsEightWay(in part);
+			if (CanFlip(in part) || (flipped && !eightWay))
 			{
 				rotation = (part.Rotation = (rotation % 4 + 4) % 4);
 				int num2 = ((flipped && (rotation == 1 || rotation == 3)) ? 180 : 0);
@@ -253,13 +262,13 @@ namespace Bpsim.Parts
 				int num4 = 90 * rotation;
 				return Quaternion.Euler(num2, num3, num4);
 			}
-			if (IsEightWay(in part))
+			if (eightWay)
 			{
 				rotation = (part.Rotation = (rotation % 8 + 8) % 8);
 				// BPSS rotates only TNT's Visualization by the extra 45 degrees.
 				if (part.PartType == PartType.TNT) return Quaternion.Euler(0f, 0f, 90 * (rotation % 4));
 				int num6 = 90 * rotation + ((rotation >= 4) ? (-315) : 0);
-				return Quaternion.Euler(0f, 0f, num6);
+				return Quaternion.Euler(0f, flipped ? 180f : 0f, num6);
 			}
 			rotation = (part.Rotation = (rotation % 4 + 4) % 4);
 			int num8 = 90 * rotation;
@@ -483,8 +492,36 @@ namespace Bpsim.Parts
 			}
 		}
 
+		public static bool IsTriggerable(PartAspect partAspect)
+		{
+			if (Sandbag.IsSandbag(partAspect.BaseTypeInfo.PartType))
+			{
+				EntityManager em = PartManager.Instance.System.EntityManager;
+				return !em.HasComponent<Sandbag>(partAspect.Entity) || !em.GetComponentData<Sandbag>(partAspect.Entity).Dropped;
+			}
+			if (partAspect.BaseTypeInfo.PartType == PartType.PointLight && partAspect.BaseTypeInfo.PartIndex == 1
+				&& !Gameplay.BpleLightRuntime.LightSystem) return false;
+			if (partAspect.PartType == PartType.Umbrella)
+			{
+				return Gameplay.PartGameplayManager.Instance?.Find(partAspect.Entity) is Gameplay.UmbrellaBehavior umbrella
+					&& umbrella.CanTrigger;
+			}
+			return IsTriggerable(partAspect.TypeInfo);
+		}
+
 		public static bool IsEnabled(Entity part, EntityManager entityManager)
 		{
+			if (!entityManager.Exists(part)) return false;
+			if (entityManager.HasComponent<BalloonBody>(part))
+			{
+				var body = entityManager.GetComponentData<BalloonBody>(part);
+				return !body.PopRequest && !body.Popped;
+			}
+			if (entityManager.HasComponent<Sandbag>(part))
+			{
+				var bag = entityManager.GetComponentData<Sandbag>(part);
+				return !bag.Dropped && !bag.DropRequest;
+			}
 			if (Gameplay.PartGameplayManager.Instance != null && Gameplay.PartGameplayManager.Instance.HasBehavior(part))
 			{
 				return Gameplay.PartGameplayManager.Instance.IsEnabled(part);
@@ -527,7 +564,24 @@ namespace Bpsim.Parts
 		public static IEnumerable<PartTriggerButtonInfo> GetTriggerButtonInfo(PartAspect partAspect)
 		{
 			PartType partType = partAspect.PartType;
-			if (partType == PartType.Fan || partType == PartType.Propeller || partType == PartType.Rotor)
+			if (partType == PartType.Umbrella)
+			{
+				yield return new PartTriggerButtonInfo(PartButtonType.Trigger, 0, partType,
+					GetUmbrellaDirection(partAspect), partAspect.ConnectedComponent);
+			}
+			else if (partType == PartType.PointLight || partType == PartType.SpotLight)
+			{
+				int index = partAspect.BaseTypeInfo.PartIndex;
+				bool toggle = partType == PartType.SpotLight || (index != 5 && (index != 1 || Gameplay.BpleLightRuntime.LightSystem));
+				yield return new PartTriggerButtonInfo(PartButtonType.Trigger, 0, partType,
+					GetLightDirection(partAspect), partAspect.ConnectedComponent, toggle);
+			}
+			else if (Simulation.SuspensionRuntime.IsSuspension(partAspect.BaseTypeInfo.PartType))
+			{
+				yield return new PartTriggerButtonInfo(PartButtonType.Trigger, 0, partType,
+					partAspect.PartIndex, partAspect.ConnectedComponent, consistent: true, multiple: false);
+			}
+			else if (partType == PartType.Fan || partType == PartType.Propeller || partType == PartType.Rotor)
 			{
 				yield return new PartTriggerButtonInfo(PartButtonType.Trigger, 0, partAspect.PartType, partAspect.Rotation, 0);
 			}
@@ -539,13 +593,20 @@ namespace Bpsim.Parts
 
 		public static IEnumerable<PartSliderButtonInfo> GetSliderButtonInfo(PartAspect partAspect)
 		{
-			if (partAspect.PartType == PartType.Umbrella && (partAspect.PartIndex == 3 || partAspect.PartIndex == 5))
-			{
-				var behavior = Gameplay.PartGameplayManager.Instance?.Find(partAspect.Entity) as Gameplay.UmbrellaBehavior;
-				if (behavior != null && behavior.Mode != 0)
-					yield return new PartSliderButtonInfo(PartButtonType.Slider, 1, PartType.Umbrella, partAspect.PartIndex,
-					partAspect.ConnectedComponent, new PartSliderButton.Range(math.degrees(behavior.DeltaAngle), 0, -180, 180, 5, .02f));
-			}
+			// Directional umbrellas (#3/#5) are controlled by their single trigger button:
+			// tap toggles the canopy, horizontal drag adjusts DeltaAngle. A separate white
+			// slider button duplicated the control in the HUD, so it is intentionally absent.
+			if (partAspect.PartType == PartType.Umbrella)
+				yield break;
 		}
+
+		internal static int GetLightDirection(PartAspect part)
+		{
+			if (UserSettings.Instance?.SimulationSettings.BpleSeparatedLightButtons == false) return 0;
+			if (part.PartType == PartType.PointLight) return part.BaseTypeInfo.PartIndex == 4 ? (int)Direction.UpRight : (part.Rotation & 3);
+			return ((part.Rotation + 1) & 3) + (part.Rotation >= 4 ? 4 : 0);
+		}
+
+		private static int GetUmbrellaDirection(PartAspect partAspect) => (partAspect.Rotation + 1) & 3;
 	}
 }

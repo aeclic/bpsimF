@@ -120,16 +120,30 @@ namespace Bpsim.Parts
 			private void OriginalLambdaBody(PartAspect part, DynamicBuffer<LinkedEntityGroup> linkedEntityGroup)
 			{
 				Entity partContainer = part.PartContainer;
+				// LinkedEntityGroup[0] is always the part's own root entity (PartEntityFactory.Create
+				// seeds the buffer with the root). Guard the empty case so Burst never faults on it.
+				bool ownsItsColor = linkedEntityGroup.Length > 0
+					&& __Bpsim_Parts_ColoredFrame_ComponentLookup.HasComponent(linkedEntityGroup[0].Value);
 				float4 value = new float4(1f, 1f, 1f, 1f);
 				float4 value2 = new float4(1f, 0f, 0f, 0f);
-				if (partContainer != Entity.Null && __Bpsim_Parts_ColoredFrame_ComponentLookup.HasComponent(partContainer))
+				if (ownsItsColor)
+				{
+					// A top-level colored frame is its own colour source.  This query used to exclude
+					// entities that own a ColoredFrame, so a frame sitting on its own never had its
+					// _BlendFactor moved off the default (1,0,0,0); the shader then sampled the plain
+					// white frame sprite and every colour picker index rendered as a white block.
+					// Its _Color is already maintained per renderer by Job0 above, which also keeps
+					// the Background child's alpha, so only _BlendFactor is written here.
+					value2 = new float4(0f, 0.75f, 0f, 0f);
+				}
+				else if (partContainer != Entity.Null && __Bpsim_Parts_ColoredFrame_ComponentLookup.HasComponent(partContainer))
 				{
 					value = (Vector4)__Bpsim_Parts_ColoredFrame_ComponentLookup[partContainer].Color;
 					value2 = new float4(0f, 0.75f, 0f, 0f);
 				}
 				foreach (Entity item in linkedEntityGroup.Reinterpret<Entity>())
 				{
-					if (materialColorLookup.HasComponent(item))
+					if (!ownsItsColor && materialColorLookup.HasComponent(item))
 					{
 						materialColorLookup[item] = new MaterialColor
 						{
@@ -287,7 +301,10 @@ namespace Bpsim.Parts
 			entityQueryBuilder = entityQueryBuilder.WithAll<LinkedEntityGroup>();
 			entityQueryBuilder = entityQueryBuilder.WithAll<PartTag>();
 			entityQueryBuilder = entityQueryBuilder.WithAll<PartContainerValue>();
-			entityQueryBuilder = entityQueryBuilder.WithNone<ColoredFrame>();
+			// Colored frames must be visited too: they are their own colour source, and leaving
+			// them out here is what left every tinted frame with the shader's default
+			// _BlendFactor (1,0,0,0) and made all 118 colour indices render as white blocks.
+			// OriginalLambdaBody takes the self branch for them (it skips _Color, which Job0 owns).
 			entityQueryBuilder = entityQueryBuilder.WithAspect<PartAspect>();
 			__query_1982409865_1 = entityQueryBuilder.Build(ref state);
 			__Bpsim_Parts_ColoredFrame_RW_ComponentTypeHandle = state.GetComponentTypeHandle<ColoredFrame>();

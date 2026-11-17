@@ -34,6 +34,9 @@ namespace Bpsim.UI
 
 		private ToggleEvent m_onValueChanged = new ToggleEvent();
 
+		private bool m_birthCaptured;
+		private Color m_birthEnabled, m_birthDisabled, m_birthBorder, m_birthBackground, m_birthEllipse;
+
 		public bool IsOn
 		{
 			get
@@ -75,6 +78,52 @@ namespace Bpsim.UI
 		public void SetIsOnWithoutNotify(bool value)
 		{
 			Set(value, sendCallback: false);
+		}
+
+		/// <summary>按当前界面配色重刷开关的边框/背景/圆点颜色（由 UiThemeApplicator 调用）。</summary>
+		internal void ApplyPalette(UiPalette palette)
+		{
+			if (palette == null)
+			{
+				return;
+			}
+			ResolveVisualReferences();
+			if (!m_birthCaptured)
+			{
+				m_birthCaptured = true;
+				m_birthEnabled = m_enabledColor;
+				m_birthDisabled = m_disabledColor;
+				m_birthBorder = m_border != null ? m_border.color : Color.white;
+				m_birthBackground = m_background != null ? m_background.color : Color.white;
+				m_birthEllipse = m_ellipse != null ? m_ellipse.color : Color.white;
+			}
+			if (palette.Id == UiTheme.DefaultId)
+			{
+				m_enabledColor = m_birthEnabled;
+				m_disabledColor = m_birthDisabled;
+				if (m_border != null) m_border.color = m_birthBorder;
+				if (m_background != null) m_background.color = m_birthBackground;
+				if (m_ellipse != null) m_ellipse.color = m_birthEllipse;
+				PlayEffect(instant: true);
+				return;
+			}
+			m_enabledColor = palette.Accent;
+			Color disabled = palette.Mix(palette.Accent, 0.25f);
+			disabled.a = 1f;
+			m_disabledColor = disabled;
+			if (m_border != null)
+			{
+				m_border.color = palette.Accent;
+			}
+			if (m_background != null)
+			{
+				m_background.color = palette.Shade(1.35f);
+			}
+			if (m_ellipse != null)
+			{
+				m_ellipse.color = Color.white;
+			}
+			PlayEffect(instant: true);
 		}
 
 		private void Set(bool value, bool sendCallback = true)

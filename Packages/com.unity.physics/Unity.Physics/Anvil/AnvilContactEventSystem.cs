@@ -43,6 +43,9 @@ namespace Bpsim.Physics.Anvil
 		/// <summary>单例实体；确保整个 session 只有一个。</summary>
 		Entity m_SingletonEntity;
 
+		/// <summary>缓存 PhysicsWorldSingleton 查询，避免每帧 CreateEntityQuery 的托管分配。</summary>
+		EntityQuery m_PhysicsWorldQuery;
+
 		/// <summary>每步最多收集多少条接触（超出即丢弃，避免无限增长）。</summary>
 		public int MaxContacts = 65536;
 
@@ -54,6 +57,7 @@ namespace Bpsim.Physics.Anvil
 
 		protected override void OnCreate()
 		{
+			m_PhysicsWorldQuery = GetEntityQuery(ComponentType.ReadOnly<PhysicsWorldSingleton>());
 			EnsureSingleton();
 		}
 
@@ -110,25 +114,22 @@ namespace Bpsim.Physics.Anvil
 			AnvilWorld anvil = AnvilStepSystem.Anvil;
 			if (Collecting && data.Active && anvil != null && anvil.IsCreated)
 			{
-				using (EntityQuery query = EntityManager.CreateEntityQuery(ComponentType.ReadOnly<PhysicsWorldSingleton>()))
+				if (m_PhysicsWorldQuery.CalculateEntityCount() > 0)
 				{
-					if (query.CalculateEntityCount() > 0)
-					{
-						Unity.Physics.PhysicsWorld world = query.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
-						int capacity = System.Math.Min(MaxContacts, System.Math.Max(64, world.NumDynamicBodies * 8));
-						int collected = anvil.CollectContactEvents(data.Events, capacity);
-						int count = System.Math.Min(collected, data.Events.Length);
+					Unity.Physics.PhysicsWorld world = m_PhysicsWorldQuery.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+					int capacity = System.Math.Min(MaxContacts, System.Math.Max(64, world.NumDynamicBodies * 8));
+					int collected = anvil.CollectContactEvents(data.Events, capacity);
+					int count = System.Math.Min(collected, data.Events.Length);
 
-						// body 索引 → Entity（动态在前、静态在后，与 PhysicsWorld 的布局一致）
-						for (int i = 0; i < count; i++)
-						{
-							AnvilContactEvent e = data.Events[i];
-							e.EntityA = Resolve(world, anvil, e.EntityA);
-							e.EntityB = Resolve(world, anvil, e.EntityB);
-							data.Events[i] = e;
-						}
-						data.Count = count;
+					// body 索引 → Entity（动态在前、静态在后，与 PhysicsWorld 的布局一致）
+					for (int i = 0; i < count; i++)
+					{
+						AnvilContactEvent e = data.Events[i];
+						e.EntityA = Resolve(world, anvil, e.EntityA);
+						e.EntityB = Resolve(world, anvil, e.EntityB);
+						data.Events[i] = e;
 					}
+					data.Count = count;
 				}
 			}
 

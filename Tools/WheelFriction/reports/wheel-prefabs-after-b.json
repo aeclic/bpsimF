@@ -1,0 +1,1077 @@
+{
+  "rows": [
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_0/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_0/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_1/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_1/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_2/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_2/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_3/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_3/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_4/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_4/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_5/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_5/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_6/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_6/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_7/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_7/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_8/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_8/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_9/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_9/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_10/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "CartWheel",
+      "node": "Part_CartWheel_10/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.05,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "68dcd4efbf41428490497b57f2085336",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_0/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_0/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_1/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_1/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_2/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_2/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_3/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_3/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_4/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_4/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_5/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_5/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_6/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "NormalWheel",
+      "node": "Part_NormalWheel_6/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_0/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_0/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_1/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_1/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_2/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_2/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_3/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_3/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_4/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_4/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_5/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_5/FakeWheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_6/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_6/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_7",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_7/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "SmallWheel",
+      "node": "Part_SmallWheel_7/WheelPivot",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_0",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_0/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_1",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_1/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_2",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_2/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_3",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_3/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_4",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_4/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_5",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_5/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_6",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_6/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "MotorWheel",
+      "node": "Part_MotorWheel_7",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_0",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_0/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_1",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_1/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_2",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_2/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_3",
+      "kind": "SphereCollider",
+      "profile": [
+        0.025,
+        0.0,
+        0.0,
+        "Multiply",
+        "Multiply"
+      ],
+      "actualGuid": "c2166d0f29084325aa004f3e24c55bcf",
+      "match": true
+    },
+    {
+      "family": "StickyWheel",
+      "node": "Part_StickyWheel_3/SupportCollider",
+      "kind": "BoxCollider",
+      "profile": [
+        0.7,
+        0.5,
+        0.0,
+        "Average",
+        "Average"
+      ],
+      "actualGuid": "c1e5fa876a094a7db889dcf2c4b2ffcf",
+      "match": true
+    }
+  ],
+  "count": 76,
+  "matches": 76,
+  "hashes": {
+    "Assets\\GameObject\\PartGroup_7_CartWheel.prefab": "74d739b2b01221a0d7790a4a018485494ec451e9332545c9f9b78ce5522cdb23",
+    "Assets\\GameObject\\PartGroup_8_NormalWheel.prefab": "e22ee6837259300932226df7ea2f5489b8928a0a994ed9c5ebf96b0e61b88b5f",
+    "Assets\\GameObject\\PartGroup_9_SmallWheel.prefab": "523e5d416dfc44dfad313e49ebbcd884ed34405731046c666a2cb1166bddc018",
+    "Assets\\GameObject\\PartGroup_10_MotorWheel.prefab": "1728ee6f6f67611fd68ff25a9cb138707be32d11896493b9f23073f34d17de44",
+    "Assets\\GameObject\\PartGroup_38_StickyWheel.prefab": "69bba829192532a5cdeec54d5816832e8291f243e5ac33507dbbb2769342a8c3"
+  }
+}

@@ -53,6 +53,13 @@ namespace Bpsim.Parts
 			}
 			BuildCompoundCollider(context, entity);
 			EnsureSandbagCollider(context, entity);
+			context.EntityManager.AddComponentData(entity, Gameplay.BpleLightBodyBounds.Create(gameObject));
+			foreach (Transform node in gameObject.GetComponentsInChildren<Transform>(true))
+				if (node.gameObject.tag == "Sharp")
+				{
+					context.EntityManager.AddComponent<BalloonPopSurface>(entity);
+					break;
+				}
 			if (context.EntityManager.HasComponent<PartTypeValue>(entity) &&
 				FrameShape.Supports(context.EntityManager.GetComponentData<PartTypeValue>(entity).Value) &&
 				context.EntityManager.HasComponent<PhysicsCollider>(entity))
@@ -98,6 +105,7 @@ namespace Bpsim.Parts
 
 		private static void BuildCompoundCollider(Context context, Entity entity)
 		{
+			bool wheel = context.EntityManager.HasComponent<Wheel>(entity);
 			DynamicBuffer<Entity> dynamicBuffer = context.EntityManager.GetBuffer<LinkedEntityGroup>(entity).Reinterpret<Entity>();
 			NativeList<CompoundCollider.ColliderBlobInstance> nativeList = new NativeList<CompoundCollider.ColliderBlobInstance>(4, Allocator.TempJob);
 			try
@@ -110,7 +118,7 @@ namespace Bpsim.Parts
 						PhysicsCollider componentData = context.EntityManager.GetComponentData<PhysicsCollider>(entity2);
 						CompoundCollider.ColliderBlobInstance value = new CompoundCollider.ColliderBlobInstance
 						{
-							CompoundFromChild = RigidTransform.identity,
+						CompoundFromChild = wheel ? WheelColliderFrame(context.EntityManager, entity2, entity) : RigidTransform.identity,
 							Collider = componentData.Value,
 							Entity = entity2
 						};
@@ -151,6 +159,19 @@ namespace Bpsim.Parts
 			}
 		}
 
+		/// <summary>Wheel support/tread colliders are authored in child-local space, not part-root space.</summary>
+		private static RigidTransform WheelColliderFrame(EntityManager em, Entity child, Entity root)
+		{
+			RigidTransform frame = RigidTransform.identity;
+			while (child != root)
+			{
+				LocalTransform local = em.GetComponentData<LocalTransform>(child);
+				frame = math.mul(new RigidTransform(local.Rotation, local.Position), frame);
+				child = em.GetComponentData<Parent>(child).Value;
+			}
+			return frame;
+		}
+
 		public static Entity CreateChild(Context context, GameObject gameObject, Entity rootEntity, Entity parentEntity, bool prefab)
 		{
 			if (gameObject.name == "Foreground")
@@ -178,9 +199,31 @@ namespace Bpsim.Parts
 				&& context.EntityManager.HasComponent<PartTypeValue>(rootEntity)
 				&& context.EntityManager.GetComponentData<PartTypeValue>(rootEntity).Type == PartType.TNT)
 				context.EntityManager.AddComponentData(entity, new TNTVisualization { Root = rootEntity, BaseRotation = gameObject.transform.localRotation });
+			if (gameObject.name == "SpringVisualization" && parentEntity == rootEntity
+				&& context.EntityManager.GetComponentData<PartTypeValue>(rootEntity).BaseType == PartType.Spring)
+				context.EntityManager.AddComponentData(entity, new SpringVisual
+				{
+					Root = rootEntity,
+					OriginalScale = context.EntityManager.HasComponent<PostTransformScale>(entity)
+						? context.EntityManager.GetComponentData<PostTransformScale>(entity).Value : float3x3.identity
+				});
+			if (parentEntity == rootEntity)
+			{
+				PartType kind = context.EntityManager.GetComponentData<PartTypeValue>(rootEntity).BaseType;
+				bool balloon = SuspensionRuntime.IsBalloon(kind);
+				bool bag = Sandbag.IsSandbag(kind);
+				if ((balloon && (gameObject.name == "BalloonVisualization" || gameObject.name == "Balloon2Visualization" || gameObject.name == "Balloon3Visualization"))
+					|| (bag && (gameObject.name == "SandbagVisualization" || gameObject.name == "Sandbag2Visualization" || gameObject.name == "Sandbag3Visualization")))
+					context.EntityManager.AddComponentData(entity, new SuspensionVisual
+					{
+						Actual = gameObject.name == (balloon ? "BalloonVisualization" : "SandbagVisualization")
+					});
+			}
 			if (gameObject.name == "UmbrellaVisualization" && parentEntity == rootEntity
 				&& context.EntityManager.GetComponentData<PartTypeValue>(rootEntity).Type == PartType.Umbrella)
 				context.EntityManager.AddComponentData(entity, new Gameplay.UmbrellaVisual { BasePosition = gameObject.transform.localPosition });
+			if (gameObject.name == "OpenSprite" && context.EntityManager.GetComponentData<PartTypeValue>(rootEntity).BaseType == PartType.Umbrella)
+				context.EntityManager.AddComponent<Gameplay.UmbrellaOpenSprite>(entity);
 			if (prefab)
 			{
 				context.EntityManager.AddComponent<Prefab>(entity);
@@ -413,30 +456,10 @@ namespace Bpsim.Parts
 
 		public static void CreateColllider(Context context, UnityEngine.Collider component, Entity entity)
 		{
-			BlobAssetReference<Unity.Physics.Collider> value;
-			if (!(component is UnityEngine.BoxCollider boxCollider))
-			{
-				if (!(component is UnityEngine.SphereCollider sphereCollider))
-				{
-					if (!(component is UnityEngine.CapsuleCollider capsuleCollider))
-					{
-						throw new InvalidCastException();
-					}
-					float3 @float = new float3(0f, 0.5f * capsuleCollider.height - capsuleCollider.radius, 0f);
-					value = PartPhysics.CreateCapsule((float3)capsuleCollider.center + @float, (float3)capsuleCollider.center - @float, capsuleCollider.radius);
-				}
-				else
-				{
-					value = PartPhysics.CreateSphere(sphereCollider.center, sphereCollider.radius);
-				}
-			}
-			else
-			{
-				value = PartPhysics.CreateBox(boxCollider.center, boxCollider.size);
-			}
+			// Tread and support leaves must retain their separate authored materials.
 			context.EntityManager.AddComponentData(entity, new PhysicsCollider
 			{
-				Value = value
+				Value = PartPhysics.CreateCollider(component)
 			});
 		}
 
@@ -454,6 +477,8 @@ namespace Bpsim.Parts
 				BaseType = baseTypeInfo.PartType,
 				BaseIndex = baseTypeInfo.PartIndex
 			});
+			if (baseTypeInfo.PartType == PartType.PointLight || baseTypeInfo.PartType == PartType.SpotLight)
+				context.EntityManager.AddComponent<Gameplay.BpleLightSourceTag>(entity);
 			context.EntityManager.SetComponentData(entity, new PartExtensionComponent
 			{
 				// 变体的索引不在 PartExtensionMap 的区间里，必须走 GetExtension 回退到基部件。
@@ -481,6 +506,14 @@ namespace Bpsim.Parts
 			{
 				context.EntityManager.SetComponentData(entity, Wheel.Create(partTypeInfo));
 			}
+			else if (partTypeInfo.PartType == PartType.Bellows)
+			{
+				context.EntityManager.SetComponentData(entity, Bellows.Create(baseTypeInfo));
+			}
+			else if (partTypeInfo.PartType == PartType.Spring)
+			{
+				context.EntityManager.SetComponentData(entity, ElasticSpring.Create());
+			}
 			else if (partTypeInfo.PartType == PartType.Gearbox)
 			{
 				context.EntityManager.SetComponentData(entity, default(Gearbox));
@@ -493,6 +526,11 @@ namespace Bpsim.Parts
 			else if (IsCircuitPart(partTypeInfo.PartType))
 			{
 				context.EntityManager.SetComponentData(entity, CircuitPart.Create(partTypeInfo));
+			}
+			else if (SuspensionRuntime.IsBalloon(partTypeInfo.PartType))
+			{
+				context.EntityManager.SetComponentData(entity, default(Balloon));
+				context.EntityManager.SetComponentData(entity, default(BalloonBody));
 			}
 			else if (Sandbag.IsSandbag(partTypeInfo.PartType))
 			{
@@ -597,6 +635,14 @@ namespace Bpsim.Parts
 					{
 						types.Add(ComponentType.ReadWrite<Separator>());
 					}
+					else if (typeInfo.PartType == PartType.Bellows)
+					{
+						types.Add(ComponentType.ReadWrite<Bellows>());
+					}
+					else if (typeInfo.PartType == PartType.Spring)
+					{
+						types.Add(ComponentType.ReadWrite<ElasticSpring>());
+					}
 					else if (IsWheelPart(typeInfo.PartType))
 					{
 						types.Add(ComponentType.ReadWrite<Wheel>());
@@ -612,6 +658,11 @@ namespace Bpsim.Parts
 					else if (IsCircuitPart(typeInfo.PartType))
 					{
 						types.Add(ComponentType.ReadWrite<CircuitPart>());
+					}
+					else if (SuspensionRuntime.IsBalloon(typeInfo.PartType))
+					{
+						types.Add(ComponentType.ReadWrite<Balloon>());
+						types.Add(ComponentType.ReadWrite<BalloonBody>());
 					}
 					else if (Sandbag.IsSandbag(typeInfo.PartType))
 					{

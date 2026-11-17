@@ -1,5 +1,6 @@
 using Bpsim.Collections;
 using Bpsim.UI;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -23,10 +24,30 @@ namespace Bpsim.Parts.Simulation
 				umbrella.SetAngle(partButtonEvent.SliderValue);
 			}
 		}
+		public static bool TriggerFirstEnabled(IEnumerable<Entity> parts)
+		{
+			var em = PartManager.Instance.System.EntityManager;
+			foreach (Entity part in parts)
+				if (BasePart.IsEnabled(part, em)) { ProcessTouch(part); return true; }
+			return false;
+		}
 
 		public static void ProcessTouch(Entity part)
 		{
 			EntityManager entityManager = PartManager.Instance.System.EntityManager;
+			if (!entityManager.Exists(part)) return;
+			if (entityManager.HasComponent<BalloonBody>(part))
+			{
+				var body = entityManager.GetComponentData<BalloonBody>(part);
+				if (!body.Popped) { body.PopRequest = true; entityManager.SetComponentData(part, body); }
+				return;
+			}
+			if (entityManager.HasComponent<Sandbag>(part))
+			{
+				var bag = entityManager.GetComponentData<Sandbag>(part);
+				if (!bag.Dropped) { bag.DropRequest = true; entityManager.SetComponentData(part, bag); }
+				return;
+			}
 			Bpsim.Parts.Gameplay.PartGameplayManager gameplay = Bpsim.Parts.Gameplay.PartGameplayManager.Instance;
 			if (gameplay != null && gameplay.HasBehavior(part))
 			{

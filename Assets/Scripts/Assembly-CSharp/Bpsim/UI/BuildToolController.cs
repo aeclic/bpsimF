@@ -269,6 +269,21 @@ namespace Bpsim.UI
 			}
 		}
 
+		public void ClearAllParts()
+		{
+			PartScene partScene = ActiveScene();
+			if (partScene == null || partScene.Unmanaged.Parts.Length == 0)
+			{
+				return;
+			}
+			CancelDrag(false);
+			CancelGizmo(false);
+			m_selectedPart = Entity.Null;
+			m_history.Record(partScene, "清除全部部件");
+			partScene.Unmanaged.ClearParts();
+			NotifyStateChanged();
+		}
+
 		public void ToggleGrid()
 		{
 			GridEnabled = !GridEnabled;

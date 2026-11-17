@@ -178,9 +178,35 @@ namespace Bpsim.Levels
 
 		private static LevelAssetReader s_assets;
 
+		/// <summary>
+		/// 关卡数据根目录覆盖值。默认 null → <c>StreamingAssets/BpsimLevels</c>（随包数据）。
+		/// 关卡功能剥离成 Mod 后，由 <c>ModLevels.SetBuiltInRoot</c> 指向 Mod 自带的
+		/// BpsimLevels 目录；不加载该 Mod 时保持 null，游戏文件里就没有任何关卡数据。
+		/// </summary>
+		private static string s_rootOverride;
+
 		private static LevelAssetReader Assets => s_assets ?? (s_assets = new LevelAssetReader(Root));
 
-		public static string Root => Path.Combine(Application.streamingAssetsPath, FolderName);
+		public static string Root => s_rootOverride ?? Path.Combine(Application.streamingAssetsPath, FolderName);
+
+		/// <summary>
+		/// 切换关卡数据根目录并清空所有缓存（索引、prefab 表、纹理、材质、shader、
+		/// LevelAssetReader）。传 null / 空串还原成随包默认目录。
+		/// </summary>
+		internal static void SetRoot(string root)
+		{
+			s_rootOverride = string.IsNullOrEmpty(root) ? null : root;
+			s_assets = null;
+			s_levels = null;
+			s_prefabs = null;
+			s_textures.Clear();
+			s_fillMaterials.Clear();
+			s_curveMaterials.Clear();
+			s_spriteMaterials.Clear();
+			s_fillShader = null;
+			s_curveShader = null;
+			s_spriteShader = null;
+		}
 
 		public static bool IsAvailable => Assets.Exists("index.json");
 

@@ -31,8 +31,8 @@ codex mcp get bpsim-unity
 - 生成项目级 `.codex/config.toml`，不修改 `C:\Users\aecli\.codex\config.toml`。此本地配置含绝对路径，已由 `.codex/.gitignore` 排除；换机器/路径后重新安装并检查配置。
 - Codex 只对受信任项目加载项目配置。如果 `codex mcp get` 看不到服务，在 Codex 中信任本项目；不要为了接入而改变别的项目权限。
 - **现有 chat 的 MCP 工具列表不保证热更新。请在本项目新开一个 Codex chat；不要自动重启所有 agent。**
-- Unity 必须打开这个项目，默认 DshBridge 地址为 `http://127.0.0.1:8791`。桥在打开项目时自启，也可从 Unity 的 `DshBridge/Start Server` 菜单启动。
-- 如果修改了 `DSH_BRIDGE_PORT`，同步在 MCP 的 args 加 `"--bridge-url", "http://127.0.0.1:新端口"`。
+- Unity 必须打开这个项目。MCP 默认读取本项目 `Temp/DshBridge/instance.json` 自动发现端口，并在每次连接时核对项目身份；找不到有效自述文件时回退到 `http://127.0.0.1:8791`。桥在打开项目时自启，也可从 Unity 的 `DshBridge/Start Server` 菜单启动。
+- 如需固定端口，可在 MCP 的 args 加 `"--bridge-url", "http://127.0.0.1:指定端口"`；显式设置优先于自动发现。不要把桥端口暴露到公网。
 - 安装和 smoke test 不触发编译、Play Mode、场景保存或任何 Unity 内容变更。
 
 ## 提供的工具
@@ -44,6 +44,7 @@ codex mcp get bpsim-unity
 5. `unity_release_control`：完成任务后立即释放。
 6. `unity_write`：持有效 token 执行允许的修改命令。
 7. `unity_acknowledge_uncertain`：人工/agent 实际核查失败请求后的状态，并明确确认后解除不确定状态。
+8. `unity_profiler`：仅编辑器性能摘要/增量历史的只读接口；支持实时查询和有界 JSONL 日志回退，无需租约。不加界面、不进入发布包。详见 `Tools/UnityMcp/PROFILER.md`。
 
 另有 MCP 资源 `unity://bpsim/guide`，内容就是本文档。
 
@@ -67,6 +68,7 @@ codex mcp get bpsim-unity
 | list_dir | `{"path":"Assets/Scenes"}` |
 | console / compile_status | `{"count":20}` |
 | playmode_state | `{}` |
+| profiler | `{"count":10,"afterSequence":0,"sessionId":""}`（实时；离线回退用 `unity_profiler`） |
 
 写命令必须提供 `token`，并先与其他 agent 协调：
 
@@ -99,7 +101,7 @@ codex mcp get bpsim-unity
   文件锁跨进程串行化桥请求；活跃的编辑租约只能由取得它的 MCP 会话使用。
 - 租约到期才能由别的会话重新取得。跨 HTTP 请求期间锁仍保持；等待超过 3 秒的调用返回忙，避免积累写请求。
 - `unity_status` 的 `editor_busy` 修正了已有 DshBridge 的标志语义：它的原始 `changing/busy` 在稳定 Play Mode 也可能为 true。
-  实际编译、主线程停滞和已知进入 Play Mode 的状态仍阻止分发。
+  实际编译、主线程停滞和已知进入 Play Mode 的状态仍阻止分发；`unity_profiler(source="auto")` 此时可回退读本项目日志。
 - 每次分发前核对 `/ping` 的绝对项目路径，错误项目/非 loopback 地址一律拒绝。
 - 文件路径限制在本项目；脚本和场景写入检查目标及父目录的 `.dshclaim`。
   **这不是文件所有权系统**：检查后外部进程仍可能建立新认领；命令行编辑、场景对象修改、静态方法内部副作用不能靠该检查完全隔离。

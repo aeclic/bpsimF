@@ -10,17 +10,18 @@ namespace Bpsim.UI
 	{
 		private static List<RaycastResult> s_raycastResults = new List<RaycastResult>();
 
-		/// <summary>bpsimtaffy's blue-orange runtime palette: subtle track and blue-gray thumb.</summary>
+		/// <summary>滚动条统一样式：细轨道 + 随当前配色走的滑块（见 UiPalette.ScrollTrack/ScrollHandle）。</summary>
 		public static void StyleScrollbars(GameObject root)
 		{
+			UiPalette palette = UiTheme.Current;
 			foreach (var bar in root.GetComponentsInChildren<UnityEngine.UI.Scrollbar>(true))
 			{
 				bool vertical = bar.direction == UnityEngine.UI.Scrollbar.Direction.BottomToTop || bar.direction == UnityEngine.UI.Scrollbar.Direction.TopToBottom;
 				((RectTransform)bar.transform).SetSizeWithCurrentAnchors(vertical ? RectTransform.Axis.Horizontal : RectTransform.Axis.Vertical, 20);
 				var track = bar.GetComponent<UnityEngine.UI.Graphic>();
-				if (track != null) track.color = new Color(1, 1, 1, .05f);
+				if (track != null) track.color = palette.ScrollTrack;
 				if (track is UnityEngine.UI.Image trackImage) trackImage.sprite = null;
-				if (bar.targetGraphic != null) bar.targetGraphic.color = Color.Lerp(new Color(.16f, .16f, .16f, 1), new Color(47f / 255, 128f / 255, 237f / 255, 1), .35f);
+				if (bar.targetGraphic != null) bar.targetGraphic.color = palette.ScrollHandle;
 				if (bar.targetGraphic is UnityEngine.UI.Image handleImage) handleImage.sprite = null;
 			}
 		}

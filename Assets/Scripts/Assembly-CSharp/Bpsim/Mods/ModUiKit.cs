@@ -12,19 +12,51 @@ namespace Bpsim.Mods
 	/// </summary>
 	public static class ModUiKit
 	{
-		// 配色（对齐 BPSS 工坊的深色调）
-		public static readonly Color PanelBg = new Color(0.086f, 0.098f, 0.125f, 0.985f);
-		public static readonly Color CardBg = new Color(0.13f, 0.145f, 0.18f, 1f);
-		public static readonly Color CardBgAlt = new Color(0.16f, 0.18f, 0.22f, 1f);
-		public static readonly Color Primary = new Color(0.16f, 0.45f, 0.92f, 1f);
-		public static readonly Color Success = new Color(0.20f, 0.62f, 0.36f, 1f);
-		public static readonly Color Danger = new Color(0.82f, 0.27f, 0.28f, 1f);
-		public static readonly Color Neutral = new Color(0.30f, 0.33f, 0.38f, 1f);
-		public static readonly Color TextMain = new Color(0.93f, 0.94f, 0.96f, 1f);
-		public static readonly Color TextDim = new Color(0.62f, 0.66f, 0.72f, 1f);
+		// 配色：转发全局界面配色（Bpsim.UI.UiTheme），设置里切换配色后新建的 Mod UI 自动跟随。
+		public static Color PanelBg => WithAlpha(UiTheme.Current.Panel, 0.985f);
+		public static Color CardBg => UiTheme.Current.Entry;
+		public static Color CardBgAlt => UiTheme.Current.Shade(1.45f);
+		public static Color Primary => UiTheme.Current.Accent;
+		public static Color Success => UiTheme.Current.Mix(UiTheme.Current.Second, 0.55f);
+		public static Color Danger => UiTheme.Current.DangerStrong;
+		public static Color Neutral => UiTheme.Current.BarButton;
+		public static Color TextMain => UiTheme.Current.Text;
+		public static Color TextDim => UiTheme.Current.TextMuted;
+
+		private static Color WithAlpha(Color color, float alpha)
+		{
+			color.a = alpha;
+			return color;
+		}
 
 		private static Font s_font;
+		private static Font s_cjkFont;
 		private static readonly Dictionary<int, Sprite> s_roundCache = new Dictionary<int, Sprite>();
+
+		/// <summary>中文标题字体：原生模板字体可能不含 CJK 字形，这里强制用系统中文字体。</summary>
+		public static Font CjkFont
+		{
+			get
+			{
+				if (s_cjkFont == null)
+				{
+					try
+					{
+						s_cjkFont = Font.CreateDynamicFontFromOSFont(new[]
+						{
+							"Microsoft YaHei", "微软雅黑", "PingFang SC", "Noto Sans CJK SC",
+							"Source Han Sans SC", "Arial Unicode MS", "Arial"
+						}, 24);
+					}
+					catch (Exception)
+					{
+						s_cjkFont = null;
+					}
+					if (s_cjkFont == null) s_cjkFont = UiFont;
+				}
+				return s_cjkFont;
+			}
+		}
 
 		private static GameObject NativeSettingsPanelTemplate
 		{
@@ -35,10 +67,61 @@ namespace Bpsim.Mods
 			}
 		}
 
+		private static Transform s_templateScanRoot;
+		private static Dictionary<string, Transform> s_templateIndex;
+
+		/// <summary>按路径或按节点名取设置面板预制体里的模板节点（供外部面板复用）。</summary>
+		public static Transform Template(string path)
+		{
+			return NativeTemplate(path);
+		}
+
+		/// <summary>
+		/// 在设置面板预制体里按路径或按节点名找模板。
+		/// 预制体把 <c>ToggleTemplate</c> / <c>InputFieldTemplate</c> / <c>DropdownTemplate</c>
+		/// 藏在 <c>Panel/Scroll View/Viewport/Content</c> 下（且默认 inactive），
+		/// 所以路径查找失败时要退回整棵子树的按名索引，否则行会退化成零尺寸。
+		/// </summary>
 		private static Transform NativeTemplate(string path)
 		{
 			GameObject root = NativeSettingsPanelTemplate;
-			return root == null ? null : root.transform.Find(path);
+			if (root == null)
+			{
+				s_templateScanRoot = null;
+				s_templateIndex = null;
+				return null;
+			}
+
+			Transform direct = root.transform.Find(path);
+			if (direct != null)
+			{
+				return direct;
+			}
+
+			if (s_templateIndex == null || s_templateScanRoot != root.transform)
+			{
+				s_templateScanRoot = root.transform;
+				s_templateIndex = new Dictionary<string, Transform>(StringComparer.Ordinal);
+				foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+				{
+					if (child == null || child == root.transform)
+					{
+						continue;
+					}
+					if (!s_templateIndex.ContainsKey(child.name))
+					{
+						s_templateIndex[child.name] = child;
+					}
+				}
+			}
+
+			string key = path;
+			int slash = key.LastIndexOf('/');
+			if (slash >= 0 && slash + 1 < key.Length)
+			{
+				key = key.Substring(slash + 1);
+			}
+			return s_templateIndex.TryGetValue(key, out Transform found) ? found : null;
 		}
 
 		/// <summary>UI 字体：优先系统中文字体（保证中文名可显示），否则退回内置字体。</summary>
@@ -151,6 +234,7 @@ namespace Bpsim.Mods
 			if (source == null) return null;
 			GameObject clone = UnityEngine.Object.Instantiate(source.gameObject, parent, false);
 			clone.name = "Panel";
+			UiThemeApplicator.ApplyTo(clone);
 			return clone.GetComponent<RectTransform>();
 		}
 
@@ -196,13 +280,172 @@ namespace Bpsim.Mods
 			return rt;
 		}
 
-		/// <summary>用户设置列表行使用的无装饰容器，间距和高度由父级布局控制。</summary>
+		/// <summary>克隆用户设置面板的 Toggle 行，复用灰色行底与原生文字样式。</summary>
 		public static RectTransform Row(Transform parent)
 		{
-			GameObject go = new GameObject("Row", typeof(RectTransform));
+			return Row(parent, "ToggleTemplate", false, 90f);
+		}
+
+		/// <summary>
+		/// 克隆设置面板里的某一行模板（<c>ToggleTemplate</c> / <c>InputFieldTemplate</c> /
+		/// <c>DropdownTemplate</c>），返回已按列表布局摆好的行。
+		/// </summary>
+		/// <param name="templateName">面板 <c>Content</c> 下的模板节点名。</param>
+		/// <param name="showValue">是否保留右侧的 <c>Value</c>（开关/输入框/下拉）。</param>
+		/// <param name="height">行高；&lt;= 0 时保持模板原高。</param>
+		public static RectTransform Row(Transform parent, string templateName, bool showValue, float height)
+		{
+			Transform source = NativeTemplate(templateName);
+			if (source == null)
+			{
+				GameObject fallback = new GameObject("Row", typeof(RectTransform));
+				fallback.transform.SetParent(parent, false);
+				RectTransform fallbackRect = fallback.GetComponent<RectTransform>();
+				fallbackRect.anchorMin = new Vector2(0f, 1f);
+				fallbackRect.anchorMax = new Vector2(1f, 1f);
+				fallbackRect.pivot = new Vector2(0.5f, 1f);
+				fallbackRect.sizeDelta = new Vector2(0f, height > 0f ? height : 90f);
+				return fallbackRect;
+			}
+
+			GameObject go = UnityEngine.Object.Instantiate(source.gameObject, parent, false);
+			go.name = templateName.Replace("Template", string.Empty);
+			Image rowImage = go.GetComponent<Image>();
+			if (rowImage != null) rowImage.color = UiTheme.Current.Entry;
+			RectTransform rt = go.GetComponent<RectTransform>();
+			rt.anchorMin = new Vector2(0f, 1f);
+			rt.anchorMax = new Vector2(1f, 1f);
+			rt.pivot = new Vector2(0.5f, 1f);
+			rt.anchoredPosition = Vector2.zero;
+			rt.sizeDelta = new Vector2(0f, height > 0f ? height : 90f);
+			rt.localScale = Vector3.one;
+			// 模板根节点是 inactive 的，它的子节点也可能各自带着 inactive 标记
+			// （Name 就是其一）。整棵子树先无条件激活，再按需藏掉 Value。
+			foreach (Transform child in go.GetComponentsInChildren<Transform>(true))
+			{
+				if (child != null && !child.gameObject.activeSelf)
+				{
+					child.gameObject.SetActive(true);
+				}
+			}
+			Transform value = go.transform.Find("Value");
+			if (value != null && !showValue)
+			{
+				value.gameObject.SetActive(false);
+			}
+			go.SetActive(true);
+			return rt;
+		}
+
+		/// <summary>行标题（模板自带的 <c>Name</c> 文本）。</summary>
+		public static Text RowTitle(RectTransform row, string text = null)
+		{
+			Text label = row != null ? row.Find("Name")?.GetComponent<Text>() : null;
+			if (label == null)
+			{
+				return null;
+			}
+			if (text != null)
+			{
+				label.text = text;
+			}
+			return label;
+		}
+
+		// ── 图标 ──────────────────────────────────────────────────────────
+		// 建造工具栏的图标资源（Resources/BuildToolbar/Icon_*.png，都是白色剪影）。
+		// 这里直接按名字取，缺失只警告一次，不让面板构建失败。
+
+		private static readonly Dictionary<string, Sprite> s_iconCache = new Dictionary<string, Sprite>();
+		private static readonly HashSet<string> s_iconWarned = new HashSet<string>();
+
+		public const string IconSettings = "Icon_Settings";
+		public const string IconAdjust = "Icon_Adjust";
+		public const string IconScreenshot = "Icon_Screenshot";
+		public const string IconLoad = "Icon_Load";
+		public const string IconSave = "Icon_Save";
+		public const string IconGrid = "Icon_Grid";
+
+		/// <summary>取建造工具栏的图标 Sprite；没有该资源时返回 null。</summary>
+		public static Sprite Icon(string iconName)
+		{
+			if (string.IsNullOrEmpty(iconName))
+			{
+				return null;
+			}
+			if (s_iconCache.TryGetValue(iconName, out Sprite cached))
+			{
+				return cached;
+			}
+			Sprite sprite = null;
+			try
+			{
+				sprite = Resources.Load<Sprite>("BuildToolbar/" + iconName);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning("[ModUiKit] 加载图标 " + iconName + " 失败：" + ex.Message);
+			}
+			if (sprite == null && s_iconWarned.Add(iconName))
+			{
+				Debug.LogWarning("[ModUiKit] 缺少图标资源 Resources/BuildToolbar/" + iconName);
+			}
+			s_iconCache[iconName] = sprite;
+			return sprite;
+		}
+
+		/// <summary>
+		/// 方形图标按钮：与建造工具栏同款的圆角底板 + 居中图标（不带文字）。
+		/// 底板颜色仍可被 <see cref="UiThemeApplicator"/> 按配色刷新。
+		/// </summary>
+		public static Button IconButton(Transform parent, string iconName, Color bg, Action onClick,
+			float size = 44f, float iconSize = 26f)
+		{
+			GameObject go = new GameObject("Button_" + iconName, typeof(RectTransform), typeof(Image), typeof(Button));
 			RectTransform rt = go.GetComponent<RectTransform>();
 			rt.SetParent(parent, false);
-			return rt;
+			Image plate = go.GetComponent<Image>();
+			plate.sprite = Rounded(8);
+			plate.type = Image.Type.Sliced;
+			plate.color = bg;
+
+			Button button = go.GetComponent<Button>();
+			button.targetGraphic = plate;
+			ColorBlock colors = button.colors;
+			colors.normalColor = Color.white;
+			colors.highlightedColor = new Color(1.25f, 1.25f, 1.25f, 1f);
+			colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+			colors.selectedColor = Color.white;
+			colors.disabledColor = new Color(0.55f, 0.55f, 0.55f, 0.6f);
+			colors.fadeDuration = 0.08f;
+			button.colors = colors;
+			if (onClick != null)
+			{
+				button.onClick.AddListener(() => onClick());
+			}
+
+			GameObject iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+			RectTransform iconRect = iconGo.GetComponent<RectTransform>();
+			iconRect.SetParent(rt, false);
+			iconRect.anchorMin = iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+			iconRect.pivot = new Vector2(0.5f, 0.5f);
+			iconRect.anchoredPosition = Vector2.zero;
+			iconRect.sizeDelta = new Vector2(iconSize, iconSize);
+			Image icon = iconGo.GetComponent<Image>();
+			icon.raycastTarget = false;
+			icon.preserveAspect = true;
+			icon.color = TextMain;
+			Sprite sprite = Icon(iconName);
+			icon.sprite = sprite;
+			icon.enabled = sprite != null;
+			if (sprite == null)
+			{
+				// 资源缺失时退化成文字标记，至少还认得出这是「设置」。
+				Text fallback = Label(rt, "⚙", Mathf.RoundToInt(iconSize), TextMain, TextAnchor.MiddleCenter);
+				SetRect(fallback.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+			}
+			rt.sizeDelta = new Vector2(size, size);
+			return button;
 		}
 
 		public static Text Label(Transform parent, string text, int size, Color color, TextAnchor anchor = TextAnchor.MiddleLeft)
@@ -228,7 +471,12 @@ namespace Bpsim.Mods
 			Image image = button.GetComponent<Image>();
 			if (image != null) image.color = bg;
 			Text label = button.GetComponentInChildren<Text>(true);
-			if (label != null && fontSize > 0) label.fontSize = fontSize;
+			if (label != null)
+			{
+				if (fontSize > 0) label.fontSize = fontSize;
+				// 原生 CloseButton 的标题色是按浅色底板配的，套到深色底板上会变成黑字。
+				label.color = TextMain;
+			}
 			return button;
 		}
 

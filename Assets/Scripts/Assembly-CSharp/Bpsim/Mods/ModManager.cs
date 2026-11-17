@@ -74,9 +74,28 @@ namespace Bpsim.Mods
 			}
 			Instance = this;
 			UnityEngine.Object.DontDestroyOnLoad(gameObject);
+			Bpsim.UI.UiTheme.Changed += OnThemeChanged;
 			if (!m_initialized)
 			{
 				Initialize();
+			}
+		}
+
+		private void OnDestroy()
+		{
+			Bpsim.UI.UiTheme.Changed -= OnThemeChanged;
+		}
+
+		private void OnThemeChanged(Bpsim.UI.UiPalette palette)
+		{
+			// Toast 存活只有几秒，配色变化时直接销毁，下次 Toast 按新配色重建。
+			if (m_toastRoot != null)
+			{
+				Destroy(m_toastRoot);
+				m_toastRoot = null;
+				m_toastGroup = null;
+				m_toastRect = null;
+				m_toastText = null;
 			}
 		}
 
@@ -356,6 +375,56 @@ namespace Bpsim.Mods
 			return found ?? pkg;
 		}
 
+		/// <summary>
+		/// 就地加载 Mod 文件夹（不复制、不解压）：把解析到的每个 Mod 目录登记进额外扫描目录后重新扫描。
+		/// 选中的可以是单个 Mod 包、外面多套一层的包目录，或一个装着多个 Mod 的集合目录。
+		/// 返回本次加载到的包；一个都找不到时抛 <see cref="InvalidDataException"/>。
+		/// </summary>
+		public List<ModPackage> InstallFolder(string folderPath)
+		{
+			List<ModPackage> probed = ModPackageStore.FindPackagesIn(folderPath);
+			if (probed.Count == 0)
+			{
+				throw new InvalidDataException("文件夹里找不到 Mod.xml 或 manifest.json：" +
+					Path.GetFileName((folderPath ?? string.Empty).TrimEnd('\\', '/')));
+			}
+			// 登记每个真正的包目录（不是玩家选中的外层目录）：这样「移除」能精确撤掉单个 Mod，
+			// 也不会因为外层目录里将来多出别的文件夹而改变扫描结果。
+			bool added = false;
+			foreach (ModPackage probe in probed)
+			{
+				if (m_config.AddAdditionalDir(probe.Directory))
+				{
+					added = true;
+				}
+			}
+			if (!added)
+			{
+				Debug.Log("[Mods] 目录已在扫描列表里：" + ModPaths.ToDisplay(folderPath));
+			}
+			m_config.Save(ModPaths.ConfigPath);
+			Rescan();
+			ModEcsBridge.SyncAll(Packages);
+
+			List<ModPackage> loaded = new List<ModPackage>();
+			foreach (ModPackage probe in probed)
+			{
+				ModPackage found = Find(probe.Id);
+				if (found == null)
+				{
+					continue;
+				}
+				m_config.SetEnabled(found.Guid, true);
+				found.Enabled = true;
+				LoadPackage(found);
+				ModEcsBridge.UpdateOne(found);
+				loaded.Add(found);
+			}
+			m_config.Save(ModPaths.ConfigPath);
+			Changed?.Invoke();
+			return loaded;
+		}
+
 		public bool Uninstall(string id)
 		{
 			ModPackage pkg = Find(id);
@@ -364,7 +433,17 @@ namespace Bpsim.Mods
 				return false;
 			}
 			UnloadPackage(pkg);
-			bool ok = ModPackageStore.Uninstall(pkg);
+			bool ok;
+			if (pkg.Source == ModSource.Additional)
+			{
+				// 就地加载的文件夹归玩家所有，只取消注册，不删他的文件。
+				ok = m_config.RemoveAdditionalDir(pkg.Directory);
+				m_config.Save(ModPaths.ConfigPath);
+			}
+			else
+			{
+				ok = ModPackageStore.Uninstall(pkg);
+			}
 			Rescan();
 			ModEcsBridge.SyncAll(Packages);
 			Changed?.Invoke();
@@ -480,7 +559,9 @@ namespace Bpsim.Mods
 				m_toastGroup = m_toastRoot.AddComponent<CanvasGroup>();
 				m_toastGroup.blocksRaycasts = false;
 				m_toastGroup.interactable = false;
-				m_toastRect = ModUiKit.Panel(canvas.transform, new Color(0.07f, 0.08f, 0.1f, 0.95f), 12);
+				Color toastBg = Bpsim.UI.UiTheme.Current.Shade(0.5f);
+				toastBg.a = 0.95f;
+				m_toastRect = ModUiKit.Panel(canvas.transform, toastBg, 12);
 				m_toastRect.anchorMin = m_toastRect.anchorMax = new Vector2(0.5f, 0f);
 				m_toastRect.pivot = new Vector2(0.5f, 0f);
 				m_toastRect.anchoredPosition = new Vector2(0f, 120f);

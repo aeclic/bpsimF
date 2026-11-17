@@ -1,0 +1,1668 @@
+{
+    "label": "preview-before-a",
+    "runId": "7b02f339a8ff46e69079540480ac37f6",
+    "utc": "2026-11-06T11:46:18.8250697Z",
+    "probeSha256": "494b36363d7aa17ae3396355c5a04353970e97e76e419b2d6623437cfa4a10e3",
+    "renderingSha256": "ea36399c1fbbd4c197e68769b18fca59d397236977277776d41a5c9331ec9ad9",
+    "cases": [
+        {
+            "scenario": "empty",
+            "stateSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "sources": 0,
+            "visible": 0,
+            "warmup": 16,
+            "sampleCount": 128,
+            "p50Ms": 0.005,
+            "p95Ms": 0.0055,
+            "p99Ms": 0.0071,
+            "maxMs": 0.0097,
+            "meanAllocatedBytes": 0.0,
+            "samples": [
+                {
+                    "milliseconds": 0.0097,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0062,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0053,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0052,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0048,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.006,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0052,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0055,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0048,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0048,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0052,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0052,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.006,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0071,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0052,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0055,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0052,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0052,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.005,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.0049,
+                    "allocatedBytes": 0
+                }
+            ]
+        },
+        {
+            "scenario": "spot-256",
+            "stateSha256": "78dfb83851e07db616321d8cd0e246c92801e6c15497ba2f57fca30043b7634e",
+            "sources": 256,
+            "visible": 256,
+            "warmup": 16,
+            "sampleCount": 128,
+            "p50Ms": 0.4684,
+            "p95Ms": 0.6964,
+            "p99Ms": 1.5934,
+            "maxMs": 1.6851,
+            "meanAllocatedBytes": 0.0,
+            "samples": [
+                {
+                    "milliseconds": 0.6483,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6859,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6345,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6684,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6789,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5282,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4791,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4684,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4687,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4671,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4662,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4654,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4755,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4677,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4628,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.7609,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6546,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6282,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4903,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4795,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.476,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6442,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5176,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4941,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4812,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4795,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.469,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4623,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4705,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4625,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5616,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4843,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4666,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5129,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4673,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4756,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.7192,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6019,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4842,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6051,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5327,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.463,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4616,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 1.6851,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6964,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4947,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.464,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4597,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4534,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4582,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4593,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4649,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4615,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4659,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4587,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4608,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4664,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.493,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4688,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4605,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4557,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4559,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4518,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4547,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4526,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4527,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4515,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.453,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.454,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4605,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4611,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4552,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4578,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4524,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6912,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6044,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5227,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.504,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4644,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4575,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5115,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5662,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4853,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4646,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4733,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4662,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4633,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.974,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4667,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4837,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4746,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4654,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5688,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5624,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4848,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4855,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 1.0577,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5491,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5048,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 1.5934,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4774,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5277,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5367,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4601,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4569,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4536,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4542,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4577,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4548,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4566,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4773,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5278,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4727,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4587,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4674,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4598,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4551,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4535,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4586,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4555,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4736,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6558,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4797,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4545,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4523,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4532,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4506,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4531,
+                    "allocatedBytes": 0
+                }
+            ]
+        },
+        {
+            "scenario": "point-256",
+            "stateSha256": "0331e5a57db74594c5b575039ff1cecaa4919f29bea48fd6433e535395b715d2",
+            "sources": 256,
+            "visible": 256,
+            "warmup": 16,
+            "sampleCount": 128,
+            "p50Ms": 0.4682,
+            "p95Ms": 0.614,
+            "p99Ms": 0.7894,
+            "maxMs": 1.156,
+            "meanAllocatedBytes": 0.0,
+            "samples": [
+                {
+                    "milliseconds": 0.46,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4569,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4572,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4801,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4544,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4611,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4575,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4586,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4567,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4538,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4542,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4538,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4546,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4563,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4596,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4638,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4731,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.466,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4651,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4569,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4557,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4663,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4572,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.453,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4514,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4532,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4529,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.452,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4539,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5235,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5895,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5252,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5173,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5073,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.501,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4962,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4874,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5358,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4784,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4741,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4787,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6284,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4934,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4671,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4658,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5126,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5117,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4856,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4751,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5333,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.484,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5107,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5116,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4824,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5122,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4939,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4587,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4545,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4526,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4521,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4535,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6186,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5284,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4868,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4727,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4752,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4713,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4894,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4955,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4772,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4819,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4665,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.462,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4676,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4656,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4736,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4595,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4549,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.7894,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.614,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4596,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4561,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 1.156,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4636,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4589,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.456,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4572,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4563,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5337,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.467,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4823,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.468,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4574,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4571,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4594,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4935,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4552,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4545,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.7776,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4746,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4618,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4613,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5147,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5437,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5747,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5224,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5264,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.6611,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.5033,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4723,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4715,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4747,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4884,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4834,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4795,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4742,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4729,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4727,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4735,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4682,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4623,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4787,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4545,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4566,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4556,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4537,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4564,
+                    "allocatedBytes": 0
+                },
+                {
+                    "milliseconds": 0.4564,
+                    "allocatedBytes": 0
+                }
+            ]
+        }
+    ],
+    "checks": [
+        {
+            "name": "empty membership",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "empty visible",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "empty removed lights discarded",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "spot-256 membership",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "spot-256 visible",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "spot-256 pose refreshed",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "spot-256 new light discovered",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "spot-256 removed lights discarded",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "point-256 membership",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "point-256 visible",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "point-256 pose refreshed",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "point-256 new light discovered",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "point-256 removed lights discarded",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "original build preserved",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "original scene restored",
+            "pass": true,
+            "detail": ""
+        }
+    ],
+    "errors": []
+}

@@ -191,69 +191,25 @@ namespace Bpsim.Parts.Gameplay
 	/// </summary>
 	public sealed class BalloonBehavior : PartBehavior
 	{
-		private const float Gravity = 9.81f;
-
-		// Net lift per balloon bubble, expressed in g.  BPSS uses 10 N on a 0.1 kg
-		// balloon with 2.0 drag, which settles around 1.5 g of net acceleration.
-		private const float NetLift = 1.55f;
-
-		private const float MaxRiseSpeed = 5.5f;
-
-		// BPSS balloons are attached to the part they hang from; the bpsim grid uses
-		// one cell per part, so anything within this radius counts as attached.
-		private const float AttachRadius = 1.6f;
-
-		// One filled balloon, two or three when the variant holds more bubbles.
-		private float m_bubbles = 1f;
-
-		private int m_ticks;
-
-		public override void Init()
-		{
-			m_bubbles = Info.PartType switch
-			{
-				PartType.Balloons2 => 2f,
-				PartType.Balloons3 => 3f,
-				_ => 1f,
-			};
-			Enabled = true;
-		}
-
+		public override void Init() => Enabled = true;
 		public override void Trigger()
 		{
-			// BPSS pops the balloon when it is touched; the button acts as a pop.
-			Enabled = !Enabled;
-			Manager.Log("balloon: " + (Enabled ? "inflated" : "popped") + " bubbles=" + m_bubbles);
+			if (!Em.Exists(Part) || !Em.HasComponent<BalloonBody>(Part)) return;
+			var body = Em.GetComponentData<BalloonBody>(Part);
+			if (body.Popped) return;
+			body.PopRequest = true; Em.SetComponentData(Part, body); Enabled = false;
 		}
-
 		public override void Tick(float deltaTime)
 		{
-			if (!Enabled)
-			{
-				return;
-			}
-			m_ticks++;
-			// The balloon body itself is massless in bpsim, so its own velocity is
-			// always zero; the speed limit must look at the parts it is lifting.
-			float riseSpeed = ComponentThrust.NearbyRiseSpeed(Part, AttachRadius);
-			if (riseSpeed >= MaxRiseSpeed)
-			{
-				return;
-			}
-			float acceleration = Gravity * NetLift * m_bubbles;
-			float delta = acceleration * deltaTime;
-			float remaining = MaxRiseSpeed - riseSpeed;
-			if (delta > remaining)
-			{
-				delta = math.max(0f, remaining);
-			}
-			ComponentThrust.LiftNearby(Part, AttachRadius, new float3(0f, delta, 0f));
+			Enabled = Em.Exists(Part) && Em.HasComponent<BalloonBody>(Part)
+				&& !Em.GetComponentData<BalloonBody>(Part).PopRequest && !Em.GetComponentData<BalloonBody>(Part).Popped;
 		}
-
 		public override string Describe()
 		{
-			float riseSpeed = ComponentThrust.NearbyRiseSpeed(Part, AttachRadius);
-			return "balloon bubbles=" + m_bubbles + " enabled=" + Enabled + " rise=" + riseSpeed.ToString("F2") + " ticks=" + m_ticks;
+			if (!Em.Exists(Part)) return "balloon popped";
+			var body = Em.GetComponentData<BalloonBody>(Part);
+			return "balloon enabled=" + Enabled + " target=" + body.Target + " force=" + body.Force
+				+ " maxSpeed=" + body.MaximumSpeed + " tether=" + body.TetherJoint;
 		}
 	}
 
@@ -554,6 +510,8 @@ namespace Bpsim.Parts.Gameplay
 
 		public override void Trigger()
 		{
+			// Passive springs have a dedicated ECS joint; this legacy adapter is boxing-glove-only.
+			if (Info.PartType != PartType.SpringBoxingGlove) return;
 			if (m_cooldown > 0f)
 			{
 				return;
@@ -657,82 +615,29 @@ namespace Bpsim.Parts.Gameplay
 	/// </summary>
 	public sealed class BellowsBehavior : PartBehavior
 	{
-		private const float BoostForce = 10f;
-
-		private const float BoostDuration = 0.5f;
-
-		private const float WaitDuration = 0.3f;
-
-		private const float InflateDuration = 0.3f;
-
-		private const float CompressedScale = 0.3f;
-
-		private float m_elapsed;
-
-		private bool m_boosting;
-
-		private bool m_spent;
-
+		public override void Init()
+		{
+			Enabled = Em.HasComponent<Bellows>(Part) && Em.GetComponentData<Bellows>(Part).Enabled;
+		}
 		public override void Trigger()
 		{
-			if (m_boosting || (m_spent && m_elapsed < BoostDuration + WaitDuration + InflateDuration))
-			{
-				return;
-			}
-			m_boosting = true;
-			m_spent = true;
-			m_elapsed = 0f;
-			Enabled = true;
-			Manager.Log("bellows: boost");
+			if (!Em.HasComponent<Bellows>(Part)) return;
+			Bellows state = Em.GetComponentData<Bellows>(Part);
+			state.TriggerRequest = true;
+			Em.SetComponentData(Part, state);
 		}
-
 		public override void Tick(float deltaTime)
 		{
-			if (!m_spent)
-			{
-				return;
-			}
-			m_elapsed += deltaTime;
-			if (m_boosting)
-			{
-				if (m_elapsed > BoostDuration)
-				{
-					m_boosting = false;
-					Enabled = false;
-					return;
-				}
-				// Quadratic ramp: strongest right after the trigger, then fading.
-				float t = m_elapsed / BoostDuration;
-				float ramp = 1f - (1f - t) * (1f - t);
-				// BPSS pushes along transform.TransformDirection(m_direction) with
-				// m_direction = Vector3.up, i.e. the part's own local up axis.
-				ComponentThrust.Apply(Part, Up() * (ramp * BoostForce * deltaTime));
-			}
-			else if (m_elapsed >= BoostDuration + WaitDuration + InflateDuration)
-			{
-				m_spent = false;
-			}
+			// Compatibility/UI observation only; time, impulse and scale belong to BellowsSystem.
+			Enabled = Em.HasComponent<Bellows>(Part) && Em.GetComponentData<Bellows>(Part).Enabled;
 		}
-
 		public override string Describe()
 		{
-			float scale = 1f;
-			if (m_spent)
-			{
-				if (m_elapsed < BoostDuration)
-				{
-					scale = math.lerp(1f, CompressedScale, m_elapsed / BoostDuration);
-				}
-				else if (m_elapsed < BoostDuration + WaitDuration)
-				{
-					scale = CompressedScale;
-				}
-				else
-				{
-					scale = math.lerp(CompressedScale, 1f, (m_elapsed - BoostDuration - WaitDuration) / InflateDuration);
-				}
-			}
-			return "bellows boosting=" + m_boosting + " elapsed=" + m_elapsed.ToString("F2") + " scale=" + scale.ToString("F2");
+			if (!Em.HasComponent<Bellows>(Part)) return "bellows (component missing)";
+			Bellows state = Em.GetComponentData<Bellows>(Part);
+			return "bellows enabled=" + state.Enabled + " cycles=" + state.Cycles
+				+ " elapsed=" + state.Elapsed.ToString("F2") + " scale=" + state.Compression.ToString("F2")
+				+ " impulse=" + state.DeliveredImpulse.ToString("F3");
 		}
 	}
 

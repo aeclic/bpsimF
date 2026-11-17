@@ -21,7 +21,7 @@ namespace Bpsim.Mods
 			}
 			catch (Exception ex)
 			{
-				error = "无法读取剪贴板：" + ex.Message + "。也可以点击“选择 zip 安装”。";
+				error = "无法读取剪贴板：" + ex.Message + "。也可以点击“导入 Mod”→“选择 zip 文件…”。";
 				return false;
 			}
 		}
@@ -35,11 +35,11 @@ namespace Bpsim.Mods
 				List<string> candidates = new List<string>();
 				foreach (string file in files)
 				{
-					if (!string.IsNullOrEmpty(file) && file.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) candidates.Add(file);
+					if (!string.IsNullOrEmpty(file) && (file.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || Directory.Exists(file))) candidates.Add(file);
 				}
 				if (candidates.Count != 1)
 				{
-					error = candidates.Count > 1 ? "剪贴板中有多个 zip，请只复制一个文件。" : "剪贴板里的文件不是 zip。";
+					error = candidates.Count > 1 ? "剪贴板中有多个 zip / 文件夹，请只复制一个。" : "剪贴板里的文件既不是 zip 也不是文件夹。";
 					return false;
 				}
 				return TryNormalizePath(candidates[0], out path, out error);
@@ -53,7 +53,7 @@ namespace Bpsim.Mods
 			error = null;
 			if (string.IsNullOrWhiteSpace(text))
 			{
-				error = "剪贴板中没有 zip 文件或路径。请复制文件，或点击“选择 zip 安装”。";
+				error = "剪贴板中没有 zip 文件或文件夹路径。请复制文件，或点击“导入 Mod”选择 zip / 文件夹。";
 				return false;
 			}
 			string candidate = text.Trim().Trim('\uFEFF', '\u200B').Trim();
@@ -87,14 +87,19 @@ namespace Bpsim.Mods
 				}
 				if (!Path.IsPathRooted(candidate))
 				{
-					error = "请复制 zip 的完整路径，而不是仅复制文件名。";
+					error = "请复制 zip 或 Mod 文件夹的完整路径，而不是仅复制文件名。";
 					return false;
 				}
-				if (!File.Exists(candidate) && candidate.IndexOf('%') >= 0) candidate = Uri.UnescapeDataString(candidate);
+				if (!File.Exists(candidate) && !Directory.Exists(candidate) && candidate.IndexOf('%') >= 0) candidate = Uri.UnescapeDataString(candidate);
 				candidate = Path.GetFullPath(candidate);
+				if (Directory.Exists(candidate))
+				{
+					path = candidate.TrimEnd('\\', '/');
+					return true;
+				}
 				if (!string.Equals(Path.GetExtension(candidate), ".zip", StringComparison.OrdinalIgnoreCase))
 				{
-					error = "所选文件不是 .zip 安装包。";
+					error = "所选内容不是 .zip 安装包，也不是 Mod 文件夹。";
 					return false;
 				}
 				if (!File.Exists(candidate))

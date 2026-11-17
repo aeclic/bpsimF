@@ -12,6 +12,7 @@ using Bpsim.Parts.Gameplay;
 using Bpsim.Parts.Simulation;
 using Bpsim.Parts.Skin;
 using Bpsim.Physics;
+using Bpsim.Physics.Anvil;
 using Bpsim.Rendering;
 using Unity.Collections;
 using Unity.Entities;
@@ -33,7 +34,8 @@ namespace Bpsim.QA
 	/// spec（分号分隔的 key=value）：
 	///   file=       schematics 路径（相对工程根或绝对路径），默认「不败荣光」
 	///   dur=        每个阶段的采样秒数，默认 2.5
-	///   solver=     模拟开始时写入的 SolverIterationCount，默认不改（-1）
+	///   solver=     模拟开始时写入的 SolverIterationCount，默认不改（-1）；Anvil 下映射成 4–16 原生子步
+	///   workers=    Anvil box3d 求解线程数，默认不改（-1，AnvilWorld 默认 1）；需在 Anvil 世界创建前设置
 	///   gravity=    模拟开始时写入的 GravityY，默认 0（悬空自旋，避免落地噪音）
 	///   spin=       二分阶段使用的角速度，默认 32
 	///   bisect=     1/0 是否跑系统二分，默认 1
@@ -218,6 +220,7 @@ namespace Bpsim.QA
 		{
 			float duration = SpecFloat(spec, "dur", 2.5f);
 			int solver = SpecInt(spec, "solver", -1);
+			int workers = SpecInt(spec, "workers", -1);
 			float gravity = SpecFloat(spec, "gravity", float.NaN);
 			float spin = SpecFloat(spec, "spin", 32f);
 			bool bisect = SpecInt(spec, "bisect", 1) != 0;
@@ -384,12 +387,39 @@ namespace Bpsim.QA
 				Line("hold: PartSimulationSystem disabled=" + wasEnabled + " (先确认关节有没有被建出来)");
 			}
 
+			if (workers > 0)
+			{
+				AnvilStepSystem.WorkerCount = workers;
+				Line("anvil workers=" + workers + " (applies on next Anvil step)");
+			}
 			System.Diagnostics.Stopwatch startWatch = System.Diagnostics.Stopwatch.StartNew();
 			manager.StartSimulation();
 			startWatch.Stop();
 			Line("start: StartSimulation " + F((float)startWatch.Elapsed.TotalMilliseconds) + "ms");
 			yield return null;
 			yield return null;
+
+			// 早退开关：在 warmup 之前关掉整块玩法或 BPLE 灯运行时，用来把「初始 5250 关节时的
+			// 物理开销」与「玩法开销」分开，而不是等二分阶段部件已经散架。
+			if (SpecInt(spec, "gameplay", 1) == 0)
+			{
+				PartGameplayManager earlyGameplay = PartGameplayManager.Instance;
+				if (earlyGameplay != null)
+				{
+					earlyGameplay.enabled = false;
+					Line("early: PartGameplayManager disabled (physics/systems only)");
+				}
+			}
+			if (SpecInt(spec, "lights", 1) == 0)
+			{
+				BpleLightRuntime.Instance?.End();
+				Line("early: BpleLightRuntime.End() (behaviors only, no light contact scan)");
+			}
+			if (SpecInt(spec, "lightprofile", 0) != 0)
+			{
+				BpleLightRuntime.SetProfiling(true);
+				Line("early: BpleLightRuntime profiling enabled");
+			}
 
 			PartSimulator sim = manager.PartSimulator;
 			if (sim == null)
@@ -801,6 +831,24 @@ namespace Bpsim.QA
 				+ " joints=" + jointsBefore + "->" + sim.Unmanaged.Joints.Length
 				+ " comp=" + componentsBefore + "->" + sim.Unmanaged.ConnectedComponents.Length
 				+ " " + spinStats + megaStats);
+			if (AnvilStepSystem.Active)
+			{
+				b3Profile anvilProfile = AnvilStepSystem.LastProfile;
+				Line("  anvil: step=" + F(anvilProfile.step) + " pairs=" + F(anvilProfile.pairs)
+					+ " collide=" + F(anvilProfile.collide) + " solve=" + F(anvilProfile.solve)
+					+ " prepare=" + F(anvilProfile.prepareConstraints) + " integratePos=" + F(anvilProfile.integratePositions)
+					+ " splitIslands=" + F(anvilProfile.splitIslands) + " transforms=" + F(anvilProfile.transforms)
+					+ " syncTo=" + F((float)AnvilStepSystem.LastSyncToMs)
+					+ " syncFrom=" + F((float)AnvilStepSystem.LastSyncFromMs));
+				AnvilWorld anvilWorld = AnvilStepSystem.Anvil;
+				if (anvilWorld != null && anvilWorld.IsCreated)
+				{
+					b3Counters counters = anvilWorld.GetCounters();
+					Line("  anvil counters: bodies=" + counters.bodyCount + " shapes=" + counters.shapeCount
+						+ " contacts=" + counters.contactCount + " joints=" + counters.jointCount
+						+ " islands=" + counters.islandCount);
+				}
+			}
 		}
 
 		private static float3 Centroid(PartSimulator sim)

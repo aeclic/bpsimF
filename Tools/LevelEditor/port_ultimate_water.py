@@ -50,6 +50,17 @@ def generate(name):
     inputs = re.findall(r'in\s+(?:(?:highp|mediump)\s+)?(vec[234])\s+(\w+);', fragment)
     body = fragment[fragment.index('void main()'):].rsplit('#endif', 1)[0]
     body = body[body.index('{') + 1:body.rfind('}')]
+    if name == 'Underwater':
+        # The late refraction layer follows the far underside edge. Its cyan
+        # meniscus belongs to the fixed near wave line, drawn in a separate pass.
+        uniforms['uw_MeniscusOnly'] = {'type': 'float', 'array': ''}
+        body = 'if(uw_MeniscusOnly>0.5 && uw_CaptureRect.y+uw_CaptureRect.w*0.5>=uw_Bounds.y) discard;\n' + body
+        body = body.replace('    u_xlat1.x = (-u_xlat21) + 1.0;',
+            '    if(uw_MeniscusOnly<0.5 && uw_CaptureRect.y+uw_CaptureRect.w*0.5<uw_Bounds.y) u_xlat21=0.0;\n    u_xlat1.x = (-u_xlat21) + 1.0;')
+        body = body.replace('    u_xlat0.xyz = u_xlat0.xyz * u_xlat1.xxx + u_xlat8.xyz;',
+            '    u_xlat0.xyz = uw_MeniscusOnly>0.5 ? _MeniscusColor.xyz : u_xlat0.xyz * u_xlat1.xxx + u_xlat8.xyz;')
+        body = body.replace('    u_xlat0 = u_xlat0 * vs_INTERP2;',
+            '    if(uw_MeniscusOnly>0.5) u_xlat0.w *= clamp(u_xlat21,0.0,1.0);\n    u_xlat0 = u_xlat0 * vs_INTERP2;')
     locals_ = fragment[re.search(r'\n(?:[biu]?vec[234]|float) u_\w+;', fragment).start():fragment.index('void main()')]
     # Keep temporaries local so multiple water passes cannot share mutable state.
     locals_ = re.sub(r'\b(?:lowp|mediump|highp)\s+', '', locals_)
@@ -94,11 +105,15 @@ vec4 vs_INTERP1=vec4(uw_uv.x,-y,0,0); vec3 vs_INTERP4=vec3((uw_world.x-uw_Bounds
         gl += 'vec4 vs_INTERP2=vec4(1);\n'
         gl += 'vec4 vs_INTERP3=vec4((uw_world-uw_CaptureRect.xy)/uw_CaptureRect.zw,0,1);\n'
     scene_textures = ('_CameraSortingLayerTexture', '_LocalReflectionMap', '_LocalUnderwaterSurfaceMap')
+    underwater_textures = ('_CameraSortingLayerTexture', '_LocalUnderwaterSurfaceMap')
     # Keep the source's implicit derivatives and mip selection. Texture color
     # space is handled by each backend's texture storage, as in the demo.
-    gl_body = function_calls(body, 'texture', lambda p: ('uwUnderwater(' if p[0] == '_CameraSortingLayerTexture' else 'uwDecodeScene(' if p[0] in scene_textures else '') + 'uwSample(' + ', '.join(p) + ')' + (', '+p[1]+')' if p[0] == '_CameraSortingLayerTexture' else ')' if p[0] in scene_textures else '')).replace('uwSample(', 'texture(')
+    gl_body = function_calls(body, 'texture', lambda p: ('uwUnderwater(' if p[0] in underwater_textures else 'uwDecodeScene(' if p[0] in scene_textures else '') + 'uwSample(' + ', '.join(p) + ')' + (', '+p[1]+')' if p[0] in underwater_textures else ')' if p[0] in scene_textures else '')).replace('uwSample(', 'texture(')
     gl_body=re.sub(r'texture\(_ShapeLightTexture0, ([^,]+),',r'texture(_ShapeLightTexture0, (uw_world-uw_LightRect.xy)/uw_LightRect.zw,',gl_body)
-    gl_body = gl_body.replace('gl_FrontFacing', 'true')
+    # The host has an orthographic camera; virtual camera height determines
+    # which side of the 2.5D surface is visible, independently of API winding.
+    front_facing = '(uw_CaptureRect.y+uw_CaptureRect.w*0.5>=uw_Bounds.y)'
+    gl_body = gl_body.replace('gl_FrontFacing', front_facing)
     if name != 'LightRays':
         gl_body = gl_body.replace('    return;', '    SV_TARGET0.rgb=uwEncodeScene(SV_TARGET0.rgb);\n    return;')
     gl += locals_ + '\n' + gl_body + '\n}\n'
@@ -109,7 +124,7 @@ vec4 vs_INTERP1=vec4(uw_uv.x,-y,0,0); vec3 vs_INTERP4=vec3((uw_world.x-uw_Bounds
 
     hs = locals_ + '\n' + body
     hs = re.sub(r'\b(lowp|mediump|highp)\s+', '', hs)
-    hs = function_calls(hs, 'texture', lambda p: ('uwUnderwater(' if p[0] == '_CameraSortingLayerTexture' else 'uwDecodeScene(' if p[0] in scene_textures else '') + f'{p[0]}.SampleBias(sampler{p[0]}, {p[1]}, {p[2] if len(p)>2 else "0.0"})' + (', '+p[1]+')' if p[0] == '_CameraSortingLayerTexture' else ')' if p[0] in scene_textures else ''))
+    hs = function_calls(hs, 'texture', lambda p: ('uwUnderwater(' if p[0] in underwater_textures else 'uwDecodeScene(' if p[0] in scene_textures else '') + f'{p[0]}.SampleBias(sampler{p[0]}, {p[1]}, {p[2] if len(p)>2 else "0.0"})' + (', '+p[1]+')' if p[0] in underwater_textures else ')' if p[0] in scene_textures else ''))
     hs=re.sub(r'_ShapeLightTexture0.SampleBias\(sampler_ShapeLightTexture0, ([^,]+),',r'_ShapeLightTexture0.SampleBias(sampler_ShapeLightTexture0, (i.world-uw_LightRect.xy)/uw_LightRect.zw,',hs)
     hs = function_calls(hs, 'textureLod', lambda p: f'{p[0]}.SampleLevel(sampler{p[0]}, {p[1]}, {p[2]})')
     hs = function_calls(hs, 'texelFetch', lambda p: f'{p[0]}.Load(int3({p[1]}, {p[2]}))')
@@ -126,7 +141,7 @@ vec4 vs_INTERP1=vec4(uw_uv.x,-y,0,0); vec3 vs_INTERP4=vec3((uw_world.x-uw_Bounds
             # GLSL vecN(scalar) broadcasts; HLSL requires a cast for this form.
             hs = re.sub(r'\b' + typ + str(n) + r'\(([^(),]+)\)', lambda m,t=typ,n=n: f'(({t}{n})({m[1]}))', hs)
     hs = re.sub(r'(?m)^(float[234]?\s+u_\w+;)$', r'precise \1', hs)
-    hs = hs.replace('gl_FragCoord', 'uw_FragCoord').replace('gl_FrontFacing', 'true')
+    hs = hs.replace('gl_FragCoord', 'uw_FragCoord').replace('gl_FrontFacing', front_facing)
     hs = re.sub(r'\breturn;', 'return max(SV_TARGET0,0);' if name == 'LightRays' else 'return float4(uwEncodeScene(SV_TARGET0.rgb), max(SV_TARGET0.a, 0.0));', hs)
     # Core.hlsl owns these globals; custom aliases allow fixed-time comparison.
     aliases = {'_Time':'uw_Time','_TimeParameters':'uw_TimeParameters','_ScaledScreenParams':'uw_ScaledScreenParams','_ProjectionParams':'uw_ProjectionParams','_GlobalMipBias':'uw_GlobalMipBias'}

@@ -1,5 +1,6 @@
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace Bpsim.Parts
 {
@@ -32,6 +33,21 @@ namespace Bpsim.Parts
 		};
 
 		public bool IsIdentity => Offset.x == 0f && Offset.y == 0f && RotationDegrees == 0f && Scale.x == 1f && Scale.y == 1f;
+
+		/// <summary>Shared by build updates and the one-time simulation seed. Input is the grid pose, not an already-composed pose.</summary>
+		internal static LocalTransform Compose(LocalTransform gridPose, in PartFreeTransform value, int layer)
+		{
+			PartFreeTransform free = Sanitize(value);
+			gridPose.Position += new float3(free.Offset, -(PartBuildLayer.Clamp(layer) - PartBuildLayer.MinLayer) * PartBuildLayer.DepthStep);
+			gridPose.Rotation = math.mul(gridPose.Rotation, quaternion.RotateZ(math.radians(free.RotationDegrees)));
+			return gridPose;
+		}
+
+		internal static PostTransformScale VisualScale(in PartFreeTransform value)
+		{
+			PartFreeTransform free = Sanitize(value);
+			return new PostTransformScale { Value = float3x3.Scale(free.Scale.x, free.Scale.y, 1f) };
+		}
 
 		/// <summary>
 		/// 把任何来源（旧存档缺字段、外部写入、组件默认值）的数值整理到合法区间：

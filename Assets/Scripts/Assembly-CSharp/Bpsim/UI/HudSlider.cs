@@ -109,6 +109,29 @@ namespace Bpsim.UI
 			ApplyModeVisuals();
 		}
 
+		/// <summary>跟随配色：滑槽灰阶与百分比强调色随色板走；旋钮/图标保持白色。</summary>
+		internal void ApplyPalette(UiPalette palette)
+		{
+			if (palette == null)
+			{
+				return;
+			}
+			if (m_track != null)
+			{
+				Image trackImage = m_track.GetComponent<Image>();
+				if (trackImage != null)
+				{
+					Color track = palette.Shade(1.7f);
+					track.a = 0.95f;
+					trackImage.color = track;
+				}
+			}
+			if (m_label != null)
+			{
+				m_label.color = palette.AccentBright;
+			}
+		}
+
 		/// <summary>切到某个用途。从倍速切回缩放时会把全局时间恢复成 1 倍。</summary>
 		internal void SetMode(HudSliderMode mode)
 		{

@@ -1,0 +1,29 @@
+{
+  "state": {
+    "ok": true,
+    "server": "DshBridge v0.2",
+    "unity": "2022.2.23f1c1",
+    "project": "D:\\rpgvx + magpie\\BPRC 2026.3.2 proj\\bpsim-main",
+    "projectId": "6307d57b3f6d",
+    "port": 8790,
+    "pid": 37176,
+    "batchMode": false,
+    "playing": false,
+    "changing": false,
+    "compiling": false,
+    "busy": false,
+    "mainThreadStalled": false,
+    "editor_busy": false,
+    "control": null,
+    "pending": null
+  },
+  "compile": {
+    "compiling": false,
+    "errors": [],
+    "warnings": []
+  },
+  "consoleWindow": 34,
+  "errorCount": 0,
+  "physicsFingerprint": "eaa4950b5d8170de523c9a009fc2d0fdd867ffd2e85c64f2c044b1eada0a35de",
+  "factCount": 43
+}

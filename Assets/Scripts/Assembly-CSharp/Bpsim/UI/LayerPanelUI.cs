@@ -133,15 +133,11 @@ namespace Bpsim.UI
                 selector = ui.PartSelector.transform as RectTransform;
             }
 
-            // 部件列表紧贴工具栏下沿、铺满整个左侧边栏剩余高度（两者之间没有间隙）。
-            float toolbarHeight = 90f;
-            if (sidebar.childCount > 0 && sidebar.GetChild(0) is RectTransform toolbar && toolbar.rect.height > 1f)
-            {
-                toolbarHeight = toolbar.rect.height;
-            }
-
             if (selector != null)
             {
+                float toolbarHeight = 90f;
+                if (sidebar.childCount > 0 && sidebar.GetChild(0) is RectTransform toolbar && toolbar.rect.height > 1f)
+                    toolbarHeight = toolbar.rect.height;
                 selector.anchorMin = new Vector2(0f, 1f);
                 selector.anchorMax = new Vector2(1f, 1f);
                 selector.pivot = new Vector2(0f, 1f);
@@ -149,8 +145,7 @@ namespace Bpsim.UI
                 selector.sizeDelta = new Vector2(0f, sidebar.rect.height - toolbarHeight);
             }
 
-            // 图层条是部件列表内部顶端的一条覆盖带：挂在 PartSelector 下面，
-            // 视觉上属于同一个面板（而不是夹在工具栏与列表之间把列表挤下去）。
+            // 保留原版图层横条：覆盖带位于部件列表内部顶端。
             RectTransform stripParent = selector != null ? selector : sidebar;
             var stripObject = new GameObject("LayerStrip", typeof(RectTransform));
             m_strip = (RectTransform)stripObject.transform;
@@ -167,7 +162,7 @@ namespace Bpsim.UI
             background.color = s_stripColor;
             background.raycastTarget = true;
 
-            // 部件网格让出图层条的高度，避免第一行部件被盖住。
+            // 部件网格只让出图层条高度，不改变列数/卡片尺寸。
             if (selector != null)
             {
                 Transform scroll = selector.Find("Scroll View");
@@ -572,7 +567,9 @@ namespace Bpsim.UI
             }
 
             ref PartSceneUnmanaged unmanaged = ref scene.Unmanaged;
-            unmanaged.SetLayerCount(unmanaged.LayerCount + 1);
+			// AddLayer 同时扩展层数并切到新层，保证点击「＋」后后续放置落在
+			// 刚创建的层，而不是继续修改原来的活动层。
+			unmanaged.AddLayer();
             Refresh(force: true);
         }
 
@@ -585,9 +582,12 @@ namespace Bpsim.UI
             }
 
             ref PartSceneUnmanaged unmanaged = ref scene.Unmanaged;
+			int previousLayer = unmanaged.ActiveLayer;
             if (!unmanaged.RemoveTopLayer())
             {
-                unmanaged.SetActiveLayer(0);
+				// 删除失败通常表示顶层仍有部件；保持当前编辑层，避免一次误点
+				// 把用户切到只读的「全部（查看）」。
+				unmanaged.SetActiveLayer(previousLayer);
             }
 
             Refresh(force: true);
@@ -595,7 +595,7 @@ namespace Bpsim.UI
     }
 
     /// <summary>
-    /// 图层条的横向拖动：层数多到超出可视宽度时，按住左右拖动平移整条。
+    /// 图层条的横向拖动：层数超出可视宽度时按住左右平移。
     /// 拖动过的这一次抬起不触发按钮点击（<see cref="SuppressClick" />），避免「想拖动结果切了层」。
     /// </summary>
     internal sealed class LayerStripDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
@@ -700,5 +700,6 @@ namespace Bpsim.UI
             float clamped = Mathf.Clamp(x, -overflow, 0f);
             m_content.anchoredPosition = new Vector2(clamped, m_content.anchoredPosition.y);
         }
+
     }
 }

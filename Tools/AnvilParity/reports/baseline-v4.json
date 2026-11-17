@@ -1,0 +1,1053 @@
+{
+    "label": "baseline-v4",
+    "runId": "af2227f0e6b54e0abec82d16109966aa",
+    "collectedAtUtc": "2026-11-06T08:15:40.2028323Z",
+    "unityVersion": "2022.2.23f1c1",
+    "fingerprint": "97f7812f5c37734fb400b2677337957858eab4d9aea6b0b909429c41eb360b8a",
+    "physicsAssemblySha256": "b61783a9aaf47fc6ab64420911cbb9120b46ff90635c32dbff3a3ad3051c3e75",
+    "havokApi": "Void .ctor(Havok.Physics.HavokConfiguration); EnableSleeping=0",
+    "pass": false,
+    "failures": 21,
+    "measurements": [
+        {
+            "backend": "UnityPhysics",
+            "scenario": "sparse-upload",
+            "metric": "target-velocity-error",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "sparse-upload",
+            "metric": "untargeted-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "small-impulses",
+            "metric": "accumulated-velocity-error",
+            "unit": "m/s",
+            "value": 2.2351741790771486e-8,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "small-impulses",
+            "metric": "untargeted-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "rotated-spin",
+            "metric": "world-omega-error",
+            "unit": "rad/s",
+            "value": 0.0000012839233249906102,
+            "tolerance": 0.0010000000474974514,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "rotated-spin",
+            "metric": "spurious-linear-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "offset-com",
+            "metric": "com-trajectory-error",
+            "unit": "m",
+            "value": 7.633119025740598e-7,
+            "tolerance": 0.00019999999494757503,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "offset-com",
+            "metric": "linear-momentum-error",
+            "unit": "kg m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "gravity",
+            "metric": "factor-0",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": "actual=float3(0f, 0f, 0f); expected=float3(0f, 0f, 0f)"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "gravity",
+            "metric": "factor-1",
+            "unit": "m/s",
+            "value": 1.4901161193847657e-8,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": "actual=float3(0f, -0.14715f, 0f); expected=float3(0f, -0.14715f, 0f)"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "gravity",
+            "metric": "factor-2",
+            "unit": "m/s",
+            "value": 5.960464477539063e-8,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": "actual=float3(0f, -0.5886f, 0f); expected=float3(0f, -0.5886f, 0f)"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "gravity",
+            "metric": "factor-3",
+            "unit": "m/s",
+            "value": 1.1920928955078126e-7,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": "actual=float3(0f, -1.1772f, 0f); expected=float3(0f, -1.1772f, 0f)"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "gravity",
+            "metric": "factor-4",
+            "unit": "m/s",
+            "value": 2.9802322387695315e-8,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": "actual=float3(0f, 0.2943f, 0f); expected=float3(0f, 0.2943f, 0f)"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "mass-change",
+            "metric": "momentum-relative-error",
+            "unit": "ratio",
+            "value": 9.536743306171047e-8,
+            "tolerance": 0.004999999888241291,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "mass-change",
+            "metric": "shared-velocity-error",
+            "unit": "m/s",
+            "value": 0.0000013709068298339844,
+            "tolerance": 0.004999999888241291,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "welded-chain",
+            "metric": "momentum-relative-error",
+            "unit": "ratio",
+            "value": 0.0,
+            "tolerance": 0.004999999888241291,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "welded-chain",
+            "metric": "energy-gain",
+            "unit": "ratio",
+            "value": 0.0,
+            "tolerance": 0.009999999776482582,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "welded-chain",
+            "metric": "max-connection-drift",
+            "unit": "m",
+            "value": 0.0008064508438110352,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "body-replacement",
+            "metric": "shared-velocity-error",
+            "unit": "m/s",
+            "value": 0.0000021457672119140627,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "body-replacement",
+            "metric": "connection-drift",
+            "unit": "m",
+            "value": 2.384185791015625e-7,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "scaled-compound",
+            "metric": "missing-hit",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "scaled-compound",
+            "metric": "surface-height-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "scaled-joint",
+            "metric": "rest-distance-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "scaled-joint",
+            "metric": "spurious-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "body-identity",
+            "metric": "missing-new-body-hit",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "body-identity",
+            "metric": "wrong-hit-entity",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "moved-static",
+            "metric": "missing-floor-hit",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "moved-static",
+            "metric": "floor-height-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "threshold-linear-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "threshold-linear-above",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=True; actual=True"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "threshold-diagonal-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "threshold-zero-unloaded",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "threshold-zero-loaded",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=True; actual=True"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "threshold-angular-above",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=True; actual=True"
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "threshold-angular-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "sparse-upload",
+            "metric": "target-velocity-error",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "sparse-upload",
+            "metric": "untargeted-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "small-impulses",
+            "metric": "accumulated-velocity-error",
+            "unit": "m/s",
+            "value": 0.029999999329447748,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "small-impulses",
+            "metric": "untargeted-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "rotated-spin",
+            "metric": "world-omega-error",
+            "unit": "rad/s",
+            "value": 0.0000026035702376248084,
+            "tolerance": 0.0010000000474974514,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "rotated-spin",
+            "metric": "spurious-linear-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "offset-com",
+            "metric": "com-trajectory-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00019999999494757503,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "offset-com",
+            "metric": "linear-momentum-error",
+            "unit": "kg m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "gravity",
+            "metric": "factor-0",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": "actual=float3(0f, 0f, 0f); expected=float3(0f, 0f, 0f)"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "gravity",
+            "metric": "factor-1",
+            "unit": "m/s",
+            "value": 0.013456225395202637,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": "actual=float3(0f, -0.1336938f, 0f); expected=float3(0f, -0.14715f, 0f)"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "gravity",
+            "metric": "factor-2",
+            "unit": "m/s",
+            "value": 0.0030275583267211916,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": "actual=float3(0f, -0.5855725f, 0f); expected=float3(0f, -0.5886f, 0f)"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "gravity",
+            "metric": "factor-3",
+            "unit": "m/s",
+            "value": 0.001519918441772461,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": "actual=float3(0f, -1.17568f, 0f); expected=float3(0f, -1.1772f, 0f)"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "gravity",
+            "metric": "factor-4",
+            "unit": "m/s",
+            "value": 0.006004989147186279,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": "actual=float3(0f, 0.288295f, 0f); expected=float3(0f, 0.2943f, 0f)"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "mass-change",
+            "metric": "momentum-relative-error",
+            "unit": "ratio",
+            "value": 0.0017583847511559725,
+            "tolerance": 0.004999999888241291,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "mass-change",
+            "metric": "shared-velocity-error",
+            "unit": "m/s",
+            "value": 0.0017633438110351563,
+            "tolerance": 0.004999999888241291,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "welded-chain",
+            "metric": "momentum-relative-error",
+            "unit": "ratio",
+            "value": 0.0000021457672119140627,
+            "tolerance": 0.004999999888241291,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "welded-chain",
+            "metric": "energy-gain",
+            "unit": "ratio",
+            "value": 0.0,
+            "tolerance": 0.009999999776482582,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "welded-chain",
+            "metric": "max-connection-drift",
+            "unit": "m",
+            "value": 0.0006449222564697266,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "body-replacement",
+            "metric": "shared-velocity-error",
+            "unit": "m/s",
+            "value": 0.0000171661376953125,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "body-replacement",
+            "metric": "connection-drift",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.019999999552965165,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "scaled-compound",
+            "metric": "missing-hit",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "scaled-compound",
+            "metric": "surface-height-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "scaled-joint",
+            "metric": "rest-distance-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "scaled-joint",
+            "metric": "spurious-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "body-identity",
+            "metric": "missing-new-body-hit",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "body-identity",
+            "metric": "wrong-hit-entity",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "moved-static",
+            "metric": "missing-floor-hit",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "moved-static",
+            "metric": "floor-height-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "threshold-linear-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "threshold-linear-above",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=True; actual=True"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "threshold-diagonal-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "threshold-zero-unloaded",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "threshold-zero-loaded",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=True; actual=True"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "threshold-angular-above",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=True; actual=True"
+        },
+        {
+            "backend": "HavokPhysics",
+            "scenario": "threshold-angular-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "sparse-upload",
+            "metric": "target-velocity-error",
+            "unit": "m/s",
+            "value": 4.123105525970459,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "sparse-upload",
+            "metric": "untargeted-velocity",
+            "unit": "m/s",
+            "value": 4.123105525970459,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "small-impulses",
+            "metric": "accumulated-velocity-error",
+            "unit": "m/s",
+            "value": 0.029999999329447748,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "small-impulses",
+            "metric": "untargeted-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "rotated-spin",
+            "metric": "world-omega-error",
+            "unit": "rad/s",
+            "value": 3.7672674655914308,
+            "tolerance": 0.0010000000474974514,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "rotated-spin",
+            "metric": "spurious-linear-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "offset-com",
+            "metric": "com-trajectory-error",
+            "unit": "m",
+            "value": 7.633119025740598e-7,
+            "tolerance": 0.00019999999494757503,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "offset-com",
+            "metric": "linear-momentum-error",
+            "unit": "kg m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "gravity",
+            "metric": "factor-0",
+            "unit": "m/s",
+            "value": 0.5885999798774719,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": "actual=float3(0f, -0.5886f, 0f); expected=float3(0f, 0f, 0f)"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "gravity",
+            "metric": "factor-1",
+            "unit": "m/s",
+            "value": 0.44144997000694277,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": "actual=float3(0f, -0.5886f, 0f); expected=float3(0f, -0.14715f, 0f)"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "gravity",
+            "metric": "factor-2",
+            "unit": "m/s",
+            "value": 5.960464477539063e-8,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": "actual=float3(0f, -0.5886f, 0f); expected=float3(0f, -0.5886f, 0f)"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "gravity",
+            "metric": "factor-3",
+            "unit": "m/s",
+            "value": 0.5886000990867615,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": "actual=float3(0f, -0.5886f, 0f); expected=float3(0f, -1.1772f, 0f)"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "gravity",
+            "metric": "factor-4",
+            "unit": "m/s",
+            "value": 0.8828999996185303,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": "actual=float3(0f, -0.5886f, 0f); expected=float3(0f, 0.2943f, 0f)"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "mass-change",
+            "metric": "momentum-relative-error",
+            "unit": "ratio",
+            "value": 4.0,
+            "tolerance": 0.004999999888241291,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "mass-change",
+            "metric": "shared-velocity-error",
+            "unit": "m/s",
+            "value": 4.0,
+            "tolerance": 0.004999999888241291,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "welded-chain",
+            "metric": "momentum-relative-error",
+            "unit": "ratio",
+            "value": 1.1920928955078126e-7,
+            "tolerance": 0.004999999888241291,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "welded-chain",
+            "metric": "energy-gain",
+            "unit": "ratio",
+            "value": 0.0,
+            "tolerance": 0.009999999776482582,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "welded-chain",
+            "metric": "max-connection-drift",
+            "unit": "m",
+            "value": 0.024312734603881837,
+            "tolerance": 0.019999999552965165,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "body-replacement",
+            "metric": "shared-velocity-error",
+            "unit": "m/s",
+            "value": 4.0,
+            "tolerance": 0.019999999552965165,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "body-replacement",
+            "metric": "connection-drift",
+            "unit": "m",
+            "value": 0.7999999523162842,
+            "tolerance": 0.019999999552965165,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "scaled-compound",
+            "metric": "missing-hit",
+            "unit": "count",
+            "value": 1.0,
+            "tolerance": 0.0,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "scaled-joint",
+            "metric": "rest-distance-error",
+            "unit": "m",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "scaled-joint",
+            "metric": "spurious-velocity",
+            "unit": "m/s",
+            "value": 0.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "body-identity",
+            "metric": "missing-new-body-hit",
+            "unit": "count",
+            "value": 1.0,
+            "tolerance": 0.0,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "body-identity",
+            "metric": "wrong-hit-entity",
+            "unit": "count",
+            "value": 1.0,
+            "tolerance": 0.0,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "moved-static",
+            "metric": "missing-floor-hit",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "moved-static",
+            "metric": "floor-height-error",
+            "unit": "m",
+            "value": 3.0,
+            "tolerance": 0.00009999999747378752,
+            "pass": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "threshold-linear-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "threshold-linear-above",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=True; actual=True"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "threshold-diagonal-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 1.0,
+            "tolerance": 0.0,
+            "pass": false,
+            "detail": "expected=False; actual=True"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "threshold-zero-unloaded",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "threshold-zero-loaded",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 1.0,
+            "tolerance": 0.0,
+            "pass": false,
+            "detail": "expected=True; actual=False"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "threshold-angular-above",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 1.0,
+            "tolerance": 0.0,
+            "pass": false,
+            "detail": "expected=True; actual=False"
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "threshold-angular-below",
+            "metric": "event-mismatch",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "detail": "expected=False; actual=False"
+        }
+    ]
+}

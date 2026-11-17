@@ -75,6 +75,8 @@ namespace Bpsim.EditorTools
             // before doing any work, so always point it at the directory we are about to build.
             EditorUserBuildSettings.SetBuildLocation(BuildTarget.StandaloneWindows64, exe);
 
+            BeeEnvironment.CollapseCaseDuplicates();
+
             string progress = Path.Combine(projectRoot, "Logs", "player-build.log");
             File.WriteAllText(progress, DateTime.Now.ToString("HH:mm:ss") + " START " + exe + "\n");
             DateTime started = DateTime.Now;

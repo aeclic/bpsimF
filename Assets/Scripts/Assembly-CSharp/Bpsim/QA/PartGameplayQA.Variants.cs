@@ -222,6 +222,15 @@ namespace Bpsim.QA
 							"90 degree wing mirrored=" + flipped + " reference curve=" + response + "; matching wind cancels lift and is consumed");
 					}, .02f);
 				}
+				yield return Scenario("umbrella-isolated-trigger", scene => {
+					Place(scene, PartType.Umbrella, 3, 0, 0, 0);
+				}, () => {}, scene => {
+					Entity part = FindPart(PartType.Umbrella, 3);
+					var aspect = PartGameplayUtil.Em.GetAspect<PartAspect>(part);
+					var canopy = (UmbrellaBehavior)PartGameplayManager.Instance.Find(part);
+					return VariantResult(!BasePart.IsTriggerable(aspect) && !canopy.CanTrigger && canopy.Mode == 0,
+						"isolated directional umbrella has no trigger button or special mode " + canopy.Describe());
+				}, .06f);
 				for (int index = 0; index <= 6; index++)
 				{
 					int skin = index;
@@ -250,13 +259,33 @@ namespace Bpsim.QA
 					}, scene => {
 						var canopy = (UmbrellaBehavior)PartGameplayManager.Instance.Find(FindPart(PartType.Umbrella,skin));
 						bool sourceMode = canopy.Mode == skin && canopy.Open && math.all(math.isfinite(canopy.LastForce));
+						PartAspect aspect = PartGameplayUtil.Em.GetAspect<PartAspect>(canopy.Part);
+						int effectDirection = (aspect.Rotation + 1) & 3;
+						int triggerDirection = -1;
+						foreach (var triggerButtonInfo in BasePart.GetTriggerButtonInfo(aspect)) triggerDirection = triggerButtonInfo.Value.PartIndex;
+						var spriteMap = PartButtonList.BuildSpriteInfoMap(CoreManager.Instance.Resources.LoadAsset<UnityEngine.Texture2D>("PartButton_Texture"));
+						bool triggerSprite = spriteMap.ContainsKey(new PartButtonInfo(PartButtonType.Trigger, 0, PartType.Umbrella, effectDirection, -1));
+						bool angleApplied = skin != 3 && skin != 5
+							? math.abs(canopy.DeltaAngle) < .001f
+							: math.abs(canopy.DeltaAngle - math.radians(30f)) < .001f;
+						bool sliderSprite = spriteMap.ContainsKey(new PartButtonInfo(PartButtonType.Slider, 1, PartType.Umbrella, effectDirection, -1));
+						bool dragMapping = PartTriggerButton.UmbrellaAngleForDrag(0f, 15f) == 30f
+							&& PartTriggerButton.UmbrellaAngleForDrag(170f, 40f) == 180f
+							&& PartTriggerButton.UmbrellaAngleForDrag(-170f, -40f) == -180f;
 						// Anchors cap each velocity correction at 4, not the final velocity after joint solving.
 						bool response = (skin == 2 || skin == 4)
 							? anchorCorrection && math.length(PartVariantPhysics.Position(canopy.Part).xy) < .5f
 								&& math.all(math.isfinite(PartGameplayUtil.LinearVelocity(canopy.Part)))
 							: math.length(canopy.LastForce) > .01f;
-						int sliders = 0; foreach(var slider in BasePart.GetSliderButtonInfo(PartGameplayUtil.Em.GetAspect<PartAspect>(canopy.Part))) sliders++;
-						return VariantResult(sourceMode && response && sliders == (skin == 3 || skin == 5 ? 1 : 0), "umbrella#" + skin + " response=" + response + anchorDetail + " sliders=" + sliders + " " + canopy.Describe());
+						int sliders = 0;
+						foreach (var slider in BasePart.GetSliderButtonInfo(aspect)) sliders++;
+						bool triggerButton = BasePart.IsTriggerable(aspect);
+						return VariantResult(sourceMode && response && angleApplied && triggerButton
+							&& triggerDirection == effectDirection && triggerSprite && !sliderSprite && sliders == 0 && dragMapping,
+							"umbrella#" + skin + " response=" + response
+							+ " angleApplied=" + angleApplied + " triggerButton=" + triggerButton + " triggerDirection=" + triggerDirection
+							+ " triggerSprite=" + triggerSprite + " sliderSprite=" + sliderSprite + anchorDetail + " sliders=" + sliders
+							+ " dragMapping=" + dragMapping + " " + canopy.Describe());
 					}, .06f);
 				}
 				yield return Scenario("umbrella-fold", BuildUmbrellaScene, TriggerFirst(PartType.Umbrella,0), scene => {

@@ -40,6 +40,8 @@ namespace Bpsim.Mods.EditorTools
 			TestSampleManifest();
 			TestModXml();
 			TestZipRoundTrip();
+			TestFolderInstall();
+			TestAdditionalDirRegistration();
 			TestWorkshopIndex();
 			TestVersionCompare();
 			TestModdingConfig();
@@ -129,8 +131,75 @@ namespace Bpsim.Mods.EditorTools
 			}
 		}
 
-		private static void TestWorkshopIndex()
+		private static void TestFolderInstall()
 		{
+			Section("文件夹就地加载");
+			string tmp = Path.Combine(Path.GetTempPath(), "bpsim-modfolder-" + Guid.NewGuid().ToString("N"));
+			string id = "foldertest-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			string pkgRoot = Path.Combine(tmp, "wrapper", id);
+			try
+			{
+				Directory.CreateDirectory(pkgRoot);
+				File.WriteAllText(Path.Combine(pkgRoot, ModXml.FileName),
+					"<Mod><Name>文件夹包</Name><Version>0.9.0</Version></Mod>\n", Encoding.UTF8);
+				File.WriteAllText(Path.Combine(pkgRoot, "p.html"), "<html></html>", Encoding.UTF8);
+
+				List<ModPackage> direct = ModPackageStore.FindPackagesIn(pkgRoot);
+				Check("直接选包目录能解析", direct.Count == 1 && direct[0].Id == id);
+				Check("来源 = Additional", direct.Count == 1 && direct[0].Source == ModSource.Additional);
+				Check("不复制文件（目录不变）", direct.Count == 1 && string.Equals(
+					Path.GetFullPath(direct[0].Directory).TrimEnd('\\', '/'), Path.GetFullPath(pkgRoot).TrimEnd('\\', '/'),
+					StringComparison.OrdinalIgnoreCase));
+				Check("版本正确", direct.Count == 1 && direct[0].Version == "0.9.0");
+
+				List<ModPackage> nested = ModPackageStore.FindPackagesIn(tmp);
+				Check("选外层目录也能找到包", nested.Count == 1 && nested[0].Id == id);
+
+				List<ModPackage> none = ModPackageStore.FindPackagesIn(Path.Combine(tmp, "nope"));
+				Check("不存在的目录返回空列表", none.Count == 0);
+			}
+			catch (Exception ex)
+			{
+				Fail("文件夹加载异常：" + ex.Message);
+			}
+			finally
+			{
+				try { if (Directory.Exists(tmp)) Directory.Delete(tmp, true); } catch { }
+			}
+		}
+
+		private static void TestAdditionalDirRegistration()
+		{
+			Section("额外扫描目录登记");
+			string path = Path.Combine(Path.GetTempPath(), "bpsim-modding-dirs.xml");
+			string dir = Path.Combine(Path.GetTempPath(), "bpsim-external-mod");
+			try
+			{
+				if (File.Exists(path)) File.Delete(path);
+				ModdingConfig cfg = new ModdingConfig();
+				Check("首次登记返回 true", cfg.AddAdditionalDir(dir));
+				Check("重复登记返回 false", !cfg.AddAdditionalDir(dir));
+				Check("大小写/结尾斜杠视为同一个", !cfg.AddAdditionalDir(dir.ToUpperInvariant() + "\\"));
+				Check("列表里只有一条", cfg.AdditionalDirs.Count == 1);
+
+				cfg.Save(path);
+				ModdingConfig back = ModdingConfig.Load(path);
+				Check("写盘后仍在列表里", back.AdditionalDirs.Count == 1);
+
+				Check("移除返回 true", back.RemoveAdditionalDir(dir));
+				Check("移除后为空", back.AdditionalDirs.Count == 0);
+			}
+			catch (Exception ex)
+			{
+				Fail("额外目录登记异常：" + ex.Message);
+			}
+			finally
+			{
+				try { if (File.Exists(path)) File.Delete(path); } catch { }
+			}
+		}
+
+		private static void TestWorkshopIndex()		{
 			Section("工坊索引反序列化");
 			string json = @"{""schema"":1,""baseUrl"":""https://example.com/ws/"",""packs"":[
 				{""id"":""demo"",""name"":""演示"",""version"":""2.0.0"",""url"":""demo.zip"",""sha256"":""abcd"",""tags"":[""a""]}

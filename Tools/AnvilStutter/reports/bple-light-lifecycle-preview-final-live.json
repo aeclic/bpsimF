@@ -1,0 +1,31 @@
+{
+    "label": "preview-final-live",
+    "runId": "f26e79e4bf114c919a19168a60d87d81",
+    "utc": "2026-11-06T11:55:20.0336595Z",
+    "unity": "2022.2.23f1c1",
+    "playing": true,
+    "constructorErrors": 0,
+    "failures": 0,
+    "checks": [
+        {
+            "name": "live singleton exists",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "properties initialized",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Ensure idempotent",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "exactly one camera callback",
+            "pass": true,
+            "detail": ""
+        }
+    ]
+}

@@ -273,6 +273,18 @@ namespace Bpsim.QA
 			bool moveOnLayer3 = scene.Unmanaged.TryMovePartContent(0, 0, 1, 0);
 			Check("move only active layer", moveOnLayer3 && scene.Unmanaged.FindPartGridAt(1, 0, 3, out _), "moved=" + moveOnLayer3);
 
+			// 改层也必须尊重大型部件的多格 footprint：目标层已有大型猪占住
+			// (4,0) 的次级占位时，另一只猪不能从层 1 锚点 (4,0) 搬过去。
+			Entity largeSource = PlacePart(scene, manager, new PartTypeInfo(PartType.KingPig, 0), 4, 0, 1);
+			Entity largeTarget = PlacePart(scene, manager, new PartTypeInfo(PartType.KingPig, 0), 5, 0, 2);
+			int layerCountBeforeFailedRelayer = scene.Unmanaged.LayerCount;
+			bool largeRelayer = largeSource != Entity.Null && largeTarget != Entity.Null && scene.Unmanaged.TrySetPartLayer(largeSource, 2);
+			bool largeSourceStayed = largeSource != Entity.Null && scene.Unmanaged.GetPartLayer(largeSource) == 1
+				&& scene.Unmanaged.FindPartGridAt(4, 0, 1, out _);
+			Check("large relayer footprint rejects", !largeRelayer && largeSourceStayed && scene.Unmanaged.LayerCount == layerCountBeforeFailedRelayer,
+				"moved=" + largeRelayer + " sourceLayer=" + (largeSource != Entity.Null ? scene.Unmanaged.GetPartLayer(largeSource).ToString() : "missing")
+				+ " count=" + scene.Unmanaged.LayerCount);
+
 			// 存档：层号进 Unit；CSV 13 列（含后加的 FrameShape）；各格式往返保留。
 			using NativeArray<Schematics.Unit> units = new NativeArray<Schematics.Unit>(scene.Unmanaged.Parts.Length, Allocator.Persistent);
 			PartSceneJobs.SaveParts(scene.Unmanaged.Parts, units).Schedule().Complete();
@@ -325,7 +337,11 @@ namespace Bpsim.QA
 
 		private static Entity PlaceFrame(PartScene scene, PartManager manager, int x, int y, int layer)
 		{
-			PartTypeInfo info = new PartTypeInfo(PartType.MetalFrame, 0);
+			return PlacePart(scene, manager, new PartTypeInfo(PartType.MetalFrame, 0), x, y, layer);
+		}
+
+		private static Entity PlacePart(PartScene scene, PartManager manager, PartTypeInfo info, int x, int y, int layer)
+		{
 			Entity prefab = manager.EntitySpawner.FindPrefab(info);
 			if (prefab == Entity.Null)
 			{

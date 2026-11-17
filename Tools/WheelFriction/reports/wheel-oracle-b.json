@@ -1,0 +1,338 @@
+{
+  "materials": [
+    {
+      "name": "Contraption_WheelFriction_PhysMat",
+      "friction": 0.025,
+      "staticFriction": 0,
+      "policy": 2
+    },
+    {
+      "name": "Contraption_WoodenWheelFriction_PhysMat 1",
+      "friction": 0.05,
+      "staticFriction": 0,
+      "policy": 2
+    }
+  ],
+  "treads": [
+    {
+      "family": "CartWheel",
+      "index": 0,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 1,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 2,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 3,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 4,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 5,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 6,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 7,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 8,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 9,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "CartWheel",
+      "index": 10,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.05
+    },
+    {
+      "family": "NormalWheel",
+      "index": 0,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "NormalWheel",
+      "index": 1,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "NormalWheel",
+      "index": 2,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "NormalWheel",
+      "index": 3,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "NormalWheel",
+      "index": 4,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "NormalWheel",
+      "index": 5,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "NormalWheel",
+      "index": 6,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 0,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 1,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 2,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 3,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 4,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 5,
+      "node": "FakeWheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 6,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 7,
+      "node": "Part_SmallWheel_7",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "SmallWheel",
+      "index": 7,
+      "node": "WheelPivot",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "MotorWheel",
+      "index": 0,
+      "node": "Part_MotorWheel_0",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "MotorWheel",
+      "index": 1,
+      "node": "Part_MotorWheel_1",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "MotorWheel",
+      "index": 2,
+      "node": "Part_MotorWheel_2",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "MotorWheel",
+      "index": 3,
+      "node": "Part_MotorWheel_3",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "MotorWheel",
+      "index": 4,
+      "node": "Part_MotorWheel_4",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "MotorWheel",
+      "index": 5,
+      "node": "Part_MotorWheel_5",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "MotorWheel",
+      "index": 6,
+      "node": "Part_MotorWheel_6",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "StickyWheel",
+      "index": 0,
+      "node": "Part_StickyWheel_0",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "StickyWheel",
+      "index": 1,
+      "node": "Part_StickyWheel_1",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "StickyWheel",
+      "index": 2,
+      "node": "Part_StickyWheel_2",
+      "shape": "Sphere",
+      "friction": 0.025
+    },
+    {
+      "family": "StickyWheel",
+      "index": 3,
+      "node": "Part_StickyWheel_3",
+      "shape": "Sphere",
+      "friction": 0.025
+    }
+  ],
+  "hashes": {
+    "Assets\\PhysicMaterial\\Contraption_LowFriction_PhysMat.physicMaterial": "7b736f00ba50860019dbb8bce538b951f4ec2e7dabb790084f7b6d6ec442a17f",
+    "Assets\\PhysicMaterial\\Contraption_PhysMat.physicMaterial": "ccc3b74301ec5847735cd718cb08de6c2e94d1ae4d4d41f6d5965a511aa0b5b5",
+    "Assets\\PhysicMaterial\\Contraption_PhysMat_Alien.physicMaterial": "b9b7f1e0e95405e9788188da3830a3e42a643e1abda791be5a568c3bca474556",
+    "Assets\\PhysicMaterial\\Contraption_WheelFriction_PhysMat.physicMaterial": "fc9c97412007f34302d4e6eb29ec54d1ae4b1e1d0ed5e5919dce51db44baea47",
+    "Assets\\PhysicMaterial\\Contraption_WoodenWheelFriction_PhysMat 1.physicMaterial": "3b1844e149546b81a0e8b1608f8bdfe7db7c73b6573938f86c3d191e2dbd83ad",
+    "Assets\\PhysicMaterial\\Ground_PhysMat.physicMaterial": "06d463d9561eb3536472dc0a1edb4e85b223cee501553424e9c031ed2dd3e348",
+    "Assets\\PhysicMaterial\\JunkPrize_PhysMat.physicMaterial": "37601e702b8a6f4b564c68776735dd17dbd7e99c83849d42a9d4f5bb8f05d426",
+    "Assets\\PhysicMaterial\\Pig_PhysMat.physicMaterial": "100bc1a10b4820a17891031fdca9445396224a38251e1cd6c966373af91147cf",
+    "Assets\\TextAsset\\CartWheel_TemplateGroup.json": "e35962b25d4a06887fb0a027c9b4e6defcee9f2b50962bc296656dd820884de9",
+    "Assets\\GameObject\\Part_CartWheel_01_SET.prefab": "e04b275556465277e5ef17694bee127a906b0a50fe7018502f289dc7749bb412",
+    "Assets\\GameObject\\Part_CartWheel_02_SET.prefab": "e20255662d4f26875edfd5c37acb019f2f16584333172cd24467b7170b10cdb0",
+    "Assets\\GameObject\\Part_CartWheel_03_SET.prefab": "7bdd8589a0fc44e9fafcb86872d9de87a07e34ea458c68e9fde5b94895043be9",
+    "Assets\\GameObject\\Part_CartWheel_04_SET.prefab": "76883e84c7c07ad273c85a0accd07c067bc038d3e4b53820a32f67945d5ca25e",
+    "Assets\\GameObject\\Part_CartWheel_05_SET.prefab": "fed9c0e466b0e7f45a2a1ab64cef791ad1b7079aaf45263ce1de607fae87211c",
+    "Assets\\GameObject\\Part_CartWheel_06_SET.prefab": "d02040bfb44f6fe1689d0d6d26b853976a957a4b496e872ab8c5a569694858e5",
+    "Assets\\GameObject\\Part_CartWheel_07_SET.prefab": "971683cde5cbac902f67ba02719fbadcf72147a2e6e748823501142ee8cbb1e4",
+    "Assets\\GameObject\\Part_CartWheel_08_SET.prefab": "bca068a4ca0064a4339fe8074529a535e139430e48063aff6a3928378d37ccd7",
+    "Assets\\GameObject\\Part_CartWheel_09_SET.prefab": "df79f0e6a475bfd9985eb497e8aaaef1925945c9e9b756cf20b5bfb44a8f9b9b",
+    "Assets\\GameObject\\Part_CartWheel_10_SET.prefab": "25abe50b14ece42f95d875361979efbd02a06bb8ac2d91514b6e3f4160f03030",
+    "Assets\\GameObject\\Part_CartWheel_11_SET.prefab": "912d819da6ba2513a0d2b2b58ae475822a5a627ca24e26e9d4e6e8f43ac025d6",
+    "Assets\\TextAsset\\NormalWheel_TemplateGroup.json": "e691b83960d839c67e37451b7ea98f46038d517883663cb9e4fd534c77d215cb",
+    "Assets\\GameObject\\Part_NormalWheel_01_SET.prefab": "e6794689d765862c6c6a6247b55564cd6db84d5aa7df2e4dcd77d67f6449df89",
+    "Assets\\GameObject\\Part_NormalWheel_02_SET.prefab": "2bdf05f35d439e48975c1abaced7566c6d6578f677ad52c3051501583d03d242",
+    "Assets\\GameObject\\Part_NormalWheel_03_SET.prefab": "af0c8d5f1114cb6becfcd2de8fdffb4e302abd88e59b1179b3b341d159822e30",
+    "Assets\\GameObject\\Part_NormalWheel_04_SET.prefab": "624b8466bc3e4891908fb8b81b089b11655ca19036b99f67160381d9cb367dd9",
+    "Assets\\GameObject\\Part_NormalWheel_05_SET.prefab": "28c5b0c38a1935f81f97899f7f21cbcb41d951c6a31b59a43c8ace7cd08b518b",
+    "Assets\\GameObject\\Part_NormalWheel_06_SET.prefab": "24cc7872c9b59c5a3545a8f1b3a8ddab874e1bbaaa80588d33703c3229b5fa4d",
+    "Assets\\GameObject\\Part_NormalWheel_07_SET.prefab": "048531a981a6e1bfc80c4024837ff8b806c9442c03851ff4d542d744e5d434a7",
+    "Assets\\TextAsset\\SmallWheel_TemplateGroup.json": "5b8abb08d4845decc8a30bf8f2c188e126eefa51c8ac682d817153e609272fcd",
+    "Assets\\GameObject\\Part_SmallWheel_01_SET.prefab": "e9ebed45646d9b59395573b4fdbeb60cede4a50996a83ccedc13a1b6357f3ded",
+    "Assets\\GameObject\\Part_SmallWheel_02_SET.prefab": "6868a1661fb0b8e7ee4e8558f06e919c8148209b8db4ebf49b74a3bd09485e7e",
+    "Assets\\GameObject\\Part_SmallWheel_03_SET.prefab": "6dd285ef3c07fd5bc75e180d4adc98aa20d82b51c26b32e8a49f7999874459a1",
+    "Assets\\GameObject\\Part_SmallWheel_04_SET.prefab": "cf19e59fb4bef18557e7533eb698a53869dfb2c4041aa2aa62acd10583af79fd",
+    "Assets\\GameObject\\Part_SmallWheel_05_SET.prefab": "cffef43590d3069226ff92f3d8617b94ca0ab829190ea6fb3f439299224db553",
+    "Assets\\GameObject\\Part_SmallWheel_06_SET.prefab": "08c1b7dc4d78c24301e2654dadfeb4471bfc8cfc5f046a1803d7c10ada8d7512",
+    "Assets\\GameObject\\Part_SmallWheel_07_SET.prefab": "53d5a65af02f4b0f99d8034d804d5085d26fd256c7d5376d56fca39da4073ef8",
+    "Assets\\GameObject\\Part_SmallWheel_08_SET.prefab": "c527a9926bd1c8d4b2d386c016c3c4629ee6ecc9465507aad0d539f7ad4c5f72",
+    "Assets\\TextAsset\\MotorWheel_TemplateGroup.json": "ba8f7c56fa19622b55c9305ce25f5d0ede6caeb37c44f93b6d515bf6a18b5216",
+    "Assets\\GameObject\\Part_MotorWheel_01_SET.prefab": "c2f8674fe5885bd7601d9b17c785869c8999b4059c2f7412f6cd573c3d0164e2",
+    "Assets\\GameObject\\Part_MotorWheel_02_SET.prefab": "8d1aa61659013fda9b2ea41e4e022d2da05a6eca876eaadfdf493949eafbda53",
+    "Assets\\GameObject\\Part_MotorWheel_03_SET.prefab": "5964844577667029a255cdb1afb1a585de94b585c0e9bd5416436e07cfd2c0b5",
+    "Assets\\GameObject\\Part_MotorWheel_04_SET.prefab": "d0ec5133665c980baaab733fb12012f2979142b3daf28475d535b58bc14033eb",
+    "Assets\\GameObject\\Part_MotorWheel_05_SET.prefab": "28bc0fe258fa1eac0f585ada18b7f3e358158d7d43662c1928d7f19022322f32",
+    "Assets\\GameObject\\Part_MotorWheel_06_SET.prefab": "20701251d12bbc9311ef8386c9ede0a4f3b37855f1100ecb43fb6d21f6faf942",
+    "Assets\\GameObject\\Part_MotorWheel_07_SET.prefab": "8c87ea361ea77edf6d7fefe28b13f4cd7ca682e8adf4295c13a364fe32aeb775",
+    "Assets\\GameObject\\Part_MotorWheel_08_SET.prefab": "267892fb7be7571e7e2863f4d8335ea35c4f3488ecfe56c73357ea9b749f7d23",
+    "Assets\\TextAsset\\StickyWheel_TemplateGroup.json": "ff2867f80ed311a8dbbae76fc049f91f39aef299d0098fc89d8e424c59fec393",
+    "Assets\\GameObject\\Part_StickyWheel_01_SET.prefab": "0c3297f2eb13dd3ba2a334fb38554f298fecf368932f9e7fcd3cb9ced551a576",
+    "Assets\\GameObject\\Part_StickyWheel_02_SET.prefab": "9b9876487bb9fa2520bac0cb20b02ae1fd9646762db0856fa039459acd77ef91",
+    "Assets\\GameObject\\Part_StickyWheel_03_SET.prefab": "72db7d0ccf84304b9809c18bf181dd9f075b9b0bb250e53c257acc361b4127d3",
+    "Assets\\GameObject\\Part_StickyWheel_04_SET.prefab": "e43a25b9ef92aa56d1b5c39f0e050056d1ae2b64f0ea1dd02a61dd547d30857f"
+  },
+  "boundary": "Serialized BPLE/local data; no dynamic parity claim"
+}

@@ -4,7 +4,17 @@ const assert = require("node:assert/strict");
 const binary = require("../../Mods/LevelEditor/Web/bpsim/level-binary.js");
 
 const project = path.resolve(__dirname, "../..");
-const levels = path.join(project, "Assets/StreamingAssets/BpsimLevels");
+// The BPLE built-in level data lives in the BpsimLevels Mod in this checkout; the
+// StreamingAssets copy is only present in builds that stage it there.
+const levelRoots = [
+    path.join(project, "Assets/StreamingAssets/BpsimLevels"),
+    path.join(project, "Mods/BpsimLevels/BpsimLevels"),
+];
+const levels = levelRoots.find(root => fs.existsSync(path.join(root, "index.json")));
+if (!levels) {
+    console.error(JSON.stringify({ pass: false, error: "BpsimLevels index.json not found", looked: levelRoots }));
+    process.exit(1);
+}
 const index = JSON.parse(fs.readFileSync(path.join(levels, "index.json"), "utf8"));
 const report = { localLevels: 0, upstreamFixtures: 0, originalOverrides: 0, byteRoundtrips: 0, edgeCases: 0 };
 function roundtrip(file) {
@@ -42,5 +52,7 @@ assert.equal(binary.parse(binary.serialize(unicode)).objects[0].Prefab.name, uni
 unicode.objects[0].Prefab.position.x = Infinity;
 assert.throws(() => binary.serialize(unicode), /Non-finite/); report.edgeCases++;
 const output = path.join(project, "_codex_work/level-editor-mod/level-binary-tests.json");
+report.pass = true;
+report.levels = levels.replace(project + path.sep, "");
 fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n", "utf8");
 console.log(JSON.stringify(report));

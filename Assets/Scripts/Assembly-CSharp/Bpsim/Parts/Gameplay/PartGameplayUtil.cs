@@ -276,6 +276,16 @@ namespace Bpsim.Parts.Gameplay
 			{
 				return 0;
 			}
+			// With self-collision enabled the simulator may still share a prefab collider blob.
+			// A control lamp must disable only its own collider/frame, never every copy of that skin.
+			if (!enabled && !em.HasComponent<PartIsolatedCollider>(entity))
+			{
+				var isolated = physicsCollider.Value.Value.Clone();
+				physicsCollider = new PhysicsCollider { Value = isolated };
+				em.SetComponentData(entity, physicsCollider);
+				em.AddComponent<PartIsolatedCollider>(entity);
+				Simulator.TrackScaledCollider(isolated);
+			}
 			ref Unity.Physics.Collider collider = ref physicsCollider.Value.Value;
 			if (!enabled)
 			{
@@ -391,6 +401,7 @@ namespace Bpsim.Parts.Gameplay
 				extension = new PartExtensionData(1f, 0f, 0f, false, false, BitDirection.None, 600f);
 			}
 			bool eightWay = BasePart.IsEightWay(info);
+			if (SuspensionRuntime.IsSuspension(PartVariants.Resolve(info).PartType)) extension.Mass = SuspensionRuntime.RuntimeMass(info);
 			quaternion rotationQuaternion = GridRotation(rotation, eightWay);
 			if (flipped && BasePart.CanFlip(info))
 				rotationQuaternion = Quaternion.Euler(rotation % 2 == 1 ? 180f : 0f, rotation % 2 == 0 ? 180f : 0f, rotation * 90f);

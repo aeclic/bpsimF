@@ -49,3 +49,22 @@
 [1023/194117.606:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
 [1023/194117.657:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
 [1024/180348.590:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1107/091517.909:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1107/091517.916:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1107/124600.366:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1107/125109.197:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1107/125245.060:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1107/130518.348:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1107/215949.407:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1114/161125.854:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1115/180412.985:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1116/180141.796:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1116/180141.932:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1116/193238.496:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1116/193331.150:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with HRESULT error code: 0x6d
+[1116/193429.486:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1116/193429.814:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with HRESULT error code: 0xe8
+[1116/202231.968:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1116/202939.589:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1117/175338.466:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1117/180152.773:WARNING:task_impl.cc(32)] No task runner for threadId 0

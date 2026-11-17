@@ -235,6 +235,7 @@ namespace Bpsim.EditorTools
 
             _buildState = "running";
             _buildReport = "scenes=" + scenes.Count + " out=" + outExe;
+            BeeEnvironment.CollapseCaseDuplicates();
             EditorApplication.delayCall += () =>
             {
                 try

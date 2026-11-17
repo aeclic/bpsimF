@@ -132,6 +132,8 @@ namespace Bpsim.UI
 			SetRenderedIcon(rectTransform, $"Part_{partType}_0_Rendered", partType == PartType.SkinPart);
 			PartPaletteDragSource dragSource = obj.AddComponent<PartPaletteDragSource>();
 			dragSource.Initialize(this, partType);
+			UiThemeToggleCard.Attach(component);
+			UiThemeApplicator.ApplyTo(obj);
 			return obj;
 		}
 

@@ -24,6 +24,8 @@ namespace Bpsim.Parts
 	/// * 第 4 列是 <c>m_gridRotation</c>：0..3 = 0/90/180/270 度，4..7 = 45/135/225/315 度
 	///   （只有八向部件会用 4..7）。八向部件原样交给 <c>BasePart.RotateTo</c>；
 	///   非八向部件会把多出来的 45 度折进 <c>@rotZ</c>（连续角），否则会被 <c>rotation % 4</c> 吃掉；
+	///   例外是一批「rotation 是模式码」的部件（铰接板布局、电线拓扑、电荷极性……），
+	///   它们的 4..7 不是角度，要先按 BPIR 自己的取模规则归一化，见 <see cref="UsesRotationAsModeCode" />；
 	/// * 第 13 列是 BPIR 的建造层 1..6，直接进 <see cref="Schematics.Unit.Layer" />——
 	///   这是「图层之间的连接关系」的唯一来源（层 2..N 只与同层邻居和正下方层 1 件焊接）；
 	/// * 第 12 列 members 是 <c>key=value;key=value</c> 串，其中
@@ -257,9 +259,16 @@ namespace Bpsim.Parts
 				LastMemberRows++;
 				ReadMembers(members, lineNumber, provider, info, ref offsetX, ref offsetY, ref rotationDegrees, ref stretchX, ref stretchY, ref frameShape);
 			}
-			// 非八向部件放不下 45 度增量（BasePart.RotateTo 会 rotation %= 4），
+			// BPIR 里有一批部件的 rotation 是「模式码」而不是角度：铰链布局、布线拓扑、
+			// 电荷极性……它们的 4..7 不代表「再多 45 度」，必须先按 BPIR 自己的取模规则
+			// 归一化，否则 BasePart.RotateTo 的 %4 会把模式码吃成别的朝向。
+			if (UsesRotationAsModeCode(info))
+			{
+				rotation = NormalizeModeCode(info, rotation);
+			}
+			// 其余非八向部件放不下 45 度增量（BasePart.RotateTo 会 rotation %= 4），
 			// 把余下的 45 度折进连续角，视觉朝向才不会丢。
-			if (rotation >= 4 && !BasePart.IsEightWay(info))
+			else if (rotation >= 4 && !BasePart.IsEightWay(info))
 			{
 				rotationDegrees += 45f;
 				rotation -= 4;
@@ -279,6 +288,80 @@ namespace Bpsim.Parts
 			return wrapped;
 		}
 
+		/// <summary>
+		/// BPIR 里有几个部件的 <c>rotation</c> 列不是朝向角度，而是模式码：铰链布局、
+		/// 布线拓扑、电荷极性……它们的 4..7 落在最常用的 0..3 之外，含义却不是
+		/// 「再多 45 度」。这些件必须按 BPIR 自己的取模规则归一化，不能折进连续角，
+		/// 否则 <see cref="BasePart.RotateTo" /> 的 <c>%4</c> 会把模式码吃成别的朝向。
+		/// </summary>
+		internal static bool UsesRotationAsModeCode(PartTypeInfo info)
+		{
+			switch (info.PartType)
+			{
+			case PartType.Rope:
+				// 4-7 是铰接板（HingePlate），rotation 是 0..5 的布局码。
+				return info.PartIndex >= 4 && info.PartIndex <= 7;
+			case PartType.ElectricalPart:
+				// 1/3 = 固定电线（7 种布线拓扑）、38/39 = 接口（5 种）、
+				// 42 = 点电荷（正负极）、44 = 磁场发生器（正反向）、
+				// 6-11 = 电阻、15-17 = 电容（BPIR 都只允许 0/90）。
+				return info.PartIndex == 1 || info.PartIndex == 3 ||
+					info.PartIndex == 38 || info.PartIndex == 39 ||
+					info.PartIndex == 42 || info.PartIndex == 44 ||
+					(info.PartIndex >= 6 && info.PartIndex <= 11) ||
+					(info.PartIndex >= 15 && info.PartIndex <= 17);
+			default:
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// 把 BPIR 的 rotation 模式码换成 bpsim 侧真正会消费的那个值：铰链板按
+		/// <c>HingePlate.SetRotation</c> 的角度分支取模、布线拓扑码原样保留、
+		/// 电荷与磁场取 bpsim <see cref="Simulation.CircuitSystem" /> 判符号用的余数。
+		/// </summary>
+		internal static int NormalizeModeCode(PartTypeInfo info, int rotation)
+		{
+			switch (info.PartType)
+			{
+			case PartType.Rope:
+			{
+				int layout = ((rotation % 6) + 6) % 6;
+				// 0/1 是「两板并排」并转 90*num，2..5 是「两板下移」并转 90*(num-2)：
+				// 两个分支合起来正好等价于 90*(layout <= 1 ? layout : layout - 2)。
+				return layout <= 1 ? layout : layout - 2;
+			}
+			case PartType.ElectricalPart:
+				if (info.PartIndex == 1 || info.PartIndex == 3)
+				{
+					// CircuitPart.GetTerminals 与 NormalizeRotation 都是 %7。
+					return ((rotation % 7) + 7) % 7;
+				}
+				if (info.PartIndex == 38 || info.PartIndex == 39)
+				{
+					// InterfacePart / CircuitPart.NormalizeRotation 都是 %5。
+					return ((rotation % 5) + 5) % 5;
+				}
+				if (info.PartIndex == 42)
+				{
+					// PointChargePart：%2，0 = 正电荷、1 = 负电荷；
+					// CircuitSystem.Charge 用 Grid.Rotation % 4 == 0 判正。
+					return ((rotation % 2) + 2) % 2;
+				}
+				if (info.PartIndex == 44)
+				{
+					// MagneticFieldGenerator：%4 之后 1 → 2、3 → 0，只剩正向/反向；
+					// CircuitSystem 用 %4 == 0 判负、%4 == 2 判正。
+					int mode = ((rotation % 4) + 4) % 4;
+					return mode == 1 || mode == 2 ? 2 : 0;
+				}
+				// 电阻（6-11）与电容（15-17）：BPIR 的 SetRotation 是 %2。
+				return ((rotation % 2) + 2) % 2;
+			default:
+				return rotation;
+			}
+		}
+
 		private string ReadMembersField(string[] fields, int lineNumber, IFormatProvider provider, out bool hasLayer, out int layer)
 		{
 			hasLayer = false;
@@ -290,7 +373,12 @@ namespace Bpsim.Parts
 			}
 			if (fields.Length < ColumnCount)
 			{
-				return string.Empty;
+				// BPIR 的 INContraptionDataManager.LoadDataFromCsv 是这么分支的：
+				//   列数 >= 8 → members 在第 13 列（index 12）、layer 在第 14 列，
+				//                少一列就两者都没有（8..12 列没有 members）；
+				//   列数 <  8 → members 落在第 7 列（index 6），没有 layer。
+				// 所以只有 7 列的窄存档带 members。
+				return fields.Length == MinColumnCount + 1 ? fields[MinColumnCount] : string.Empty;
 			}
 			if (fields.Length > ColumnCount)
 			{

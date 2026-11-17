@@ -42,12 +42,17 @@ def port_program(metadata,name):
     # Keep the virtual camera's homogeneous W for perspective interpolation.
     begin=body.index('    u_xlat1 = u_xlat0.yyyy * hlslcc_mtx4x4unity_MatrixVP[1];')
     end=body.index('    u_xlat2.xz =',begin)
+    # The visible cyan wave line is the original near edge (z=0, p=1).
+    # Anchor that edge at the authored water height, retaining its waves.
+    # Only the far edge changes height as the camera moves across the bank.
+    surface_offset = ('cy*(1.0-p)' if surface else
+                      '(uw_MeniscusOnly>0.5?0.0:min(cy,0.0)*294.121521/(294.121521+19.4)*(1.0-uv.y))')
     projection='''float d=19.4+u_xlat0.z,p=19.4/d;
-float cx=(uw_CaptureRect.x+uw_CaptureRect.z*.5-uw_Bounds.x-uw_Bounds.z*.5)/uw_Scale;
 float cy=(uw_CaptureRect.y+uw_CaptureRect.w*.5-uw_Bounds.y)/uw_Scale;
-vec2 projected=vec2(uw_Bounds.x+uw_Bounds.z*.5+(cx+(u_xlat0.x-cx)*p)*uw_Scale,uw_Bounds.y+(cy+(u_xlat0.y-cy)*p)*uw_Scale);
+cy=clamp(cy,-uw_Bounds.w/uw_Scale*(294.121521+19.4)/294.121521,uw_Bounds.w/uw_Scale*(294.121521+19.4)/294.121521);
+vec2 projected=vec2(uw_Bounds.x+uv.x*uw_Bounds.z,uw_Bounds.y+(u_xlat0.y*p+SURFACE_OFFSET)*uw_Scale);
 u_xlat1=vec4(((projected-uw_CaptureRect.xy)/uw_CaptureRect.zw*2.0-1.0)*d,0,d);
-'''
+'''.replace('SURFACE_OFFSET', surface_offset)
     body=body[:begin]+projection+body[end:]
     for matrix in ('ObjectToWorld','WorldToObject'):
         for i,vector in enumerate(('vec4(1,0,0,0)','vec4(0,1,0,0)','vec4(0,0,1,0)','vec4(0,0,0,1)')):
@@ -64,6 +69,7 @@ out vec2 uw_world,uw_uv,uw_local;out vec3 uw_original;out vec4 uw_color;
 int op_not(int v){return ~v;}
 '''
     gl+='\n'.join('uniform '+v['type']+' '+k+v['array']+';' for k,v in uniforms.items())
+    if not surface: gl+='\nuniform float uw_MeniscusOnly;\n'
     gl+='\nvoid main(){vec3 uw_position=vec3(local.x*uw_Bounds.z/uw_Scale/303.75,0,local.y);\n'+outputs+'\n'+locals_+'\n'+body
     gl+='\nuw_world=projected;uw_uv=vs_INTERP0.xy;uw_local=vs_INTERP1.xy;uw_original=vs_INTERP4;uw_color=vs_INTERP2;}'
     if not surface:
@@ -94,12 +100,12 @@ int op_not(int v){return ~v;}
     if not surface:
         shader=shader.replace('float4 vs_INTERP0=float4(i.uv.x,1-i.uv.y,0,0);','float4 vs_INTERP0=float4(i.uv,0,0);').replace('float4 vs_INTERP1=float4(i.uv.x,-local.y,0,0);','float4 vs_INTERP1=float4(i.local,0,0);')
     hsbody=body.replace(projection,'''float d=19.4+u_xlat0.z,p=19.4/d;
-float cx=(uw_CaptureRect.x+uw_CaptureRect.z*.5-uw_Bounds.x-uw_Bounds.z*.5)/uw_Scale;
 float cy=(uw_CaptureRect.y+uw_CaptureRect.w*.5-uw_Bounds.y)/uw_Scale;
+cy=clamp(cy,-uw_Bounds.w/uw_Scale*(294.121521+19.4)/294.121521,uw_Bounds.w/uw_Scale*(294.121521+19.4)/294.121521);
 float3 projected=TransformObjectToWorld(a.positionOS);
-projected.xy=float2(uw_Bounds.x+uw_Bounds.z*.5+(cx+(u_xlat0.x-cx)*p)*uw_Scale,uw_Bounds.y+(cy+(u_xlat0.y-cy)*p)*uw_Scale);
+projected.xy=float2(uw_Bounds.x+uv.x*uw_Bounds.z,uw_Bounds.y+(u_xlat0.y*p+SURFACE_OFFSET)*uw_Scale);
 u_xlat1=TransformWorldToHClip(projected)*d;
-''')
+'''.replace('SURFACE_OFFSET', surface_offset))
     hsbody=hsbody.replace('gl_Position = u_xlat1;','o.positionCS=u_xlat1;')
     vertex='''Varyings Vert(Attributes a){Varyings o;
 float2 uv=a.uv;float3 uw_position=float3(a.local.x,0,a.local.y);
@@ -121,9 +127,12 @@ def port_rays(metadata):
     uniforms={k:{'type':t,'array':''} for t,k in re.findall(r'uniform\s+(vec[234]|float)\s+(\w+);',source) if not k.startswith('hlslcc')}
     projection='''u_xlat0.z=clamp(u_xlat0.z,_LocalZBounds.x,_LocalZBounds.y);
 float d=19.4+u_xlat0.z,p=19.4/d;
-float cx=(uw_CaptureRect.x+uw_CaptureRect.z*.5-uw_Bounds.x-uw_Bounds.z*.5)/uw_Scale;
+float halfW=uw_Bounds.z*.5/uw_Scale;
+float cx=clamp((uw_CaptureRect.x+uw_CaptureRect.z*.5-uw_Bounds.x-uw_Bounds.z*.5)/uw_Scale,-halfW,halfW);
 float cy=(uw_CaptureRect.y+uw_CaptureRect.w*.5-uw_Bounds.y)/uw_Scale;
-vec2 projected=vec2(uw_Bounds.x+uw_Bounds.z*.5+(cx+(u_xlat0.x-cx)*p)*uw_Scale,uw_Bounds.y+(cy+(u_xlat0.y-cy)*p)*uw_Scale);
+cy=clamp(cy,-uw_Bounds.w/uw_Scale*(294.121521+19.4)/294.121521,uw_Bounds.w/uw_Scale*(294.121521+19.4)/294.121521);
+vec2 projected=vec2(uw_Bounds.x+uw_Bounds.z*.5+(cx+(u_xlat0.x-cx)*p)*uw_Scale,uw_Bounds.y+(u_xlat0.y*p+cy*(1.0-p))*uw_Scale);
+projected.x=clamp(projected.x,uw_Bounds.x,uw_Bounds.x+uw_Bounds.z);
 '''
     gl='''#version 300 es
 precision highp float;precision highp int;

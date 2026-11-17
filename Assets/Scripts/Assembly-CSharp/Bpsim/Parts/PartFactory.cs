@@ -75,13 +75,20 @@ namespace Bpsim.Parts
 		public NativeParallelHashMap<PartTypeInfo, PartExtensionData> ToNativeExtensionMap(Allocator allocator)
 		{
 			NativeParallelHashMap<PartTypeInfo, PartExtensionData> map = (m_partExtensionMap ?? new Dictionary<PartTypeInfo, PartExtensionData>()).ToNative(allocator);
+			for (int index = 0; index <= 6; index++)
+			{
+				var info = new PartTypeInfo(PartType.Umbrella, index);
+				if (!map.TryGetValue(info, out var data)) continue;
+				data.Mass = UserSettings.Instance?.SimulationSettings.BpleSpecialUmbrellas != false ? .5f : .2f;
+				map[info] = data;
+			}
 			foreach (KeyValuePair<PartTypeInfo, PartTypeInfo> pair in PartVariants.All)
 			{
 				if (map.ContainsKey(pair.Key))
 				{
 					continue;
 				}
-				PartExtensionData value = m_partExtensionMap != null && m_partExtensionMap.TryGetValue(pair.Value, out PartExtensionData baseValue)
+				PartExtensionData value = map.TryGetValue(pair.Value, out PartExtensionData baseValue)
 					? baseValue
 					: DefaultExtension;
 				map.TryAdd(pair.Key, value);

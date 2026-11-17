@@ -82,6 +82,7 @@ namespace Bpsim.Parts.Gameplay
 			}
 			m_running = true;
 			m_log.Length = 0;
+			BpleLightRuntime.Ensure().Begin();
 			EntityManager em = Em;
 			ref PartSimulatorUnmanaged simulator = ref manager.PartSimulator.Unmanaged;
 			for (int i = 0; i < simulator.Parts.Length; i++)
@@ -115,6 +116,7 @@ namespace Bpsim.Parts.Gameplay
 		public void End()
 		{
 			m_running = false;
+			BpleLightRuntime.Instance?.End();
 			TNTDamage.Clear();
 			TNTImpulse.Clear();
 			m_spawnedParts.Clear();
@@ -206,7 +208,6 @@ namespace Bpsim.Parts.Gameplay
 				return Make(PartGameplayKind.Umbrella, new UmbrellaBehavior());
 			case PartType.PoweredUmbrella:
 				return Make(PartGameplayKind.PoweredUmbrella, new PoweredUmbrellaBehavior());
-			case PartType.Spring:
 			case PartType.SpringBoxingGlove:
 				return Make(PartGameplayKind.Spring, new SpringBehavior());
 			case PartType.Kicker:
@@ -363,6 +364,7 @@ namespace Bpsim.Parts.Gameplay
 			}
 			m_spawnedParts.Clear();
 			TNTDamage.Flush();
+			BpleLightRuntime.Instance?.Step(deltaTime);
 			for (int i = 0; i < m_dead.Count; i++)
 			{
 				PartBehavior behavior;

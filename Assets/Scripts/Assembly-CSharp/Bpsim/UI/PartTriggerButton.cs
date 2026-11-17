@@ -1,4 +1,5 @@
 using Bpsim.Parts;
+using Bpsim.Parts.Gameplay;
 using Bpsim.Parts.Simulation;
 using Unity.Entities;
 using UnityEngine;
@@ -33,6 +34,18 @@ namespace Bpsim.UI
 
 		private Color m_pressedColor;
 
+		private const float UmbrellaDragThreshold = 4f;
+
+		private const float UmbrellaDegreesPerPixel = 2f;
+
+		private bool m_umbrellaPressPending;
+
+		private bool m_umbrellaWasDragged;
+
+		private Vector2 m_umbrellaPressPosition;
+
+		private float m_umbrellaStartAngle;
+
 		public bool Enabled => m_state == TriggerButtonState.Enabled;
 
 		public bool Consistent => m_consistent;
@@ -46,6 +59,8 @@ namespace Bpsim.UI
 			base.Awake();
 			m_button = base.transform.Find("Button").GetComponent<UIButton>();
 			m_button.PointerDown += OnPointerDown;
+			m_button.PointerClick += OnPointerClick;
+			m_button.Drag += OnPointerDrag;
 			m_texture = m_button.GetComponent<Image>();
 			m_color = m_disabledColor;
 		}
@@ -82,6 +97,12 @@ namespace Bpsim.UI
 		private void TriggerMultipleParts()
 		{
 			EntityManager entityManager = PartManager.Instance.System.EntityManager;
+			if (!m_multiple)
+			{
+				// BPLE one-shot groups consume one live runtime body, not the entire cluster.
+				PartSimulation.TriggerFirstEnabled(m_parts);
+				return;
+			}
 			bool flag = false;
 			foreach (Entity part in m_parts)
 			{
@@ -102,7 +123,106 @@ namespace Bpsim.UI
 
 		private void OnPointerDown(PointerEventData eventData)
 		{
+			if (eventData.button != PointerEventData.InputButton.Left)
+			{
+				return;
+			}
+			// Directional umbrellas have a single BPLE-style control: tap toggles the canopy,
+			// horizontal drag adjusts the angle. Defer the toggle to PointerClick so a drag
+			// does not also flip the umbrella.
+			if (TryBeginUmbrellaDrag(eventData))
+			{
+				return;
+			}
+			// Non-directional parts and every other part type still stroke on press.
 			OnTriggered();
+		}
+
+		private void OnPointerClick(PointerEventData eventData)
+		{
+			if (!m_umbrellaPressPending || m_umbrellaWasDragged)
+			{
+				m_umbrellaPressPending = false;
+				m_umbrellaWasDragged = false;
+				return;
+			}
+			m_umbrellaPressPending = false;
+			TriggerMultipleParts();
+		}
+
+		private void OnPointerDrag(PointerEventData eventData)
+		{
+			if (!m_umbrellaPressPending || eventData.button != PointerEventData.InputButton.Left)
+			{
+				return;
+			}
+			float horizontal = eventData.position.x - m_umbrellaPressPosition.x;
+			if (!m_umbrellaWasDragged)
+			{
+				if (Mathf.Abs(horizontal) < UmbrellaDragThreshold)
+				{
+					return;
+				}
+				m_umbrellaWasDragged = true;
+			}
+			ApplyUmbrellaAngle(UmbrellaAngleForDrag(m_umbrellaStartAngle, horizontal));
+		}
+
+		/// <summary>
+		/// Pure angle mapping shared by the HUD and QA: two degrees per pixel, clamped to the
+		/// BPLE slider range [-180, 180].
+		/// </summary>
+		internal static float UmbrellaAngleForDrag(float startAngle, float horizontalDelta)
+		{
+			return Mathf.Clamp(startAngle + UmbrellaDegreesPerPixel * horizontalDelta, -180f, 180f);
+		}
+
+		private bool TryBeginUmbrellaDrag(PointerEventData eventData)
+		{
+			if (!TryFindDirectionalUmbrella(out UmbrellaBehavior first))
+			{
+				return false;
+			}
+			m_umbrellaPressPending = true;
+			m_umbrellaWasDragged = false;
+			m_umbrellaPressPosition = eventData.position;
+			m_umbrellaStartAngle = Mathf.Rad2Deg * first.DeltaAngle;
+			return true;
+		}
+
+		private bool TryFindDirectionalUmbrella(out UmbrellaBehavior first)
+		{
+			first = null;
+			if (m_info.PartType != PartType.Umbrella || PartGameplayManager.Instance == null)
+			{
+				return false;
+			}
+			foreach (Entity part in m_parts)
+			{
+				if (PartGameplayManager.Instance.Find(part) is UmbrellaBehavior umbrella
+					&& (umbrella.Mode == 3 || umbrella.Mode == 5))
+				{
+					first = umbrella;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private void ApplyUmbrellaAngle(float angle)
+		{
+			if (PartGameplayManager.Instance == null)
+			{
+				return;
+			}
+			foreach (Entity part in m_parts)
+			{
+				if (PartGameplayManager.Instance.Find(part) is UmbrellaBehavior umbrella
+					&& (umbrella.Mode == 3 || umbrella.Mode == 5))
+				{
+					PartSimulation.SendButtonEvent(PartButtonEvent.CreateSliderEvent(part, angle));
+				}
+			}
 		}
 
 		private void Update()
@@ -154,6 +274,10 @@ namespace Bpsim.UI
 			base.Reset();
 			m_state = TriggerButtonState.Disabled;
 			m_color = m_disabledColor;
+			m_umbrellaPressPending = false;
+			m_umbrellaWasDragged = false;
+			m_umbrellaStartAngle = 0f;
+			m_umbrellaPressPosition = Vector2.zero;
 		}
 	}
 }

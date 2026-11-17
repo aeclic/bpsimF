@@ -7,6 +7,7 @@ using Unity.Transforms;
 namespace Bpsim.Parts.Gameplay
 {
 	internal struct UmbrellaVisual : IComponentData { public float3 BasePosition; }
+	internal struct UmbrellaOpenSprite : IComponentData { }
 	public sealed partial class WingBehavior
 	{
 		private static readonly float[] WingAngles = { -180,-135,-90,-45,-10,10,15,19,22,45,90,135,180 };
@@ -69,8 +70,10 @@ namespace Bpsim.Parts.Gameplay
 		private float3 m_anchor;
 		public float DeltaAngle { get; private set; }
 		public bool Open => m_open;
+		public bool CanTrigger => PartVariantPhysics.IsAssembly(Part) || Enabled;
 		public float3 LastForce { get; private set; }
-		public int Mode => PartVariantPhysics.IsAssembly(Part) ? Info.PartIndex : 0;
+		public int Mode => UserSettings.Instance.SimulationSettings.BpleSpecialUmbrellas && PartVariantPhysics.IsAssembly(Part)
+			? PartVariants.Resolve(Info).PartIndex : 0;
 		public override void Init()
 		{
 			Enabled = false;
@@ -143,11 +146,13 @@ namespace Bpsim.Parts.Gameplay
 			if (!Enabled) return;
 			m_timer += dt;
 			UpdateVisual(math.saturate(m_timer / .25f));
-			PartVariantPhysics.Force(Part, up * (m_open ? 20f : -4f), dt);
-			if (m_timer < .25f) return;
+			float strokeForce = BplePartsProfiles.Umbrella(PartVariants.Resolve(Info).PartIndex).force * .25f;
+			PartVariantPhysics.Force(Part, up * (m_open ? strokeForce : -.2f * strokeForce), dt);
+			if (m_timer <= .25f) return;
 			m_timer = 0;
 			m_open = !m_open;
 			Enabled = false;
+			BplePartAudio.Play(m_open ? "UmbrellaOpen" : "UmbrellaClose");
 			if (m_open && Mode != 3 && Mode != 5) RememberPose();
 			if (Bpsim.UI.PartButtonList.Instance != null) Bpsim.UI.PartButtonList.Instance.NeedsUpdate = true;
 		}
@@ -158,11 +163,17 @@ namespace Bpsim.Parts.Gameplay
 			for (int i = 0; i < count; i++)
 			{
 				Entity child = Em.GetBuffer<LinkedEntityGroup>(Part)[i].Value;
+				if (Em.HasComponent<UmbrellaOpenSprite>(child))
+				{
+					var sprite = Em.GetComponentData<LocalTransform>(child);
+					sprite.Position = float3.zero;
+					Em.SetComponentData(child, sprite);
+				}
 				if (!Em.HasComponent<UmbrellaVisual>(child)) continue;
 				float blend = m_open ? 1 - math.pow(progress, 3) : math.pow(progress, 6);
 				float yScale = math.lerp(2f, 1f, blend);
 				var transform = Em.GetComponentData<LocalTransform>(child);
-				transform.Position = Em.GetComponentData<UmbrellaVisual>(child).BasePosition;
+				transform.Position = new float3(0, 0, Em.GetComponentData<UmbrellaVisual>(child).BasePosition.z);
 				transform.Position.y = math.lerp(-.05f, 0, m_open ? 1 - progress : progress) - .45f * (yScale - 1);
 				transform.Scale = 1;
 				Em.SetComponentData(child, transform);
@@ -170,6 +181,7 @@ namespace Bpsim.Parts.Gameplay
 				if (Em.HasComponent<PostTransformScale>(child)) Em.SetComponentData(child, scale);
 				else Em.AddComponentData(child, scale);
 			}
+			UpdateCanopyCollider(progress);
 		}
 		public override string Describe() => "umbrella open=" + m_open + " moving=" + Enabled + " mode=" + Mode + " angle=" + math.degrees(DeltaAngle).ToString("F1") + " force=" + LastForce;
 	}

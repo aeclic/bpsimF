@@ -1,0 +1,576 @@
+{
+    "label": "awake-b",
+    "runId": "83d170fda08c436aaada19e9114c9b35",
+    "utc": "2026-11-06T10:54:44.1195808Z",
+    "unity": "2022.2.23f1c1",
+    "playing": false,
+    "constructorErrors": 0,
+    "failures": 0,
+    "checks": [
+        {
+            "name": "inactive constructor has no native properties 0",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 0",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 0",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 0",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 0",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 0",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 0",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 1",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 1",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 1",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 1",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 1",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 1",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 1",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 2",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 2",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 2",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 2",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 2",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 2",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 2",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 3",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 3",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 3",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 3",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 3",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 3",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 3",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 4",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 4",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 4",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 4",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 4",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 4",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 4",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 5",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 5",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 5",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 5",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 5",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 5",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 5",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 6",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 6",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 6",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 6",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 6",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 6",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 6",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 7",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 7",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 7",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 7",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 7",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 7",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 7",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 8",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 8",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 8",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 8",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 8",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 8",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 8",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 9",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 9",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 9",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 9",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 9",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 9",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 9",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 10",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 10",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 10",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 10",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 10",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 10",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 10",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 11",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 11",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 11",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 11",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 11",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 11",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 11",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 12",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 12",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 12",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 12",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 12",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 12",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 12",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 13",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 13",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 13",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 13",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 13",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 13",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 13",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 14",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 14",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 14",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 14",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 14",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 14",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 14",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive constructor has no native properties 15",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "inactive construction does not register singleton 15",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "Awake initializes native properties 15",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "repeated Ensure has one singleton 15",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "one rendering subscription 15",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "subscription released 15",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "singleton released 15",
+            "pass": true,
+            "detail": ""
+        },
+        {
+            "name": "zero constructor errors",
+            "pass": true,
+            "detail": "0"
+        }
+    ]
+}

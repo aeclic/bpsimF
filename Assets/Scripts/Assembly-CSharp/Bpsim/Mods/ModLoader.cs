@@ -31,7 +31,16 @@ namespace Bpsim.Mods
 			{
 				foreach (string dir in config.AdditionalDirs)
 				{
-					ScanRoot(ResolveAdditional(dir), ModSource.Additional, result, seen);
+					string resolved = ResolveAdditional(dir);
+					if (resolved == null)
+					{
+						continue;
+					}
+					// 直接指到 Mod 包本身（文件夹里就有清单）时不再往下拆子目录。
+					if (!TryAddPackage(resolved, ModSource.Additional, result, seen))
+					{
+						ScanRoot(resolved, ModSource.Additional, result, seen);
+					}
 				}
 			}
 			ScanRoot(ModPaths.BuiltInRoot, ModSource.BuiltIn, result, seen);

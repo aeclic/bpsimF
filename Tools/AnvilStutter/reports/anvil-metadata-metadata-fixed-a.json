@@ -1,0 +1,98 @@
+{
+    "label": "metadata-fixed-a",
+    "runId": "f61c6b21bf9d4639af308bd57448b97c",
+    "utc": "2026-11-06T11:31:56.1139953Z",
+    "fingerprint": "462c267f88e206b7c04fbf11c13db78cdc2a17835fc650bf07dd1eca478cc7a9",
+    "contractsSha256": "efa32ed212790245dbcd2177cb3f56c100da96cf034b08491a57acff179e4e00",
+    "failures": 0,
+    "measurements": [
+        {
+            "backend": "UnityPhysics",
+            "scenario": "metadata-no-version-threshold-on",
+            "metric": "missed-event",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "metadata-no-version-threshold-off",
+            "metric": "stale-event",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        },
+        {
+            "backend": "UnityPhysics",
+            "scenario": "metadata-no-version-frame",
+            "metric": "anchor-error",
+            "unit": "m",
+            "value": 5.960464477539063e-8,
+            "tolerance": 0.009999999776482582,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "metadata-no-version-threshold-on",
+            "metric": "missed-event",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "metadata-no-version-threshold-off",
+            "metric": "stale-event",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "metadata-no-version-frame",
+            "metric": "anchor-error",
+            "unit": "m",
+            "value": 5.960464477539063e-8,
+            "tolerance": 0.009999999776482582,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "metadata-collision-off",
+            "metric": "unexpected-contacts",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        },
+        {
+            "backend": "AnvilPhysics",
+            "scenario": "metadata-no-version-collision-on",
+            "metric": "missing-contacts",
+            "unit": "count",
+            "value": 0.0,
+            "tolerance": 0.0,
+            "pass": true,
+            "referenceOnly": false,
+            "detail": ""
+        }
+    ]
+}

@@ -41,7 +41,7 @@ namespace Bpsim.Physics.Anvil
 		/// <summary>最近一步的分段墙钟耗时（毫秒）：ECS → box3d 同步。</summary>
 		public static double LastSyncToMs { get; private set; }
 
-		/// <summary>最近一步的分段墙钟耗时（毫秒）：box3d 原生 step。</summary>
+		/// <summary>最近一步的分段墙钟耗时（毫秒）：重力、原生 step 和每子步冲量/接触采样；不只是原生求解器。</summary>
 		public static double LastStepMs { get; private set; }
 
 		/// <summary>最近一步的分段墙钟耗时（毫秒）：box3d → ECS 同步。</summary>
@@ -65,12 +65,17 @@ namespace Bpsim.Physics.Anvil
 		/// 是 Anvil 后端在 bpsim 里的主要固定开销，所以做成可关：
 		/// 关掉后射线查询会读到上一步的位姿（对打点类玩法足够），省下这段时间。
 		/// </remarks>
-		public static bool SyncBroadphaseTree { get; set; } = true;
+		public static bool SyncBroadphaseTree { get; set; } = false;
 
 		/// <summary>
-		/// box3d 求解线程数（0 = 用 <see cref="AnvilWorld.WorkerCount"/> 的默认值 1）。
-		/// 必须在 <c>AnvilWorld</c> 创建前设置才生效；原生基准显示 4 worker 相对 1 worker 有约 2.9× 加速。
+		/// box3d 求解线程数。0 = 自动：8 核以上 4，4 核以上 2，否则 1。
 		/// </summary>
+		/// <remarks>
+		/// 必须在 <c>AnvilWorld</c> 创建前设置才生效；原生基准显示 4 worker 相对 1 worker 有约 2.9× 加速。
+		/// 实测 16 核机器上 1648 部件 / 5250 关节：1 worker 单步 17ms（固定步追赶后仅 3.4fps），
+		/// 4 worker 单步 8.7ms（稳态约 49fps），8 worker 因与 Unity Job/渲染线程争抢反而降到 41fps。
+		/// 所以自动值封顶 4；QA/基准仍可在创建前显式覆盖。
+		/// </remarks>
 		public static int WorkerCount { get; set; }
 
 		/// <summary>
@@ -79,10 +84,19 @@ namespace Bpsim.Physics.Anvil
 		/// </summary>
 		public static bool? EnableSleep { get; set; }
 
+		/// <summary>缓存 PhysicsStep 查询，避免每帧 CreateEntityQuery 的托管分配。</summary>
+		EntityQuery m_StepQuery;
+
 		protected override void OnCreate()
 		{
 			Active = false;
 			StepCount = 0;
+			if (WorkerCount <= 0)
+			{
+				int cores = UnityEngine.SystemInfo.processorCount;
+				WorkerCount = cores >= 8 ? 4 : cores >= 4 ? 2 : 1;
+			}
+			m_StepQuery = GetEntityQuery(ComponentType.ReadOnly<PhysicsStep>());
 		}
 
 		protected override void OnDestroy()
@@ -97,14 +111,13 @@ namespace Bpsim.Physics.Anvil
 		{
 			SimulationType type = SimulationType.UnityPhysics;
 			float3 gravity = new float3(0f, -9.81f, 0f);
+			int solverIterations = PhysicsStep.Default.SolverIterationCount;
 
-			using (EntityQuery query = EntityManager.CreateEntityQuery(ComponentType.ReadOnly<PhysicsStep>()))
+			if (m_StepQuery.TryGetSingleton(out PhysicsStep step))
 			{
-				if (query.TryGetSingleton(out PhysicsStep step))
-				{
-					type = step.SimulationType;
-					gravity = step.Gravity;
-				}
+				type = step.SimulationType;
+				gravity = step.Gravity;
+				solverIterations = step.SolverIterationCount;
 			}
 
 			Active = type == SimulationType.AnvilPhysics;
@@ -127,8 +140,25 @@ namespace Bpsim.Physics.Anvil
 			}
 
 			Anvil.SetGravity(gravity);
+			// Box3D exposes solver substeps rather than Unity's Gauss-Seidel iteration count.
+			// Four is the minimum validated production quality for off-centre assemblies.
+			Anvil.SubStepCount = math.clamp(solverIterations, 4, 16);
 
 			PhysicsWorld physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+
+			// 新一次模拟的起点：动态体清零说明上一场模拟的部件已被销毁，但编辑场景的
+			// 静态地面还在（NumStaticBodies > 0），原来的空世界 early-return 不会触发，
+			// 于是 SyncJointsToNative 会对已被 b3DestroyBody 隐式释放的 stale b3JointId
+			// 调用 b3DestroyJoint → SIGSEGV（第二次模拟崩溃）。此时整体销毁重建 box3d
+			// 世界，让 b3DestroyWorld 原子清空 body/shape/joint，下一帧再懒重建。
+			if (physicsWorld.NumDynamicBodies == 0 && Anvil.HasBodies)
+			{
+				Anvil.Dispose();
+				Anvil = null;
+				LastProfile = default;
+				return;
+			}
+
 			if (physicsWorld.NumDynamicBodies == 0 && physicsWorld.NumStaticBodies == 0)
 			{
 				LastProfile = default;

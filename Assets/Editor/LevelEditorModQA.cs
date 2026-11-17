@@ -223,7 +223,7 @@ namespace Bpsim.EditorTools
 			string error;
 			ModManifest manifest = ModLoader.ReadManifest(modDirectory, out error);
 			Check(manifest != null, "Manifest parses: " + error);
-			Assembly assembly = Assembly.LoadFrom(Path.Combine(modDirectory, "BpsimLevelEditor.dll"));
+			Assembly assembly = Assembly.LoadFrom(Path.Combine(modDirectory, "BpsimLevelEditor_v050.dll"));
 			ModScanResult scan = ModAssemblyScanner.Scan(assembly, true);
 			m_report["scanWarnings"] = JArray.FromObject(scan.Warnings);
 			Check(scan.Passed, "Strict Mod scan: " + scan.Describe());

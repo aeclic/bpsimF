@@ -127,6 +127,58 @@ namespace Bpsim.Mods
 			}
 		}
 
+		/// <summary>
+		/// 找出一个文件夹里的 Mod 包（就地，不复制、不解压）：
+		/// 文件夹本身带清单就直接算一个包；否则往下找一层/两层，允许一次选中一批 Mod。
+		/// 找不到任何包时返回空列表。
+		/// </summary>
+		public static List<ModPackage> FindPackagesIn(string folderPath)
+		{
+			List<ModPackage> result = new List<ModPackage>();
+			if (string.IsNullOrWhiteSpace(folderPath))
+			{
+				return result;
+			}
+			string root = Path.GetFullPath(folderPath.TrimEnd('\\', '/'));
+			if (!Directory.Exists(root))
+			{
+				return result;
+			}
+			if (HasManifest(root))
+			{
+				ModPackage single = TryLoadPackage(root, ModSource.Additional);
+				if (single != null)
+				{
+					result.Add(single);
+				}
+				return result;
+			}
+
+			// 和 zip 安装一样容忍「外面多套了一层」的打包习惯。
+			foreach (string dir in Directory.GetDirectories(root))
+			{
+				if (Path.GetFileName(dir).StartsWith(".", StringComparison.Ordinal))
+				{
+					continue;
+				}
+				ModPackage pkg = TryLoadPackage(dir, ModSource.Additional);
+				if (pkg != null)
+				{
+					result.Add(pkg);
+					continue;
+				}
+				foreach (string sub in Directory.GetDirectories(dir))
+				{
+					ModPackage nested = TryLoadPackage(sub, ModSource.Additional);
+					if (nested != null)
+					{
+						result.Add(nested);
+					}
+				}
+			}
+			return result;
+		}
+
 		/// <summary>删除一个已安装的 Mod（内置源不可删）。</summary>
 		public static bool Uninstall(ModPackage pkg)
 		{

@@ -80,24 +80,42 @@ namespace Bpsim.UI
 		/// <summary>触屏长按显示提示的阈值，与 <see cref="T:Bpsim.UI.HoldableButton" /> 一致。</summary>
 		private const float LongPressSeconds = 0.5f;
 
-		private static readonly Color PlayColor = new Color(0.11f, 0.52f, 0.23f, 1f);
+		// HUD 的颜色全部走 UiTheme：默认配色下与原版观感一致，切换配色即时生效。
+		// 播放/停止保留绿/红语义（任何配色下都可辨认），灰阶与强调色随色板走。
+		private static Color PlayColor => UiTheme.Current.Success;
 
-		private static readonly Color StopColor = new Color(0.62f, 0.17f, 0.16f, 1f);
+		private static Color StopColor => UiTheme.Current.DangerStrong;
 
-		private static readonly Color PlayDisabledColor = new Color(0.18f, 0.18f, 0.18f, 1f);
+		private static Color PlayDisabledColor => UiTheme.Current.Shade(1.15f);
 
-		/// <summary>滑槽颜色：比背景亮的一条浅灰线（Besiege 实测 69,72,88 压在 12,14,30 上）。</summary>
-		private static readonly Color TrackColor = new Color(0.27f, 0.28f, 0.35f, 0.95f);
+		/// <summary>滑槽颜色：比面板亮的一条浅灰线。</summary>
+		private static Color TrackColor
+		{
+			get
+			{
+				Color c = UiTheme.Current.Shade(1.7f);
+				c.a = 0.95f;
+				return c;
+			}
+		}
 
 		/// <summary>旋钮：纯白实心圆。</summary>
 		private static readonly Color KnobColor = new Color(1f, 1f, 1f, 1f);
 
-		/// <summary>倍速百分比那行字：Besiege 的青色 (19, 235, 192)。</summary>
-		private static readonly Color AccentColor = new Color(0.075f, 0.922f, 0.753f, 1f);
+		/// <summary>倍速百分比那行字：默认配色是 Besiege 青色，其余配色随主色提亮。</summary>
+		private static Color AccentColor => UiTheme.Current.AccentBright;
 
 		private static readonly Color CapColor = new Color(1f, 1f, 1f, 0.75f);
 
-		private static readonly Color HintColor = new Color(0.05f, 0.05f, 0.05f, 0.9f);
+		private static Color HintColor
+		{
+			get
+			{
+				Color c = UiTheme.Current.Shade(0.35f);
+				c.a = 0.9f;
+				return c;
+			}
+		}
 
 		private UserInterface m_root;
 
@@ -168,6 +186,28 @@ namespace Bpsim.UI
 			CreateSlider();
 			CreateHint();
 			ApplyLayout(false);
+			UiTheme.Changed += OnThemeChanged;
+		}
+
+		private void OnDestroy()
+		{
+			UiTheme.Changed -= OnThemeChanged;
+		}
+
+		private void OnThemeChanged(UiPalette palette)
+		{
+			// 播放键底板由 ApplyLayout/UpdatePlayAvailability 每帧维护，
+			// 这里重刷一次让建造态立即跟上新配色（模拟态的停止色同理）。
+			ApplyLayout(m_runtimeLayout);
+			m_slider?.ApplyPalette(palette);
+			if (m_hintRoot != null)
+			{
+				Image image = m_hintRoot.GetComponent<Image>();
+				if (image != null)
+				{
+					image.color = HintColor;
+				}
+			}
 		}
 
 		private void Update()
@@ -253,6 +293,8 @@ namespace Bpsim.UI
 		private void CreateCanvas()
 		{
 			GameObject gameObject = new GameObject("BuildHudCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+			// HUD 的颜色由本组件自己管理（播放/停止/滑槽），通用 applicator 不要再插手。
+			gameObject.AddComponent<UiThemeOwned>();
 			gameObject.transform.SetParent(transform, false);
 			m_canvas = gameObject.GetComponent<Canvas>();
 			m_canvas.renderMode = RenderMode.ScreenSpaceOverlay;

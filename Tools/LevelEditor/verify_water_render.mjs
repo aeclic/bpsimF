@@ -2,7 +2,7 @@
 import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-const require = createRequire('C:/Users/aecli/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/entry.cjs');
+const require = createRequire('C:/Users/aecli/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/');
 const { chromium } = require('playwright');
 const output = path.resolve(process.env.WATER_OUTPUT_DIR || '_codex_work/water-comparison');
 await mkdir(output, { recursive: true });

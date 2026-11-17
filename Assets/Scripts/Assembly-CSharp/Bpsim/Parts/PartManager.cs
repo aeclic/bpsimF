@@ -77,12 +77,89 @@ namespace Bpsim.Parts
 
 		private void Start()
 		{
-			m_world = World.DefaultGameObjectInjectionWorld;
-			m_entityManager = m_world.EntityManager;
-			m_entitySpawner = new PartEntitySpawner(m_world);
-			m_system = m_world.GetOrCreateSystemManaged<PartSceneSystem>();
-			SetFixedDeltaTime(UserSettings.Instance.SimulationSettings.FixedTimeStep);
+			// 先挂默认「超平坦」场景协程：它独立于 Start 后续代码运行，且自带
+			// 等待/重试。即便 ECS World 的解析因 Burst/域重载的瞬时故障失败
+			// （Unity 快速反复进出 Play 时偶发），默认场景仍会在 ECS 恢复后建出来。
+			if (!Application.isBatchMode)
+			{
+				StartCoroutine(EnsureDefaultFlatScene());
+			}
+			EnsureWorld();
 		}
+
+		/// <summary>
+		/// 幂等地解析 ECS World。快速反复进出 Play 时，Burst 域重载可能让
+		/// <see cref="World.DefaultGameObjectInjectionWorld"/> 在某帧为 null；此时返回
+		/// false，后续帧（由 <see cref="EnsureDefaultFlatScene"/> 驱动）再重试即可。
+		/// </summary>
+		private bool EnsureWorld()
+		{
+			if (m_world != null && m_world.IsCreated)
+			{
+				return true;
+			}
+			try
+			{
+				m_world = World.DefaultGameObjectInjectionWorld;
+				if (m_world == null || !m_world.IsCreated)
+				{
+					m_world = null;
+					return false;
+				}
+				m_entityManager = m_world.EntityManager;
+				m_entitySpawner = new PartEntitySpawner(m_world);
+				m_system = m_world.GetOrCreateSystemManaged<PartSceneSystem>();
+				SetFixedDeltaTime(UserSettings.Instance.SimulationSettings.FixedTimeStep);
+				return true;
+			}
+			catch (Exception e)
+			{
+				Debug.LogWarning("[PartManager] ECS World 尚未就绪，稍后重试：" + e.Message);
+				m_world = null;
+				return false;
+			}
+		}
+
+		private System.Collections.IEnumerator EnsureDefaultFlatScene()
+		{
+			// 等 ECS World 就绪（最多 ~10 秒），期间每帧重试 EnsureWorld；这样即便
+			// Start 那一刻 World 因瞬时故障未建好，也能在其恢复后继续。同时给
+			// LevelManager 的会话恢复 / QA 自建场景 / Mod 的 OnLoad 留出先跑的机会。
+			for (int i = 0; i < 600 && !EnsureWorld(); i++)
+			{
+				yield return null;
+			}
+			for (int i = 0; i < 6; i++)
+			{
+				yield return null;
+			}
+			if (Application.isBatchMode || !IsReady || HasActiveScene())
+			{
+				yield break;
+			}
+			if (Bpsim.Levels.LevelSession.HasLevel || Bpsim.Levels.LevelSession.HasScene)
+			{
+				yield break;
+			}
+			PartScene created = null;
+			Action<PartScene> handler = scene => created = scene;
+			SceneLoaded += handler;
+			try
+			{
+				LoadEmptyScene("Empty", flatGround: true);
+			}
+			finally
+			{
+				SceneLoaded -= handler;
+			}
+			if (created != null)
+			{
+				SelectScene(created.SceneID);
+				SandboxMap.Sync(true);
+			}
+		}
+
+		private void EnsureBpleLightPreview() => Gameplay.BpleLightRuntime.Ensure();
 
 		private void SetFixedDeltaTime(float deltaTime)
 		{
@@ -99,12 +176,18 @@ namespace Bpsim.Parts
 			return m_sceneMap[id];
 		}
 
-		public void LoadEmptyScene(string name)
+		/// <param name="flatGround">
+		/// true = 这是给玩家看的「超平坦」空白场景（taffy 式白底 + 无限灰地面 +
+		/// 模拟时的运动学物理地面）。QA / 关卡引擎内部造的空测试场景保持 false，
+		/// 不受这块地面的影响。
+		/// </param>
+		public void LoadEmptyScene(string name, bool flatGround = false)
 		{
 			int sceneID = m_sceneID;
 			PartScene partScene = CreateScene(sceneID, name, m_entityManager.World);
 			partScene.State.CameraPosition = Vector2.zero;
 			partScene.State.CameraSize = 20f;
+			partScene.State.UseFlatGround = flatGround;
 			Entity entity = partScene.Unmanaged.FindLastPart(PartType.Pig);
 			if (entity != Entity.Null)
 			{
@@ -113,12 +196,37 @@ namespace Bpsim.Parts
 			}
 			m_sceneMap.Add(sceneID, partScene);
 			m_sceneID++;
+			if (flatGround)
+			{
+				SandboxMap.Create();
+			}
 			this.SceneLoaded?.Invoke(partScene);
 		}
 
-		public void LoadScene(Stream stream, string name, SchematicsFormat format)
+		/// <summary>
+		/// 读取并放置一个场景。传入 <see cref="SchematicsFormat.Auto" /> 时先按内容判定格式，
+		/// 返回值是实际使用的格式（显式格式则原样返回），方便调用方把它记进会话。
+		/// </summary>
+		public SchematicsFormat LoadScene(Stream stream, string name, SchematicsFormat format)
 		{
-			Schematics schematics = Schematics.CreateLoader(format).Read(stream);
+			MemoryStream bufferedStream = null;
+			Stream loadStream = stream;
+			try
+			{
+				if (format == SchematicsFormat.Auto)
+				{
+					// DetectFormat restores seekable streams, but a network/package stream may not
+					// support seeking. Buffer it once so detection and the actual loader see the same bytes.
+					if (stream != null && !stream.CanSeek)
+					{
+						bufferedStream = new MemoryStream();
+						stream.CopyTo(bufferedStream);
+						bufferedStream.Position = 0L;
+						loadStream = bufferedStream;
+					}
+					format = Schematics.DetectFormat(loadStream);
+				}
+				Schematics schematics = Schematics.CreateLoader(format).Read(loadStream);
 			int sceneID = m_sceneID;
 			PartScene partScene = CreateScene(sceneID, name, m_entityManager.World);
 			using NativeArray<Schematics.Unit> schematics2 = schematics.ToNative(Allocator.TempJob);
@@ -135,6 +243,12 @@ namespace Bpsim.Parts
 			m_sceneMap.Add(sceneID, partScene);
 			m_sceneID++;
 			this.SceneLoaded?.Invoke(partScene);
+			return format;
+			}
+			finally
+			{
+				bufferedStream?.Dispose();
+			}
 		}
 
 		public void UnloadScene(int id)
@@ -215,7 +329,10 @@ namespace Bpsim.Parts
 
 		private void Update()
 		{
+			if (Gameplay.BpleLightRuntime.Instance == null && m_system != null) EnsureBpleLightPreview();
 			m_partDrawer.Update(this);
+			// 关卡场景有自己的地形，隐藏超平坦视觉并还原相机背景；空白/超平坦显示它。
+			SandboxMap.Sync(m_activeScene != null && m_activeScene.State.UseFlatGround);
 		}
 
 		private PartScene CreateScene(int id, string name, World world)

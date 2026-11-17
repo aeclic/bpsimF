@@ -498,282 +498,64 @@ namespace Bpsim.Parts.Gameplay
 	public sealed class VoidLightBehavior : PartBehavior
 	{
 		public static readonly Dictionary<Entity, float> AlphaRestore = new Dictionary<Entity, float>();
-
-		private readonly HashSet<Entity> m_voided = new HashSet<Entity>();
-
-		private readonly Dictionary<Entity, CollisionFilter> m_filters = new Dictionary<Entity, CollisionFilter>();
-
-		private float m_radius = 2.5f;
-
-		private int m_voidPasses;
-
-		private int m_ticks;
-
-		private int m_lastForeign;
-
-		private int m_lastFrames;
-
-		private bool m_lastDetected;
-
-		private int m_colliderChanges;
-
-		private bool m_visualInit;
-
-		private bool m_visualOn;
-
-		private bool m_visualFull;
-
-		private int m_visualSwaps;
-
-		public override void Trigger()
-		{
-			Enabled = !Enabled;
-			if (!Enabled)
-			{
-				RestoreAll();
-			}
-			// BPSS AutoControlLight.OnTouch 翻转 activated 的同时也换图，这里保持一致。
-			SyncVisual(force: true);
-			Manager.Log("voidlight: " + (Enabled ? "enabled" : "disabled"));
-		}
-
-		/// <summary>
-		/// 按「开关状态 + 朝向」更新灯图（BPSS AutoControlLight 的 active/inactive sprite，
-		/// 以及斜向型号专用的 *Full 那一对）。
-		/// </summary>
-		/// <remarks>
-		/// 原版 <c>CurrentType</c> = <c>m_gridRotation &gt;= Deg_45 ? 1 : 0</c>；type 0 用
-		/// <c>activeSprite/inactiveSprite</c>，type 1 用 <c>m_activeFullSprite/m_inactiveFullSprite</c>，
-		/// 另一对永远关掉。熄灭状态也要保持正确的那一对，所以 Tick 里在早退之前先同步一次。
-		/// </remarks>
-		private void SyncVisual(bool force)
-		{
-			int gridX;
-			int gridY;
-			int rotation;
-			bool flipped;
-			if (!PartGameplayUtil.TryGetGrid(Part, out gridX, out gridY, out rotation, out flipped))
-			{
-				rotation = 0;
-			}
-			bool full = rotation >= 4;
-			if (!force && m_visualInit && m_visualOn == Enabled && m_visualFull == full)
-			{
-				return;
-			}
-			m_visualSwaps += PartGameplayUtil.SetPointLightVisual(Part, Enabled, full);
-			m_visualInit = true;
-			m_visualOn = Enabled;
-			m_visualFull = full;
-		}
-
-		public override void Tick(float deltaTime)
-		{
-			SyncVisual(force: false);
-			if (!Enabled)
-			{
-				return;
-			}
-			m_ticks++;
-			EntityManager em = PartGameplayUtil.Em;
-			ref PartSimulatorUnmanaged simulator = ref PartManager.Instance.PartSimulator.Unmanaged;
-			float3 origin = Position();
-			float3 down = Down();
-			if (math.lengthsq(down) < 1E-06f)
-			{
-				down = new float3(0f, -1f, 0f);
-			}
-			down = math.normalize(down);
-			float3 side = new float3(down.y, 0f - down.x, 0f);
-			int rotation;
-			int gridX;
-			int gridY;
-			bool flipped;
-			PartGameplayUtil.TryGetGrid(Part, out gridX, out gridY, out rotation, out flipped);
-			bool diagonal = rotation >= 4;
-			bool detected = false;
-			int foreign = 0;
-			for (int i = 0; i < simulator.Parts.Length; i++)
-			{
-				Entity candidate = simulator.Parts[i];
-				if (candidate == Part || !PartGameplayUtil.Alive(candidate) || !PartGameplayManager.IsForeign(Part, candidate))
-				{
-					continue;
-				}
-				foreign++;
-				float3 delta = PartGameplayUtil.Position(candidate) - origin;
-				float x = math.dot(delta, down);
-				float y = math.dot(delta, side);
-				bool inside = diagonal
-					? (math.abs(x) <= m_radius && math.abs(y) <= m_radius)
-					: (x >= -2f && x <= 6.5f && math.abs(y) <= 2.5f);
-				if (inside)
-				{
-					detected = true;
-					break;
-				}
-			}
-			if (!detected)
-			{
-				m_lastForeign = foreign;
-				m_lastDetected = false;
-				m_lastFrames = 0;
-				RestoreAll();
-				return;
-			}
-			m_lastForeign = foreign;
-			m_lastDetected = true;
-			m_lastFrames = 0;
-			HashSet<Entity> current = new HashSet<Entity>();
-			for (int j = 0; j < simulator.Parts.Length; j++)
-			{
-				Entity candidate2 = simulator.Parts[j];
-				if (!PartGameplayUtil.Alive(candidate2) || PartGameplayManager.IsForeign(Part, candidate2))
-				{
-					continue;
-				}
-				PartTypeInfo info = PartGameplayUtil.TypeInfo(candidate2);
-				if (info.PartType != PartType.WoodenFrame && info.PartType != PartType.MetalFrame)
-				{
-					continue;
-				}
-				float3 delta2 = PartGameplayUtil.Position(candidate2) - origin;
-				float x2 = math.dot(delta2, down);
-				float y2 = math.dot(delta2, side);
-				if (math.abs(x2) <= m_radius && math.abs(y2) <= m_radius)
-				{
-					current.Add(candidate2);
-					m_lastFrames++;
-				}
-			}
-			List<Entity> restore = new List<Entity>();
-			foreach (Entity item2 in m_voided)
-			{
-				if (!current.Contains(item2))
-				{
-					restore.Add(item2);
-				}
-			}
-			for (int k = 0; k < restore.Count; k++)
-			{
-				RestorePart(restore[k]);
-			}
-			foreach (Entity item3 in current)
-			{
-				if (m_voided.Contains(item3))
-				{
-					continue;
-				}
-				m_voided.Add(item3);
-				m_colliderChanges += PartGameplayUtil.SetCollisionEnabled(item3, false, m_filters);
-				PartGameplayUtil.SetAlpha(item3, 0.25f, AlphaRestore);
-				if (em.HasComponent<PartTypeValue>(item3))
-				{
-					m_voidPasses++;
-				}
-			}
-		}
-
-		private void RestorePart(Entity part)
-		{
-			PartGameplayUtil.SetCollisionEnabled(part, true, m_filters);
-			PartGameplayUtil.RestoreAlphaFor(part, AlphaRestore);
-			m_voided.Remove(part);
-		}
-
-		private void RestoreAll()
-		{
-			foreach (Entity item in m_voided)
-			{
-				PartGameplayUtil.SetCollisionEnabled(item, true, m_filters);
-				PartGameplayUtil.RestoreAlphaFor(item, AlphaRestore);
-			}
-			m_voided.Clear();
-		}
-
-		public override void Dispose()
-		{
-			RestoreAll();
-		}
-
-		public override string Describe()
-		{
-			return "voidlight enabled=" + Enabled + " voided=" + m_voided.Count + " passes=" + m_voidPasses
-				+ " ticks=" + m_ticks + " foreign=" + m_lastForeign + " detected=" + m_lastDetected
-				+ " frames=" + m_lastFrames + " colliderChanges=" + m_colliderChanges
-				+ " full=" + m_visualFull + " spriteSwaps=" + m_visualSwaps;
-		}
-	}
-
-	/// <summary>
-	/// BPSS DecelerationLight (减速灯): a foreign body passing through the beam
-	/// is slowed down instead of being pulled.
-	/// </summary>
-	public sealed class DecelerationLightBehavior : PartBehavior
-	{
-		private float m_radius = 3f;
-
-		private bool m_visualInit;
-
-		private bool m_visualOn;
-
-		private int m_visualSwaps;
-
+		private readonly Dictionary<Entity, CollisionFilter> m_selfFilter = new Dictionary<Entity, CollisionFilter>();
+		private bool m_detected, m_collided;
+		private float m_delay, m_maxDelay = .1f;
+		public bool Detected => m_detected;
+		public bool Collided => m_collided;
+		public bool Full => Em.GetComponentData<PartTransform>(Part).Rotation >= 4;
 		public override void Init()
 		{
-			// BPSS DecelerationLight 继承 PointLight，熄灭时显示 inactive 图。
-			SyncVisual(force: true);
+			Enabled = false;
+			BpleLightRuntime.Ensure().Register(Part, Info);
+			Entity enclosure = Em.GetComponentData<PartContainerValue>(Part).Value;
+			if (enclosure != Entity.Null && PartGameplayUtil.TypeInfo(enclosure).Equals(BasePart.AlienMetalFrame)) m_maxDelay = 0;
+			SyncVisual();
 		}
-
 		public override void Trigger()
 		{
+			if (Enabled && m_collided) return;
 			Enabled = !Enabled;
-			SyncVisual(force: true);
-			Manager.Log("decelerationlight: " + (Enabled ? "enabled" : "disabled"));
+			BpleLightRuntime.Instance.SetActivation(Part, Enabled);
+			if (!Enabled) SetDetected(false, true, 0);
+			SyncVisual();
 		}
-
-		/// <summary>继承自 PointLight 的那半行为：换 active/inactive 图（没有 Full 那一对）。</summary>
-		private void SyncVisual(bool force)
+		private void SyncVisual() => PartGameplayUtil.SetPointLightVisual(Part, Enabled, Full);
+		public override void Tick(float dt) => SyncVisual();
+		internal void SetCollided(bool value) => m_collided = value;
+		internal void SetDetected(bool value, bool force, float dt)
 		{
-			if (!force && m_visualInit && m_visualOn == Enabled)
-			{
-				return;
-			}
-			m_visualSwaps += PartGameplayUtil.SetPointLightVisual(Part, Enabled, false);
-			m_visualInit = true;
-			m_visualOn = Enabled;
+			if (value == m_detected) return;
+			m_delay += dt;
+			if (!force && m_delay < m_maxDelay) return;
+			m_delay = 0; m_detected = value;
+			PartGameplayUtil.SetCollisionEnabled(Part, !m_detected, m_selfFilter);
 		}
-
-		public override void Tick(float deltaTime)
+		public override void Dispose()
 		{
-			SyncVisual(force: false);
-			if (!Enabled)
-			{
-				return;
-			}
-			PartSimulatorUnmanaged simulator = PartManager.Instance.PartSimulator.Unmanaged;
-			float3 origin = Position();
-			for (int i = 0; i < simulator.Parts.Length; i++)
-			{
-				Entity candidate = simulator.Parts[i];
-				if (candidate == Part || !PartGameplayUtil.Alive(candidate) || !PartGameplayManager.IsForeign(Part, candidate))
-				{
-					continue;
-				}
-				float3 delta = PartGameplayUtil.Position(candidate) - origin;
-				if (math.length(delta) > m_radius)
-				{
-					continue;
-				}
-				float3 velocity = PartGameplayUtil.LinearVelocity(candidate);
-				PartGameplayUtil.AddVelocity(candidate, -velocity * math.saturate(deltaTime * 3f));
-			}
+			if (Em.Exists(Part)) PartGameplayUtil.SetCollisionEnabled(Part, true, m_selfFilter);
+			BpleLightRuntime.Instance?.Unregister(Part);
 		}
+		public override string Describe() => "autocontrollight enabled=" + Enabled + " detected=" + m_detected + " collided=" + m_collided;
+	}
 
-		public override string Describe()
+	public sealed class DecelerationLightBehavior : PartBehavior
+	{
+		public override void Init()
 		{
-			return "decelerationlight enabled=" + Enabled + " spriteSwaps=" + m_visualSwaps;
+			Enabled = false;
+			BpleLightRuntime.Ensure().Register(Part, Info);
+			PartGameplayUtil.SetPointLightVisual(Part, false, false);
 		}
+		public override void Trigger()
+		{
+			if (!Enabled && !PartVariantPhysics.IsAssembly(Part)) return;
+			Enabled = !Enabled;
+			PartGameplayUtil.SetPointLightVisual(Part, Enabled, false);
+			BpleLightRuntime.Instance.SetActivation(Part, Enabled);
+		}
+		public override void Dispose() => BpleLightRuntime.Instance?.Unregister(Part);
+		public override string Describe() => "decelerationlight enabled=" + Enabled + " innerRadius=4 outerRadius=8 maxForce=150";
 	}
 
 }

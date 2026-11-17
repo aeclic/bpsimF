@@ -156,10 +156,10 @@ namespace Bpsim.EditorTools
             string overridesPath=Path.Combine(directory,"diagnostic-overrides.json");
             JObject uniformOverrides=File.Exists(overridesPath)?JObject.Parse(File.ReadAllText(overridesPath)):new JObject();
             float fixtureTime=(float)fixture["time"];
-            Type waterAssets=System.Reflection.Assembly.Load(File.ReadAllBytes(Path.Combine(root,"Mods","LevelEditor","BpsimLevelEditor.dll"))).GetType("Bpsim.LevelEditor.WaterAssets");
+            Type waterAssets=System.Reflection.Assembly.Load(File.ReadAllBytes(Path.Combine(root,"Mods","LevelEditor","BpsimLevelEditor_v050.dll"))).GetType("Bpsim.LevelEditor.WaterAssets");
             JObject lighting=JObject.Parse(File.ReadAllText(Path.Combine(web,"lighting-profile.json")));
             int width = 1280, height = 762;
-            Texture2D source = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
+            Texture2D source = new Texture2D(2, 2, TextureFormat.RGBA32, false, true) { wrapMode=TextureWrapMode.Clamp, filterMode=FilterMode.Bilinear };
             source.LoadImage(File.ReadAllBytes(Path.Combine(directory, "web-source.png")));
             RenderTexture previousActive = RenderTexture.active;
             if (previousActive != null && !previousActive.IsCreated()) previousActive = null;
@@ -231,7 +231,8 @@ namespace Bpsim.EditorTools
                             }
                             if (prop.Name.Contains("Ripple") && prop.Name.EndsWith("Tex")) texture = Texture2D.blackTexture;
                             if (prop.Name == "_LocalReflectionMap") texture = reflection;
-                            if (prop.Name == "_CameraSortingLayerTexture") texture = target;
+                            // The scene snapshot must not alias the render target being written.
+                            if (prop.Name == "_CameraSortingLayerTexture") texture = source;
                             if (prop.Name == "_LocalUnderwaterSurfaceMap") texture = halfSource;
                             material.SetTexture(prop.Name, texture);
                             continue;

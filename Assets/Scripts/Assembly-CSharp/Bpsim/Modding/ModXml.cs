@@ -30,6 +30,13 @@ namespace Bpsim.Modding
 	///     &lt;Texture name="icon" path="icon.png" /&gt;
 	///     &lt;Panel id="player" title="播放器" html="panel.html" width="460" height="680" /&gt;
 	///   &lt;/Resources&gt;
+	///   &lt;Settings&gt;
+	///     &lt;Setting key="autoSave" title="自动保存" type="bool" default="true" /&gt;
+	///     &lt;Setting key="gridSize" title="网格边长" type="int" default="4" min="1" max="32" /&gt;
+	///     &lt;Setting key="mode" title="模式" type="enum" default="fast"&gt;
+	///       &lt;Option value="fast" label="快速" /&gt;
+	///     &lt;/Setting&gt;
+	///   &lt;/Settings&gt;
 	/// &lt;/Mod&gt;
 	/// </code>
 	/// <para>解析是宽松的：认不得的元素忽略，缺字段用目录名兜底，绝不因为一个拼错的标签整包失败。</para>
@@ -114,6 +121,12 @@ namespace Bpsim.Modding
 			CollectPanels(Child(root, "Resources"), panels);
 			CollectPanels(Child(root, "Panels"), panels);
 
+			// 可调设置：<Settings><Setting .../></Settings>（也接受 <Resources>/<Config> 下直接写）
+			List<ModSettingSpec> settings = new List<ModSettingSpec>();
+			CollectSettings(Child(root, "Settings"), settings);
+			CollectSettings(Child(root, "Resources"), settings);
+			CollectSettings(Child(root, "Config"), settings);
+
 			// 标签
 			XElement tagsNode = Child(root, "Tags");
 			if (tagsNode != null)
@@ -128,6 +141,7 @@ namespace Bpsim.Modding
 			}
 
 			m.panels = panels;
+			m.settings = settings;
 			if (assemblies.Count > 0)
 			{
 				m.entryAssembly = assemblies[0];
@@ -211,6 +225,98 @@ namespace Bpsim.Modding
 			}
 		}
 
+		/// <summary>
+		/// 收集 <c>&lt;Setting&gt;</c> 声明。接受两种形状：
+		/// <c>type</c> 属性（bool/int/float/string/enum）或 <c>kind</c> 别名；
+		/// enum 的候选写成子元素 <c>&lt;Option value=".." label=".."/&gt;</c>，
+		/// 也接受 <c>options="a,b,c"</c> 这种逗号串。认不出的键忽略，不让整包失败。
+		/// </summary>
+		private static void CollectSettings(XElement node, List<ModSettingSpec> into)
+		{
+			if (node == null)
+			{
+				return;
+			}
+			// 也接受包了一层：<Resources><Settings><Setting .../></Settings></Resources>
+			XElement nested = node.Element("Settings");
+			if (nested != null)
+			{
+				CollectSettings(nested, into);
+			}
+			foreach (XElement element in node.Elements("Setting"))
+			{
+				ModSettingSpec spec = new ModSettingSpec();
+				spec.key = Attribute(element, "key");
+				if (string.IsNullOrWhiteSpace(spec.key))
+				{
+					spec.key = Attribute(element, "name");
+				}
+				spec.title = Attribute(element, "title");
+				if (string.IsNullOrWhiteSpace(spec.title))
+				{
+					spec.title = Value(element, "Title");
+				}
+				spec.description = Attribute(element, "description");
+				if (string.IsNullOrWhiteSpace(spec.description))
+				{
+					spec.description = Value(element, "Description");
+				}
+				string type = Attribute(element, "type");
+				if (string.IsNullOrWhiteSpace(type))
+				{
+					type = Attribute(element, "kind");
+				}
+				if (!string.IsNullOrWhiteSpace(type))
+				{
+					spec.type = type.Trim().ToLowerInvariant();
+				}
+				spec.value = Attribute(element, "default");
+				if (spec.value == null)
+				{
+					spec.value = Attribute(element, "value");
+				}
+				spec.min = ParseNumber(Attribute(element, "min"), 0f);
+				spec.max = ParseNumber(Attribute(element, "max"), 0f);
+
+				foreach (XElement option in element.Elements("Option"))
+				{
+					ModSettingOption candidate = new ModSettingOption();
+					candidate.value = Attribute(option, "value");
+					if (string.IsNullOrWhiteSpace(candidate.value))
+					{
+						candidate.value = option.Value != null ? option.Value.Trim() : null;
+					}
+					candidate.label = Attribute(option, "label");
+					spec.options.Add(candidate);
+				}
+				string inlineOptions = Attribute(element, "options");
+				if (!string.IsNullOrWhiteSpace(inlineOptions))
+				{
+					foreach (string part in inlineOptions.Split(','))
+					{
+						if (string.IsNullOrWhiteSpace(part))
+						{
+							continue;
+						}
+						ModSettingOption candidate = new ModSettingOption();
+						// 支持 "fast=快速" 形式。
+						int split = part.IndexOf('=');
+						if (split > 0)
+						{
+							candidate.value = part.Substring(0, split).Trim();
+							candidate.label = part.Substring(split + 1).Trim();
+						}
+						else
+						{
+							candidate.value = part.Trim();
+						}
+						spec.options.Add(candidate);
+					}
+				}
+				into.Add(spec);
+			}
+		}
+
 		private static XElement Child(XElement parent, string name)
 		{
 			return parent != null ? parent.Element(name) : null;
@@ -254,6 +360,17 @@ namespace Bpsim.Modding
 		private static float ParseFloat(string text, float fallback)
 		{
 			if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float v) && v > 0f)
+			{
+				return v;
+			}
+			return fallback;
+		}
+
+		/// <summary>带区间约束的数值属性：允许 0 和负数（不同于只收正数的 <see cref="ParseFloat"/>）。</summary>
+		private static float ParseNumber(string text, float fallback)
+		{
+			if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float v)
+				&& !float.IsNaN(v) && !float.IsInfinity(v))
 			{
 				return v;
 			}

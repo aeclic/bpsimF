@@ -31,6 +31,11 @@ namespace Bpsim.QA
 					checks.Add(name);
 				}
 
+				// 关卡数据已随「BPLE 内置关卡」Mod 移出 StreamingAssets，QA 直接指向 Mod
+				// 自带的数据目录（不加载 Mod 时游戏本体里没有这份数据）。
+				string qaRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Mods", "BpsimLevels", "BpsimLevels"));
+				LevelCatalog.SetRoot(qaRoot);
+
 				Check(LevelCatalog.IsAvailable && LevelCatalog.Levels.Count > 0, "desktop catalog available");
 				LevelEntryJson first = LevelCatalog.Levels[0];
 				string texturePath = Directory.GetFiles(Path.Combine(LevelCatalog.Root, "textures"), "*.png")[0];
@@ -93,12 +98,11 @@ namespace Bpsim.QA
 						}
 						root = new GameObject("LevelAssetsQA");
 						LevelMenu menu = LevelMenu.Create(root.transform);
-						Button toggle = menu.transform.Find("LevelMenuToggle").GetComponent<Button>();
 						Transform panel = menu.transform.Find("LevelMenuPanel");
-						Check(toggle.gameObject.activeInHierarchy && !panel.gameObject.activeSelf,
-							compression + ": visible level button");
-						toggle.onClick.Invoke();
-						Check(panel.gameObject.activeSelf, compression + ": button opens picker");
+						Check(!panel.gameObject.activeSelf, compression + ": picker starts closed");
+						// 右上角常驻按钮已删除，面板改由宿主 API 按需打开。
+						menu.Show();
+						Check(panel.gameObject.activeSelf, compression + ": Show() opens picker");
 						Check(panel.Find("Levels/Viewport/Content").childCount > 0,
 							compression + ": picker populated");
 					}
@@ -118,6 +122,7 @@ namespace Bpsim.QA
 			finally
 			{
 				if (root != null) UnityEngine.Object.DestroyImmediate(root);
+				LevelCatalog.SetRoot(null);
 				Directory.Delete(scratch, recursive: true);
 			}
 		}

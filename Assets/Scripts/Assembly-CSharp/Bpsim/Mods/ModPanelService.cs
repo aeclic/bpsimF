@@ -199,7 +199,7 @@ namespace Bpsim.Mods
 			}
 
 			// 标题栏
-			RectTransform bar = ModUiKit.Panel(frame, new Color(0.12f, 0.14f, 0.18f, 1f), 14);
+			RectTransform bar = ModUiKit.Panel(frame, Bpsim.UI.UiTheme.Current.Header, 14);
 			bar.name = "TitleBar";
 			bar.anchorMin = new Vector2(0f, 1f);
 			bar.anchorMax = new Vector2(1f, 1f);
@@ -237,7 +237,7 @@ namespace Bpsim.Mods
 			m_host = host;
 
 			// 平台后端在门面里选：桌面/编辑器 = Vuplex，Android/iOS 真机 = UniWebView。
-			m_html = HtmlPanelView.Attach(gameObject, host, true, new Color(0.09f, 0.10f, 0.13f, 1f));
+			m_html = HtmlPanelView.Attach(gameObject, host, true, Bpsim.UI.UiTheme.Current.Shade(0.6f));
 			if (m_html == null)
 			{
 				ShowError("网页组件创建失败");

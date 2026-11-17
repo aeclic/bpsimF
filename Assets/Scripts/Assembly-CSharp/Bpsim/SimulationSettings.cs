@@ -224,6 +224,7 @@ namespace Bpsim
 
 		public void Update(SimulationSettings settings)
 		{
+			UpdateBpleParts(settings);
 			UpdateTnt(settings);
 			UpdateFactions(settings);
 			SimulationType = settings.SimulationType;

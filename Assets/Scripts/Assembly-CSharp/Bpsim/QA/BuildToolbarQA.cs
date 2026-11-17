@@ -113,8 +113,8 @@ namespace Bpsim.QA
 		///
 		///   invoke_static type=Bpsim.QA.BuildToolbarQA method=Magnify args=[true]
 		///
-		/// 返回 saved / overview / bounds 这些中间量，配合 <see cref="M:Bpsim.QA.BuildToolbarQA.Capture(System.String)" />
-		/// 就能看出到底拉远了多少、包围盒是从哪儿取的。走的是
+		/// 返回当前镜头状态，配合 <see cref="M:Bpsim.QA.BuildToolbarQA.Capture(System.String)" />
+		/// 可确认预览开关不会自动移动或缩放镜头。走的是
 		/// <see cref="P:UnityEngine.UI.Toggle.isOn" />，也就是真实的点击路径。
 		/// </summary>
 		public static string Magnify(bool on)
@@ -193,6 +193,8 @@ namespace Bpsim.QA
 			CheckIconButton(actionBar, "BuildTransformMachineButton", "Icon_TransformMachine");
 			CheckIconButton(actionBar, "BuildGridButton", "Icon_Grid");
 			CheckIconButton(actionBar, "BuildUndoButton", "Icon_Undo");
+			Transform clear = actionBar.Find("BuildClearButton");
+			Check("clear button has trash icon", clear != null && clear.GetComponent<Button>() != null && clear.Find("TrashLid") != null && clear.Find("TrashSideLeft") != null && clear.Find("TrashSideRight") != null && clear.Find("TrashBottom") != null);
 
 			// 合并掉的按钮不能再出现：它们和留下的按钮是同一套手势的两个入口。
 			// 「部件调整」由双击部件覆盖，「旋转部件/整车旋转」并进平移按钮的单击，
@@ -232,18 +234,18 @@ namespace Bpsim.QA
 			}
 			CheckNoOverlap(actionBar);
 			// 工具栏右端要给右侧的 FPS 文本留位置（FPS 锚在右边，宽 160）。
-			RectTransform undo = actionBar.Find("BuildUndoButton") as RectTransform;
+			RectTransform clearRect = actionBar.Find("BuildClearButton") as RectTransform;
 			RectTransform fpsRect = actionBar.Find("Text") as RectTransform;
-			if (undo != null && fpsRect != null)
+			if (clearRect != null && fpsRect != null)
 			{
 				float barWidth = ((RectTransform)actionBar).rect.width;
-				float toolbarRight = undo.anchoredPosition.x + undo.sizeDelta.x * 0.5f;
+				float toolbarRight = clearRect.anchoredPosition.x + clearRect.sizeDelta.x * 0.5f;
 				float fpsLeft = barWidth + fpsRect.anchoredPosition.x - fpsRect.sizeDelta.x * 0.5f;
 				Check("toolbar clears fps", toolbarRight < fpsLeft - 16f, "toolbarRight=" + toolbarRight + " fpsLeft=" + fpsLeft);
 			}
 			else
 			{
-				Check("toolbar clears fps", false, "缺少 BuildUndoButton 或 Text");
+				Check("toolbar clears fps", false, "缺少 BuildClearButton 或 Text");
 			}
 			RectTransform fps = actionBar.Find("Text") as RectTransform;
 			Check("fps text kept", fps != null && Mathf.Approximately(fps.anchoredPosition.x, -48f), (fps == null) ? "缺少 Text" : ("x=" + fps.anchoredPosition.x));
@@ -263,7 +265,7 @@ namespace Bpsim.QA
 				{
 					"LoadButton", "SaveButton", "ScreenshotButton", "SettingsButton",
 					"BuildMoveButton", "BuildMoveAllButton", "BuildTransformPartButton",
-					"BuildTransformMachineButton", "BuildGridButton", "BuildUndoButton"
+					"BuildTransformMachineButton", "BuildGridButton", "BuildUndoButton", "BuildClearButton"
 				};
 				string missing = string.Empty;
 				foreach (string name in names)
@@ -387,6 +389,18 @@ namespace Bpsim.QA
 			Check("tool toggles off", controller.CurrentTool == BuildTool.None, "tool=" + controller.CurrentTool);
 			Check("operator back to view", ui.PartOperator.Mode == PartOperationMode.View, "mode=" + ui.PartOperator.Mode);
 
+			// 四枚工具按钮开启态要有绿色底板（与网格按钮、播放键一致的「开」反馈）：
+			// 底板是 button 自身的 Image，图标是 "Icon" 子物体 —— 二者必须分开，
+			// 否则会把激活色刷到图标上、底板却永远停在深蓝。这里逐个工具核对开/关两态。
+			// 上方悬停检查已声明同名 toolbar，这里换名避免 CS0128 局部变量重复。
+			BuildToolbar plateToolbar = ui.ActionBar.GameObject.GetComponent<BuildToolbar>();
+			CheckToolPlate(actionBar, plateToolbar, controller, BuildTool.Move, "BuildMoveButton");
+			CheckToolPlate(actionBar, plateToolbar, controller, BuildTool.MoveAll, "BuildMoveAllButton");
+			CheckToolPlate(actionBar, plateToolbar, controller, BuildTool.TransformPart, "BuildTransformPartButton");
+			CheckToolPlate(actionBar, plateToolbar, controller, BuildTool.TransformMachine, "BuildTransformMachineButton");
+			controller.SetTool(BuildTool.None);
+			plateToolbar.RefreshForTest();
+
 			// 合并掉的旧工具值不再有按钮，但外部脚本 / 旧存档逻辑仍可能传进来：
 			// 必须翻译成合并后的工具（旋转→平移、自由变换→部件变换、部件调整→无），
 			// 而且「再传一次同一个旧值」要能取消，说明比对发生在归一化之后。
@@ -401,7 +415,7 @@ namespace Bpsim.QA
 			controller.SetTool(BuildTool.Adjust);
 			Check("legacy adjust has no tool", controller.CurrentTool == BuildTool.None, "tool=" + controller.CurrentTool);
 
-			// 放大镜（概览镜头）按钮：位于「框选」右边的第 5 颗，独立开关，不参与四选一的放置模式。
+			// 放大镜（预览镜头）按钮：位于「框选」右边的第 5 颗，独立开关，不参与四选一的放置模式。
 			CheckMagnifier(ui);
 
 			// 下面用两个金属框验证 PartSceneUnmanaged 新增的四个入口。
@@ -521,6 +535,41 @@ namespace Bpsim.QA
 				&& labelHidden
 				&& Mathf.Abs(((RectTransform)iconTransform).sizeDelta.x - iconSize) < 0.01f;
 			Check(name, ok, "plate=" + (plate != null) + " button=" + (button != null) + " icon=" + spriteName + " textHidden=" + labelHidden);
+		}
+
+		/// <summary>
+		/// 工具按钮的「开启态」反馈：点开后 button 自身的底板 Image 要变成绿色（ActiveColor），
+		/// 图标仍保持近白；再点一次取消，底板回到深蓝（BaseColor）。
+		/// 底板与图标必须是两个不同的 Image —— 这里顺带验证它们没有被刷成同一个对象，
+		/// 否则激活色会被图标的白色覆盖，四枚按钮都看不到绿色。
+		/// </summary>
+		private static void CheckToolPlate(Transform actionBar, BuildToolbar toolbar, BuildToolController controller, BuildTool tool, string name)
+		{
+			Transform child = actionBar.Find(name);
+			Image plate = (child == null) ? null : child.GetComponent<Image>();
+			Transform iconTransform = (child == null) ? null : child.Find("Icon");
+			Image icon = (iconTransform == null) ? null : iconTransform.GetComponent<Image>();
+			if (plate == null || icon == null || toolbar == null)
+			{
+				Check(name + " active plate is green", false, "按钮/底板/图标/工具栏缺失");
+				Check(name + " inactive plate is blue", false, "按钮/底板/图标/工具栏缺失");
+				return;
+			}
+			Check(name + " plate and icon are separate", plate != icon, "同一 Image");
+
+			controller.SetTool(tool);
+			toolbar.RefreshForTest();
+			Color active = plate.color;
+			bool green = active.g > active.r + 0.2f && active.g > active.b + 0.2f;
+			Check(name + " active plate is green", green && controller.CurrentTool == tool, "color=" + active + " tool=" + controller.CurrentTool);
+			Color iconActive = icon.color;
+			Check(name + " active icon stays white", iconActive.r > 0.9f && iconActive.g > 0.9f && iconActive.b > 0.9f, "color=" + iconActive);
+
+			controller.SetTool(tool);
+			toolbar.RefreshForTest();
+			Color off = plate.color;
+			bool blue = off.b > off.g;
+			Check(name + " inactive plate is blue", blue && controller.CurrentTool == BuildTool.None, "color=" + off + " tool=" + controller.CurrentTool);
 		}
 
 		/// <summary>
@@ -758,7 +807,7 @@ namespace Bpsim.QA
 		/// ① 它真的被克隆出来并排在「框选」右边（HorizontalLayoutGroup 靠 sibling 顺序排，顺序错了位置就错）；
 		/// ② 它是<b>独立</b>开关 —— 脱离 ToggleGroup 之后既不会被四个模式按钮关掉，也不会把
 		///    <see cref="P:Bpsim.UI.PartOperator.Mode" /> 抢成 None（那会让放置笔刷失效）；
-		/// ③ 点开确实把镜头目标尺寸推大、再点回来能恢复原值。
+		/// ③ 点开只切换预览状态，不自动缩放或移动镜头；关闭后保留预览期间的手动调整。
 		/// </summary>
 		private static void CheckMagnifier(UserInterface ui)
 		{
@@ -789,44 +838,27 @@ namespace Bpsim.QA
 			SceneCamera camera = SceneCamera.Instance;
 			if (camera == null)
 			{
-				Check("magnifier zooms out", false, "找不到 SceneCamera");
+				Check("magnifier preserves camera", false, "找不到 SceneCamera");
 				return;
 			}
-			// 存档进来时镜头可能本来就框着整台载具（那时概览尺寸和当前尺寸几乎相等，看不出变化），
-			// 所以先固定一个近景起点，让「拉远到装下整车」这件事一定是可观测的。
 			float before = camera.TargetSize;
 			Vector2 beforePoint = camera.TargetPoint;
-			// 先把概览收起来：真机/编辑器里人造的点击可能把按钮留在开启态，那时镜头已经不是
-			// 探针以为的尺寸，后面的 near/overview 断言会全是噪声。
 			magnifier.SetPreview(false);
-			camera.ScaleTo(camera.MinSize);
-			float near = camera.TargetSize;
+			camera.ScaleTo(before);
 			magnifier.SetPreview(true);
-			float overview = camera.TargetSize;
-			Check("magnifier zooms out", overview > near * 1.5f && magnifier.IsPreviewing, "near=" + near.ToString("0.###") + " overview=" + overview.ToString("0.###") + " | " + magnifier.Diagnostics);
+			Check("magnifier opens preview without camera jump", magnifier.IsPreviewing && Mathf.Abs(camera.TargetSize - before) < 0.01f && Vector2.Distance(camera.TargetPoint, beforePoint) < 0.01f, "size=" + camera.TargetSize.ToString("0.###") + " before=" + before.ToString("0.###") + " point=" + camera.TargetPoint + " beforePoint=" + beforePoint);
 			PartManager partManager = PartManager.Instance;
-			Vector2 overviewPoint = camera.TargetPoint;
-			CheckMagnifierInputOwnership(ui, partManager, camera, overviewPoint);
-			// 概览要把镜头挪到部件中心，否则只是「拉远但没对准」。
-			bool hasParts = partManager != null && partManager.HasActiveScene() && partManager.ActiveScene != null && partManager.ActiveScene.Unmanaged.Parts.Length > 0;
-			// 空场景时没有包围盒，概览只拉远、不挪镜头，中心应保持原样。
-			// 有部件时镜头要「往左偏半条侧栏宽」：左侧部件栏盖住了画面左边那一条，
-			// 只有把载具中心摆到剩下那条可见区的正中，载具才算真的入画。
-			float occluded = magnifier.OccludedLeftFraction;
-			Check("magnifier detects the sidebar", hasParts ? (occluded > 0.02f && occluded < 0.6f) : true, "left=" + occluded.ToString("0.###"));
-			Vector2 center = hasParts ? partManager.ActiveScene.Unmanaged.GetPartsCenter() : beforePoint;
-			if (hasParts)
-			{
-				float aspect = ((camera.Camera != null && camera.Camera.aspect > 0.01f) ? camera.Camera.aspect : 16f / 9f);
-				center = new Vector2(center.x - 0.5f * occluded * 2f * overview * aspect, center.y);
-			}
-			Check("magnifier centers the build", Vector2.Distance(camera.TargetPoint, center) < 0.5f, "parts=" + (hasParts ? "yes" : "no") + " point=" + camera.TargetPoint + " center=" + center + " left=" + occluded.ToString("0.###"));
-			// 打开概览不能把放置模式顶掉：ToggleGroup 没断的话 PartOperator 会判成 None。
+			CheckMagnifierInputOwnership(ui, partManager, camera, beforePoint);
+			// 打开预览不能把放置模式顶掉：ToggleGroup 没断的话 PartOperator 会判成 None。
 			Check("magnifier keeps placement mode", partOperator.Mode != PartOperationMode.None, "mode=" + partOperator.Mode);
+			Vector2 pannedPoint = camera.TargetPoint + new Vector2(2f, 1f);
+			float adjustedSize = Mathf.Clamp(camera.TargetSize * 1.5f, camera.MinSize, camera.MaxSize);
+			camera.MoveTo(pannedPoint);
+			camera.ScaleTo(adjustedSize);
 			magnifier.SetPreview(false);
-			Check("magnifier restores zoom", Mathf.Abs(camera.TargetSize - near) < 0.01f && !magnifier.IsPreviewing, "target=" + camera.TargetSize.ToString("0.###") + " near=" + near.ToString("0.###"));
-			Check("magnifier restores camera point", Vector2.Distance(camera.TargetPoint, beforePoint) < 0.5f, "point=" + camera.TargetPoint + " before=" + beforePoint);
-			// 收拾现场：把镜头还给进入本次检查之前的尺寸，别让后面的检查看到近景。
+			Check("magnifier keeps preview camera adjustments", !magnifier.IsPreviewing && Mathf.Abs(camera.TargetSize - adjustedSize) < 0.01f && Vector2.Distance(camera.TargetPoint, pannedPoint) < 0.01f, "size=" + camera.TargetSize.ToString("0.###") + " adjusted=" + adjustedSize.ToString("0.###") + " point=" + camera.TargetPoint + " panned=" + pannedPoint);
+			camera.MoveTo(beforePoint);
+			// Restore the camera state from before this check.
 			camera.ScaleTo(before);
 		}
 

@@ -2,7 +2,7 @@
 import {createRequire} from 'node:module';
 import {readFile,writeFile} from 'node:fs/promises';
 import path from 'node:path';
-const require=createRequire('C:/Users/aecli/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/entry.cjs');
+const require=createRequire('C:/Users/aecli/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/');
 const {chromium}=require('playwright');
 const directory=process.argv.includes('--interact')?'_codex_work/water-interaction':'_codex_work/water-reference';
 const reference=JSON.parse(await readFile(directory+'/draw-inputs.json','utf8'));

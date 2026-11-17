@@ -275,7 +275,8 @@ class UniWebViewPostBuildProcessor : IPostGenerateGradleAndroidProject
         var found = false;
         root.Each(node =>
         {
-            if (node is UniWebViewGradleContentNode content && content.Name.Contains("resolutionStrategy"))
+            // Parsed brace blocks are structural nodes; newly appended blocks are content nodes.
+            if (!(node is UniWebViewGradleCommentNode) && node.Name.Contains("resolutionStrategy"))
             {
                 found = true;
             }

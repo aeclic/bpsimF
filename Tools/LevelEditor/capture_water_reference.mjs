@@ -2,7 +2,7 @@
 import { createRequire } from 'node:module';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
-const require = createRequire(process.env.CODEX_NODE_MODULES ? path.join(process.env.CODEX_NODE_MODULES, 'entry.cjs') : 'C:/Users/aecli/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/entry.cjs');
+const require = createRequire('C:/Users/aecli/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/');
 const { chromium } = require('playwright');
 const interacting=process.argv.includes('--interact');
 const out = path.resolve(interacting?'_codex_work/water-interaction':'_codex_work/water-reference');

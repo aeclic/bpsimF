@@ -520,7 +520,7 @@ namespace Bpsim.Physics.Anvil
 		#region 关节
 
 		[DllImport(Library)] public static extern b3JointId b3CreateWeldJoint(b3WorldId worldId, ref b3WeldJointDef def);
-		[DllImport(Library)] public static extern void b3DestroyJoint(b3JointId jointId);
+		[DllImport(Library)] public static extern void b3DestroyJoint(b3JointId jointId, byte wakeAttached);
 		[DllImport(Library)] public static extern byte b3Joint_IsValid(b3JointId jointId);
 		[DllImport(Library)] public static extern void b3Joint_SetForceThreshold(b3JointId jointId, float threshold);
 		[DllImport(Library)] public static extern void b3Joint_SetTorqueThreshold(b3JointId jointId, float threshold);
