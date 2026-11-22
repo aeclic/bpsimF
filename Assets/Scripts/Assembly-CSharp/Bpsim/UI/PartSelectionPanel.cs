@@ -203,7 +203,7 @@ namespace Bpsim.UI
 			using NativeList<Entity> nativeList = new NativeList<Entity>(256, Allocator.TempJob);
 			IJobExtensions.Run(PartSceneJobs.SelectParts(partScene, selection, nativeList));
 			NativeArray<Schematics.Unit> nativeArray = new NativeArray<Schematics.Unit>(nativeList.Length, Allocator.Persistent);
-			IJobExtensions.Run(PartSceneJobs.SaveParts(nativeList, nativeArray));
+			IJobExtensions.Run(PartSceneJobs.SaveParts(nativeList, nativeArray, restrictRemoteTargets: true));
 			return nativeArray;
 		}
 

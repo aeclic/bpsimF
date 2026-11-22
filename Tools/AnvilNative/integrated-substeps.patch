@@ -1,0 +1,32 @@
+diff --git a/src/physics_world.h b/src/physics_world.h
+--- a/src/physics_world.h
++++ b/src/physics_world.h
+@@ -248,7 +248,11 @@
+ 
+ 	uint16_t generation;
+ 
+ 	b3Profile profile;
++#ifdef ANVIL_INTEGRATED_SUBSTEPS
++	void ( *anvilSampleJoints )( struct b3World* world, float subStep, void* context );
++	void* anvilJointContext;
++#endif
+ 	int satCallCount;
+ 	int satCacheHitCount;
+ 	int manifoldCounts[B3_CONTACT_MANIFOLD_COUNT_BUCKETS];
+diff --git a/src/solver.c b/src/solver.c
+--- a/src/solver.c
++++ b/src/solver.c
+@@ -1309,6 +1309,12 @@
+ 				graphSyncIndex += 1;
+ 			}
+ 
+ 			profile->relaxImpulses += b3GetMillisecondsAndReset( &ticks );
++#ifdef ANVIL_INTEGRATED_SUBSTEPS
++			if ( context->world->anvilSampleJoints )
++			{
++				context->world->anvilSampleJoints( context->world, context->h, context->world->anvilJointContext );
++			}
++#endif
+ 		}
+ 
+ 		// Advance the stage according to the sub-stepping tasks just completed

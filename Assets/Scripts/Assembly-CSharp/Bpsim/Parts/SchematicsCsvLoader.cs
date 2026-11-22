@@ -68,7 +68,14 @@ namespace Bpsim.Parts
 					layer = ParseInt(array, 11, lineNumber, "Layer", invariantInfo);
 				}
 				int frameShape = array.Length >= 13 ? ParseInt(array, 12, lineNumber, "FrameShape", invariantInfo) : 0;
-				schematics.Units.Add(new Schematics.Unit(x, y, type, index, rotation, flipped, offsetX, offsetY, rotationDegrees, scaleX, scaleY, layer, frameShape).Normalized());
+				int drawLayer = array.Length >= 14 ? ParseInt(array, 13, lineNumber, "DrawLayer", invariantInfo) : 0;
+				Schematics.Unit unit = new Schematics.Unit(x, y, type, index, rotation, flipped, offsetX, offsetY, rotationDegrees, scaleX, scaleY, layer, frameShape, drawLayer);
+				if (array.Length >= 15)
+				{
+					unit.RemoteLink = true;
+					unit.RemoteCells = array[14];
+				}
+				schematics.Units.Add(unit.Normalized());
 			}
 			return schematics;
 		}
@@ -161,6 +168,16 @@ namespace Bpsim.Parts
 				writer.Write(unit.Layer);
 				writer.Write(value);
 				writer.Write(unit.FrameShape);
+				if (unit.DrawLayer != 0 || unit.RemoteLink)
+				{
+					writer.Write(value);
+					writer.Write(unit.DrawLayer);
+				}
+				if (unit.RemoteLink)
+				{
+					writer.Write(value);
+					writer.Write(unit.RemoteCells);
+				}
 				writer.WriteLine();
 			}
 		}

@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+#if UNITY_ANDROID && !UNITY_EDITOR
+using System.IO;
+using System.IO.Compression;
+#endif
 using Bpsim.Modding;
 using Bpsim.UI;
 using UnityEngine;
@@ -40,6 +44,11 @@ namespace Bpsim.Mods
 		private Text m_subtitle;
 
 		private Button m_deleteButton;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+		private Button m_exportButton;
+		private bool m_exporting;
+#endif
 
 		private Button m_resetButton;
 
@@ -323,6 +332,15 @@ namespace Bpsim.Mods
 			ModUiKit.SetRect(hint.rectTransform, Vector2.zero, Vector2.one,
 				new Vector2(228f, 0f), new Vector2(-12f, 0f));
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+			m_exportButton = ModUiKit.Button(footer, "导出 ZIP", ModUiKit.Neutral, ExportCurrent, 20);
+			RectTransform exportRect = m_exportButton.GetComponent<RectTransform>();
+			exportRect.anchorMin = exportRect.anchorMax = new Vector2(1f, 0.5f);
+			exportRect.pivot = new Vector2(1f, 0.5f);
+			exportRect.sizeDelta = new Vector2(156f, 40f);
+			exportRect.anchoredPosition = new Vector2(-12f, 0f);
+			hint.rectTransform.offsetMax = new Vector2(-184f, 0f);
+#endif
 			m_canvas.gameObject.SetActive(false);
 		}
 
@@ -728,6 +746,9 @@ namespace Bpsim.Mods
 
 		private void RefreshFooter(ModPackage pkg)
 		{
+#if UNITY_ANDROID && !UNITY_EDITOR
+			m_exportButton.interactable = !m_exporting && Directory.Exists(pkg.Directory);
+#endif
 			if (m_deleteButton == null)
 			{
 				return;
@@ -747,6 +768,30 @@ namespace Bpsim.Mods
 		}
 
 		// ───────────────────────── 动作 ─────────────────────────
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+		private async void ExportCurrent()
+		{
+			ModPackage pkg = m_package;
+			if (m_exporting || pkg == null || !Directory.Exists(pkg.Directory)) return;
+			m_exporting = true;
+			RefreshFooter(pkg);
+			try
+			{
+				if (await FileAPI.ExportFile(pkg.Id + ".zip", "application/zip", path =>
+					ZipFile.CreateFromDirectory(pkg.Directory, path, System.IO.Compression.CompressionLevel.Optimal, includeBaseDirectory: true)))
+				{
+					ModManager.Ensure().Toast("已导出「" + pkg.DisplayName + "」");
+				}
+			}
+			catch (Exception ex) { ModManager.Ensure().Toast("导出失败：" + ex.Message); }
+			finally
+			{
+				m_exporting = false;
+				if (this != null && m_package != null) RefreshFooter(m_package);
+			}
+		}
+#endif
 
 		private void ResetSettings()
 		{

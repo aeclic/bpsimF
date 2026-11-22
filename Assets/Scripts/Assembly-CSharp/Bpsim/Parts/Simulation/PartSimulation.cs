@@ -23,6 +23,24 @@ namespace Bpsim.Parts.Simulation
 			{
 				umbrella.SetAngle(partButtonEvent.SliderValue);
 			}
+			else if (partButtonEvent.PartButtonType == PartButtonType.Slider)
+			{
+				PartManager manager = PartManager.Instance;
+				if (manager == null) return;
+				EntityManager entityManager = manager.System.EntityManager;
+				Entity part = partButtonEvent.Part;
+				if (entityManager.Exists(part) && entityManager.HasComponent<PartTypeValue>(part)
+					&& entityManager.GetComponentData<PartTypeValue>(part).Type == PartType.ElectricalPart
+					&& entityManager.HasComponent<CircuitPart>(part))
+				{
+					CircuitPart resistor = entityManager.GetComponentData<CircuitPart>(part);
+					if (resistor.Index == 11)
+					{
+						resistor.ValueA = math.clamp(partButtonEvent.SliderValue, 0.1f, 10f);
+						entityManager.SetComponentData(part, resistor);
+					}
+				}
+			}
 		}
 		public static bool TriggerFirstEnabled(IEnumerable<Entity> parts)
 		{
@@ -87,7 +105,9 @@ namespace Bpsim.Parts.Simulation
 			foreach (Entity joint in simulator.Value.Joints)
 			{
 				PhysicsConstrainedBodyPair physicsConstrainedBodyPair = constrainedBodyPairLookup[joint];
-				result.Union(nativeParallelHashMap[physicsConstrainedBodyPair.EntityA], nativeParallelHashMap[physicsConstrainedBodyPair.EntityB]);
+				if (simulator.Value.CountsAsConnection(in physicsConstrainedBodyPair, out Entity first, out Entity second)
+					&& nativeParallelHashMap.TryGetValue(first, out int firstIndex) && nativeParallelHashMap.TryGetValue(second, out int secondIndex))
+					result.Union(firstIndex, secondIndex);
 			}
 			return result;
 		}

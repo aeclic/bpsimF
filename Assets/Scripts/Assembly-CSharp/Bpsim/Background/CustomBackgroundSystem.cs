@@ -206,10 +206,7 @@ namespace Bpsim.Background
 	private const float DefaultGridPlaneZ = 5f;
 
 	/// <summary>
-	/// 背景锚点：当前活动场景网格平面的世界坐标。
-	/// 网格 SpriteRenderer 按 50 单位吸附跟随相机（见 <see cref="PartScene.LateUpdate" />），
-	/// 把背景锚在同一个点上，背景就和网格一起走 —— 也就是玩家眼里的「贴在网格上」，
-	/// 而不是像以前那样贴着镜头飘。
+	/// 背景所在网格平面的 Z 坐标。XY 由相机连续位置决定，避免追随网格的区块吸附。
 	/// </summary>
 	internal static Vector3 ResolveGridAnchor()
 	{
@@ -230,14 +227,11 @@ namespace Bpsim.Background
 	/// 把设置折算成世界空间的 TRS。
 	/// </summary>
 	/// <remarks>
-	/// 历史包袱：这段公式原本逐条照搬 BPSS 的 <c>CustomBackgroundScale.LateUpdate</c>，
-	/// 也就是把背景当成「贴在相机前的屏幕壁纸」（X/Y 取相机位置、Z 取 Distance、朝向取相机朝向）。
-	/// 那个语义在 bpsim 里是错的：相机在 z = -10 朝 +Z 看，部件在 z ≈ 0、网格在 z = +5，
-	/// 于是 z = Distance（默认 4）的背景落在部件<b>前面</b>，看起来像浮在部件上方的一张纸，
-	/// 而且跟着镜头平移、旋转。现在的语义是「世界里的一块背景板」：
+	/// 相对模式随相机连续移动，世界区块更换时不会因网格吸附跳跃。
+	/// 绝对模式则固定在用户指定的世界坐标。
 	/// <list type="bullet">
 	/// <item>Z = 网格平面 z + Distance，永远在网格和部件后面。</item>
-	/// <item>X/Y 锚在网格平面上（不再取相机位置），偏移量以视野为单位。</item>
+	/// <item>相对模式 X/Y 锚在相机位置，偏移量以视野为单位。</item>
 	/// <item>朝向只保留用户的绕 Z 旋转角。</item>
 	/// </list>
 	/// 视野高度 viewH = 2*orthographicSize（正交）或 2*Distance*tan(fov/2)，尺寸规则保持不变。
@@ -300,9 +294,10 @@ namespace Bpsim.Background
 		else
 		{
 			// 相对坐标：锚在网格平面中心，偏移量以视野为单位（1 = 一个视野宽 / 高）。
+			Vector3 anchor = camera != null ? camera.transform.position : gridAnchor;
 			position = new Vector3(
-				gridAnchor.x + settings.OffsetX * viewWidth,
-				gridAnchor.y + settings.OffsetY * viewHeight,
+				anchor.x + settings.OffsetX * viewWidth,
+				anchor.y + settings.OffsetY * viewHeight,
 				planeZ);
 		}
 		float effectiveAspect = (mediaAspect > 0f) ? mediaAspect : cameraAspect;

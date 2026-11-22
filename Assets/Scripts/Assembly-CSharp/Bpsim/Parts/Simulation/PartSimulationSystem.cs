@@ -16,6 +16,21 @@ namespace Bpsim.Parts.Simulation
 	[UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
 	internal partial class PartSimulationSystem : SystemBase
 	{
+#if UNITY_ANDROID && !UNITY_EDITOR
+		private static readonly System.Reflection.PropertyInfo HavokReadyForEventScheduling = typeof(Havok.Physics.HavokSimulation).GetProperty(
+			"ReadyForEventScheduling", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+		private struct HavokImpulseReaderJob : IJob
+		{
+			public HavokImpulseEvents Events;
+			public NativeParallelHashSet<Entity> Joints;
+
+			public void Execute()
+			{
+				foreach (var impulse in Events) Joints.Add(impulse.JointEntity);
+			}
+		}
+#endif
 		[BurstCompile]
 		private struct ImpulseEventJob : IImpulseEventsJob, IImpulseEventsJobBase
 		{
@@ -287,10 +302,7 @@ namespace Bpsim.Parts.Simulation
 			}
 			else
 			{
-				dependency = IHavokImpulseEventsJobExtensions.Schedule(new ImpulseEventJob
-				{
-					Joints = nativeParallelHashSet
-				}, __query_125383276_1.GetSingleton<SimulationSingleton>(), dependency);
+				dependency = ScheduleImpulseEvents(__query_125383276_1.GetSingleton<SimulationSingleton>(), nativeParallelHashSet, dependency);
 			}
 			__Unity_Physics_PhysicsConstrainedBodyPair_RW_ComponentLookup.Update(ref base.CheckedStateRef);
 			dependency = IJobExtensions.Schedule(new RemoveJointsJob
@@ -304,6 +316,20 @@ namespace Bpsim.Parts.Simulation
 			dependency = nativeParallelHashSet.Dispose(dependency);
 			m_commandBufferSystem.AddJobHandleForProducer(dependency);
 			return dependency;
+		}
+
+		private static JobHandle ScheduleImpulseEvents(SimulationSingleton simulation, NativeParallelHashSet<Entity> joints, JobHandle dependency)
+		{
+#if UNITY_ANDROID && !UNITY_EDITOR
+			if (simulation.Type == SimulationType.HavokPhysics)
+			{
+				var havok = simulation.AsHavokSimulation();
+				if (HavokReadyForEventScheduling?.GetValue(havok) is not true) return dependency;
+				dependency = JobHandle.CombineDependencies(dependency, havok.FinalSimulationJobHandle);
+				return new HavokImpulseReaderJob { Events = havok.ImpulseEvents, Joints = joints }.Schedule(dependency);
+			}
+#endif
+			return IHavokImpulseEventsJobExtensions.Schedule(new ImpulseEventJob { Joints = joints }, simulation, dependency);
 		}
 
 		private JobHandle PartSimulationSystem_2DE0C1DC_LambdaJob_0_Execute(NativeReference<bool> dirty, Reference<PartSimulatorUnmanaged> simulator, JobHandle __inputDependency)

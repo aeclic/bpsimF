@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using Bpsim.Levels;
 using Bpsim.Parts;
 using Cysharp.Threading.Tasks;
@@ -34,6 +33,9 @@ namespace Bpsim.UI
 		private Text m_state;
 
 		private bool m_dirty;
+		private bool m_browsing;
+		private FileSelection m_selection;
+		private string m_selectionText;
 
 		private SceneLoaderMode m_mode;
 
@@ -62,6 +64,7 @@ namespace Bpsim.UI
 				if (m_mode != value)
 				{
 					m_mode = value;
+					SetDefaultFormat();
 					SetDirty();
 				}
 			}
@@ -80,6 +83,7 @@ namespace Bpsim.UI
 			m_applyButton.onClick.AddListener(Apply);
 			m_cancelButton.onClick.AddListener(Cancel);
 			EnsureBpirFormatOption();
+			SetDefaultFormat();
 			string directoryName = GetDefaultDataDirectory();
 			m_bpsimDataPath = Path.Combine(directoryName, "bput");
 			m_innovationDataPath = Path.Combine(directoryName, "Rovio");
@@ -94,6 +98,13 @@ namespace Bpsim.UI
 		private const string BpirFormatLabel = "BPIR 存档 (原版 Innovation Rebuild)";
 
 		private const string AutoFormatLabel = "自动识别 (按文件内容)";
+
+		private void SetDefaultFormat()
+		{
+			if (m_loadFormat == null) return;
+			int automatic = m_loadFormat.options.FindIndex(option => option?.text == AutoFormatLabel);
+			m_loadFormat.SetValueWithoutNotify(m_mode == SceneLoaderMode.Read && automatic >= 0 ? automatic : 0);
+		}
 
 		private void EnsureBpirFormatOption()
 		{
@@ -357,32 +368,65 @@ namespace Bpsim.UI
 
 		private async UniTask BrowseAsync(string initialDirectory)
 		{
-			SceneLoaderMode mode = m_mode;
-			string text = await (mode switch
+			if (m_browsing) return;
+#if UNITY_ANDROID && !UNITY_EDITOR
+			if (m_mode == SceneLoaderMode.Write)
 			{
-				SceneLoaderMode.Read => FileAPI.OpenFile(initialDirectory), 
-				SceneLoaderMode.Write => FileAPI.CreateFile(initialDirectory), 
-				_ => throw new SwitchExpressionException(mode), 
-			});
-			if (!string.IsNullOrEmpty(text))
-			{
-				m_path.text = text;
+				await ExportScene(SelectedFormat);
+				return;
 			}
+#endif
+			m_browsing = true;
+			try
+			{
+				if (m_mode == SceneLoaderMode.Write)
+				{
+					string path = await FileAPI.CreateFile(initialDirectory);
+					if (this != null && !string.IsNullOrEmpty(path)) m_path.text = path;
+					return;
+				}
+				FileSelection selected = await FileAPI.OpenFile(initialDirectory, keepForSession: true);
+				if (selected == null) return;
+				if (this == null)
+				{
+					selected.Dispose();
+					return;
+				}
+				m_selection?.Dispose();
+				m_selection = selected;
+#if UNITY_ANDROID && !UNITY_EDITOR
+				m_selectionText = Path.GetFileName(selected.Path);
+#else
+				m_selectionText = selected.Path;
+#endif
+				m_path.text = m_selectionText;
+				m_state.text = string.Empty;
+			}
+			catch (Exception ex)
+			{
+				Debug.LogException(ex);
+				if (this != null) m_state.text = "无法选择文件：" + ex.Message;
+			}
+			finally { m_browsing = false; }
 		}
+
+		private SchematicsFormat SelectedFormat => m_loadFormat.value switch
+		{
+			0 => SchematicsFormat.Csv,
+			1 => SchematicsFormat.Json,
+			2 => SchematicsFormat.EncryptedXml,
+			3 => SchematicsFormat.Xml,
+			4 => SchematicsFormat.BpirCsv,
+			5 => SchematicsFormat.Auto,
+			_ => SchematicsFormat.None,
+		};
 
 		private void Apply()
 		{
+			if (m_browsing) return;
 			string text = m_path.text;
-			SchematicsFormat format = m_loadFormat.value switch
-			{
-				0 => SchematicsFormat.Csv, 
-				1 => SchematicsFormat.Json, 
-				2 => SchematicsFormat.EncryptedXml, 
-				3 => SchematicsFormat.Xml, 
-				4 => SchematicsFormat.BpirCsv, 
-				5 => SchematicsFormat.Auto,
-				_ => SchematicsFormat.None, 
-			};
+			bool hasSelection = m_selection != null && text == m_selectionText;
+			SchematicsFormat format = SelectedFormat;
 			// 保存必须先落到具体格式：Auto 只有内容可嗅探，写盘时没有内容可看。
 			// 这里拦住并留在对话框里，比让 CreateLoader 抛 InvalidOperationException 友好。
 			if (m_mode == SceneLoaderMode.Write && format == SchematicsFormat.Auto)
@@ -390,13 +434,21 @@ namespace Bpsim.UI
 				m_state.text = "<color=#FFD080>保存需要先选一个具体格式（自动识别只用于读取）</color>";
 				return;
 			}
+#if UNITY_ANDROID && !UNITY_EDITOR
+			if (m_mode == SceneLoaderMode.Write && (string.IsNullOrWhiteSpace(text) || hasSelection))
+			{
+				ExportScene(format).Forget();
+				return;
+			}
+#endif
 			Exception ex = null;
 			try
 			{
 				switch (m_mode)
 				{
 				case SceneLoaderMode.Read:
-					Load(text, format);
+					LoadFromPath(hasSelection ? m_selection.Path : text, format);
+					if (hasSelection) m_selection.Keep();
 					break;
 				case SceneLoaderMode.Write:
 					Save(text, format);
@@ -419,10 +471,54 @@ namespace Bpsim.UI
 			}
 		}
 
-		private void Load(string path, SchematicsFormat format)
+#if UNITY_ANDROID && !UNITY_EDITOR
+		private async UniTask ExportScene(SchematicsFormat format)
 		{
-			LoadFromPath(path, format);
+			if (!PartManager.Instance.HasActiveScene())
+			{
+				m_state.text = "没有可保存的场景。";
+				return;
+			}
+			string extension;
+			string mimeType;
+			switch (format)
+			{
+				case SchematicsFormat.Csv:
+				case SchematicsFormat.BpirCsv:
+					extension = ".csv";
+					mimeType = "text/csv";
+					break;
+				case SchematicsFormat.Json:
+					extension = ".json";
+					mimeType = "application/json";
+					break;
+				case SchematicsFormat.Xml:
+					extension = ".xml";
+					mimeType = "text/xml";
+					break;
+				case SchematicsFormat.EncryptedXml:
+					extension = ".bytes";
+					mimeType = "application/octet-stream";
+					break;
+				default:
+					m_state.text = "保存需要先选一个具体格式。";
+					return;
+			}
+			string name = PartManager.Instance.ActiveScene.SceneName.Replace('/', '_').Replace('\\', '_');
+			if (string.IsNullOrWhiteSpace(name)) name = "Bpsim-Scene";
+			m_browsing = true;
+			try
+			{
+				if (await FileAPI.ExportFile(name + extension, mimeType, path => Save(path, format)) && this != null) Close();
+			}
+			catch (Exception ex)
+			{
+				Debug.LogException(ex);
+				if (this != null) m_state.text = "保存失败：" + ex.Message;
+			}
+			finally { m_browsing = false; }
 		}
+#endif
 
 		/// <summary>
 		/// Loads <paramref name="path"/> into a new scene and records it as the session's
@@ -483,6 +579,7 @@ namespace Bpsim.UI
 
 		private void OnDestroy()
 		{
+			m_selection?.Dispose();
 			ReleaseVisualTexture();
 		}
 	}

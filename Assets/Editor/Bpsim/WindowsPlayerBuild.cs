@@ -30,10 +30,15 @@ namespace Bpsim.EditorTools
                     dir = args[i + 1];
                 }
             }
-            Debug.Log("[Build] " + Build(dir));
+            bool saveBenchmark = Array.IndexOf(args, "-bpsimSaveBenchmarkBuild") >= 0;
+            if (saveBenchmark && !PlayerSettings.companyName.Equals("Bpsim-Anvil-Save-QA", StringComparison.Ordinal))
+                throw new InvalidOperationException("Build the save benchmark from the isolated QA project.");
+            Debug.Log("[Build] " + Build(dir, saveBenchmark));
         }
 
-        public static string Build(string outDir)
+        public static string Build(string outDir) => Build(outDir, false);
+
+        private static string Build(string outDir, bool saveBenchmark)
         {
             StringBuilder sb = new StringBuilder();
             if (string.IsNullOrEmpty(outDir))
@@ -65,7 +70,8 @@ namespace Bpsim.EditorTools
                 locationPathName = exe,
                 target = BuildTarget.StandaloneWindows64,
                 targetGroup = BuildTargetGroup.Standalone,
-                options = BuildOptions.None
+                options = BuildOptions.CompressWithLz4HC,
+                extraScriptingDefines = saveBenchmark ? new[] { "BPSIM_SAVE_BENCHMARK" } : Array.Empty<string>()
             };
 
             // WinPlayerPostProcessor.PrepareForBuild cleans the directory recorded in
@@ -78,6 +84,7 @@ namespace Bpsim.EditorTools
             BeeEnvironment.CollapseCaseDuplicates();
 
             string progress = Path.Combine(projectRoot, "Logs", "player-build.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(progress));
             File.WriteAllText(progress, DateTime.Now.ToString("HH:mm:ss") + " START " + exe + "\n");
             DateTime started = DateTime.Now;
             BuildReport report = BuildPipeline.BuildPlayer(options);
@@ -88,6 +95,8 @@ namespace Bpsim.EditorTools
               .Append(" warnings=").Append(summary.totalWarnings)
               .Append(" sizeMB=").Append((summary.totalSize / (1024f * 1024f)).ToString("0.0"))
               .Append(" elapsed=").Append(elapsed.ToString(@"mm\:ss"))
+              .Append('\n');
+            sb.Append("outputDirectoryMB=").Append((DirectorySizeBytes(fullOut) / (1024f * 1024f)).ToString("0.0"))
               .Append('\n');
             sb.Append("exe=").Append(exe).Append('\n');
             if (summary.result != BuildResult.Succeeded)
@@ -110,7 +119,19 @@ namespace Bpsim.EditorTools
             catch (Exception)
             {
             }
+            if (saveBenchmark && summary.result != BuildResult.Succeeded)
+                throw new InvalidOperationException($"Save benchmark build ended with {summary.result}. See {progress}.");
             return sb.ToString();
+        }
+
+        private static long DirectorySizeBytes(string directory)
+        {
+            long bytes = 0;
+            foreach (string file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+            {
+                bytes += new FileInfo(file).Length;
+            }
+            return bytes;
         }
     }
 }

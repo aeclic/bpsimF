@@ -38,7 +38,10 @@ namespace Bpsim.Parts
 				foreach (Entity item in linkedEntityGroup.Reinterpret<Entity>())
 				{
 					ref MaterialColor valueRW = ref materialColorLookup.GetRefRW(item, isReadOnly: false).ValueRW;
-					float w = (coloredFrame.IsTransparent ? color.w : valueRW.Value.w);
+					// Opaque colored frames must not inherit a stale prefab alpha.  The
+					// palette color is the source of truth. Transparent frames keep their
+					// animated alpha because their glass fill changes at runtime.
+					float w = color.w;
 					valueRW.Value = new float4(color.xyz, w);
 				}
 			}
@@ -130,16 +133,14 @@ namespace Bpsim.Parts
 				{
 					// A top-level colored frame is its own colour source.  This query used to exclude
 					// entities that own a ColoredFrame, so a frame sitting on its own never had its
-					// _BlendFactor moved off the default (1,0,0,0); the shader then sampled the plain
-					// white frame sprite and every colour picker index rendered as a white block.
-					// Its _Color is already maintained per renderer by Job0 above, which also keeps
-					// the Background child's alpha, so only _BlendFactor is written here.
-					value2 = new float4(0f, 0.75f, 0f, 0f);
+					// (1,1) is the shader's explicit texture-multiply mode for a frame's own artwork.
+					value2 = new float4(1f, 1f, 0f, 0f);
 				}
 				else if (partContainer != Entity.Null && __Bpsim_Parts_ColoredFrame_ComponentLookup.HasComponent(partContainer))
 				{
 					value = (Vector4)__Bpsim_Parts_ColoredFrame_ComponentLookup[partContainer].Color;
-					value2 = new float4(0f, 0.75f, 0f, 0f);
+					// Keep enclosed parts on their texture path so their artwork remains visible.
+					value2 = new float4(1f, 0f, 0f, 0f);
 				}
 				foreach (Entity item in linkedEntityGroup.Reinterpret<Entity>())
 				{

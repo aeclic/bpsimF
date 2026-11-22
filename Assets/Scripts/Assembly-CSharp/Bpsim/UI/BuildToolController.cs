@@ -962,7 +962,8 @@ namespace Bpsim.UI
 			{
 				Offset = offset2,
 				RotationDegrees = m_startFree.RotationDegrees,
-				Scale = newScale
+				Scale = newScale,
+				DrawLayer = m_startFree.DrawLayer
 			});
 		}
 

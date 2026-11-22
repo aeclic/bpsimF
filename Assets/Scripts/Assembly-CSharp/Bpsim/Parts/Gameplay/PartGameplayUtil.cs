@@ -52,6 +52,12 @@ namespace Bpsim.Parts.Gameplay
 				return float3.zero;
 			}
 			EntityManager em = Em;
+			if (em.HasComponent<HingePlate>(entity))
+			{
+				HingePlate plate = em.GetComponentData<HingePlate>(entity);
+				if (em.HasComponent<PhysicsMass>(plate.Left) && em.HasComponent<PhysicsMass>(plate.Right))
+					return .5f * (em.GetComponentData<LocalTransform>(plate.Left).Position + em.GetComponentData<LocalTransform>(plate.Right).Position);
+			}
 			if (em.HasComponent<LocalToWorld>(entity))
 			{
 				return em.GetComponentData<LocalToWorld>(entity).Position;
@@ -386,6 +392,10 @@ namespace Bpsim.Parts.Gameplay
 		// ------------------------------------------------------------------
 
 		public static Entity SpawnPart(PartTypeInfo info, int coordX, int coordY, int rotation, bool flipped, ref PartSimulatorUnmanaged simulator, byte layer = PartBuildLayer.MinLayer)
+			=> SpawnPart(info, coordX, coordY, rotation, flipped, ref simulator, layer, default);
+
+		internal static Entity SpawnPart(PartTypeInfo info, int coordX, int coordY, int rotation, bool flipped, ref PartSimulatorUnmanaged simulator,
+			byte layer, PartFreeTransform freeTransform)
 		{
 			EntityManager em = Em;
 			PartManager manager = PartManager.Instance;
@@ -406,9 +416,22 @@ namespace Bpsim.Parts.Gameplay
 			if (flipped && BasePart.CanFlip(info))
 				rotationQuaternion = Quaternion.Euler(rotation % 2 == 1 ? 180f : 0f, rotation % 2 == 0 ? 180f : 0f, rotation * 90f);
 			if (info.PartType == PartType.TNT) rotationQuaternion = GridRotation(rotation % 4, false);
-			float3 position = new float3(coordX, coordY, -0.09f);
+			bool isPlate = em.HasComponent<HingePlate>(prefab);
+			if (isPlate)
+			{
+				rotation = HingePlate.NormalizeLayout(rotation);
+				rotationQuaternion = GridRotation(HingePlate.QuarterTurns(rotation), false);
+			}
+			var pose = LocalTransform.FromPositionRotationScale(new float3(coordX, coordY, -0.09f), rotationQuaternion, 1f);
 			Entity part = em.Instantiate(prefab);
 			em.SetName(part, "GeneratedPart_" + info.PartType + "_" + coordX + "_" + coordY);
+			if (isPlate)
+			{
+				freeTransform = PartFreeTransform.Sanitize(freeTransform);
+				pose = PartFreeTransform.Compose(pose, in freeTransform, layer, out PostTransformScale visualScale);
+				SuspensionRuntime.Set(em, part, freeTransform);
+				SuspensionRuntime.Set(em, part, visualScale);
+			}
 			em.SetComponentData(part, new PartTransform
 			{
 				X = coordX,
@@ -430,18 +453,22 @@ namespace Bpsim.Parts.Gameplay
 					Value = -1
 				});
 			}
+			float3 position = pose.Position;
 			if (em.HasComponent<LocalTransform>(part))
 			{
-				em.SetComponentData(part, LocalTransform.FromPositionRotationScale(position, rotationQuaternion, 1f));
+				em.SetComponentData(part, pose);
 			}
 			if (em.HasComponent<LocalToWorld>(part))
 			{
 				em.SetComponentData(part, new LocalToWorld
 				{
-					Value = float4x4.TRS(position, rotationQuaternion, new float3(1f, 1f, 1f))
+					Value = float4x4.TRS(position, pose.Rotation, isPlate ? new float3(freeTransform.Scale, 1f) : new float3(1f))
 				});
 			}
-			if (em.HasComponent<PhysicsCollider>(part))
+			PartBuildLayerUtility.SetLayer(em, part, layer);
+			if (isPlate)
+				HingePlateRuntime.InitializeBody(em, ref simulator, part, UserSettings.Instance.SimulationSettings, Time.fixedDeltaTime);
+			else if (em.HasComponent<PhysicsCollider>(part))
 			{
 				PhysicsCollider collider = em.GetComponentData<PhysicsCollider>(part);
 				if (collider.Value.IsCreated)
@@ -460,10 +487,7 @@ namespace Bpsim.Parts.Gameplay
 					PartPhysics.EnableGraphicalInterpolation(em, part, new RigidTransform(rotationQuaternion, position));
 				}
 			}
-			em.AddSharedComponent(part, new PhysicsWorldIndex(0u));
-			// 生成体落在生成器所在的建造层：PartMap 的第三维是层号，
-			// 公共层是 PartBuildLayer.MinLayer = 1（不是 0）。
-			PartBuildLayerUtility.SetLayer(em, part, layer);
+			if (!isPlate) em.AddSharedComponent(part, new PhysicsWorldIndex(0u));
 			simulator.Parts.Add(part);
 			simulator.PartMap.Set(coordX, coordY, layer, new PartGridInfo(Entity.Null, part, 0));
 			if (info.PartType == PartType.TNT)

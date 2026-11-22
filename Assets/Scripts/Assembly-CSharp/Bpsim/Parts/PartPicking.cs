@@ -26,6 +26,12 @@ namespace Bpsim.Parts
 		public static float GetBaseRotationDegrees(in PartTransform transform, PartTypeInfo info)
 		{
 			int rotation = transform.Rotation;
+			if (info.PartType == PartType.Kicker) return 0f;
+			if (info == BasePart.AutoControlLight) return ((rotation % 5 + 5) % 5 & 3) * 90f;
+			if (info.BelongsTo(BasePart.HingePlates))
+			{
+				return HingePlate.QuarterTurns(HingePlate.NormalizeLayout(rotation)) * 90f;
+			}
 			if (info.PartType == PartType.ElectricalPart && (info.PartIndex == 1 || info.PartIndex == 3 || info.PartIndex == 38 || info.PartIndex == 39)) return 0f;
 			if (BasePart.IsEightWay(info))
 			{

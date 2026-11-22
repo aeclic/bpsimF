@@ -583,10 +583,18 @@ namespace Bpsim.Parts.Gameplay
 		public static void ApplyRadialImpulse(float3 center, float radius, float strength, Entity ignoreA, Entity ignoreB)
 		{
 			PartSimulatorUnmanaged simulator = PartManager.Instance.PartSimulator.Unmanaged;
+			int ownerComponent = PartGameplayUtil.ConnectedComponent(ignoreA);
 			for (int i = 0; i < simulator.Parts.Length; i++)
 			{
 				Entity part = simulator.Parts[i];
 				if (part == ignoreA || part == ignoreB || !PartGameplayUtil.Alive(part))
+				{
+					continue;
+				}
+				// A projectile is spawned by a part and its explosion can occur beside
+				// that part's chassis. Keep the owner's connected assembly rigid while
+				// still applying the impulse to external targets.
+				if (ownerComponent >= 0 && PartGameplayUtil.ConnectedComponent(part) == ownerComponent)
 				{
 					continue;
 				}

@@ -10,6 +10,7 @@
 //
 // 因为 Havok 的 PhysicsSimulationPickerSystem 对未知的 SimulationType 走 default 分支（只关闭旧链、
 // 不启用任何链），切到 AnvilPhysics 时它会把 Unity.Physics / Havok 的四系统链关掉，正好让位给我们。
+using System;
 using System.Diagnostics;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -37,6 +38,10 @@ namespace Bpsim.Physics.Anvil
 
 		/// <summary>累计步数，基准/自检用。</summary>
 		public static int StepCount { get; private set; }
+
+		public Func<Entity, AnvilCollisionTag> GetCollisionTag { get; set; }
+
+		public static double LastWorldBuildWaitMs { get; private set; }
 
 		/// <summary>最近一步的分段墙钟耗时（毫秒）：ECS → box3d 同步。</summary>
 		public static double LastSyncToMs { get; private set; }
@@ -83,6 +88,7 @@ namespace Bpsim.Physics.Anvil
 		/// 关掉后堆叠场景全程活跃，测出来的是真实求解成本而不是「几乎全睡」的空转。
 		/// </summary>
 		public static bool? EnableSleep { get; set; }
+		public bool EnableWarmStarting { get; set; } = true;
 
 		/// <summary>缓存 PhysicsStep 查询，避免每帧 CreateEntityQuery 的托管分配。</summary>
 		EntityQuery m_StepQuery;
@@ -139,12 +145,16 @@ namespace Bpsim.Physics.Anvil
 				Anvil.SetWorkerCount(WorkerCount);
 			}
 
+			Anvil.SetWarmStarting(EnableWarmStarting);
 			Anvil.SetGravity(gravity);
 			// Box3D exposes solver substeps rather than Unity's Gauss-Seidel iteration count.
 			// Four is the minimum validated production quality for off-centre assemblies.
 			Anvil.SubStepCount = math.clamp(solverIterations, 4, 16);
 
-			PhysicsWorld physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+			long waitStart = Stopwatch.GetTimestamp();
+			EntityManager.CompleteDependencyBeforeRW<PhysicsWorldSingleton>();
+			PhysicsWorld physicsWorld = SystemAPI.GetSingletonRW<PhysicsWorldSingleton>().ValueRW.PhysicsWorld;
+			LastWorldBuildWaitMs = Elapsed(waitStart, Stopwatch.GetTimestamp());
 
 			// 新一次模拟的起点：动态体清零说明上一场模拟的部件已被销毁，但编辑场景的
 			// 静态地面还在（NumStaticBodies > 0），原来的空世界 early-return 不会触发，
@@ -169,8 +179,8 @@ namespace Bpsim.Physics.Anvil
 			if (timeStep <= 0f) timeStep = 0.02f;
 
 			long t0 = Stopwatch.GetTimestamp();
-			Anvil.SyncToNative(ref physicsWorld);
-			Anvil.SyncJointsToNative(ref physicsWorld, timeStep);
+			Anvil.SyncToNative(ref physicsWorld, GetCollisionTag);
+			Anvil.SyncJointsToNative(ref physicsWorld, timeStep, EntityManager);
 			long t1 = Stopwatch.GetTimestamp();
 			LastProfile = Anvil.Step(timeStep);
 			long t2 = Stopwatch.GetTimestamp();

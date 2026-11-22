@@ -12,9 +12,15 @@ PluginImporter:
   validateReferences: 1
   platformData:
   - first:
-      Any: 
+      '': Any
     second:
       enabled: 1
+      settings:
+        Exclude Android: 1
+  - first:
+      Android: Android
+    second:
+      enabled: 0
       settings: {}
   - first:
       Editor: Editor
@@ -23,6 +29,12 @@ PluginImporter:
       settings:
         CPU: AnyCPU
         DefaultValueInitialized: true
+  - first:
+      Standalone: Win64
+    second:
+      enabled: 1
+      settings:
+        CPU: AnyCPU
   userData: 
   assetBundleName: 
   assetBundleVariant: 

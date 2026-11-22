@@ -4,11 +4,13 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Bpsim.Parts;
+using Bpsim.Rendering;
 using Bpsim.UI;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Bpsim.QA
@@ -207,6 +209,10 @@ namespace Bpsim.QA
 				yield break;
 			}
 			Check("PartManager", true);
+			SceneRenderSystem.SortPriority near = new SceneRenderSystem.SortPriority(0, 1, 0, 7);
+			SceneRenderSystem.SortPriority far = new SceneRenderSystem.SortPriority(1, 2, 0, 1);
+			int atlasOrder = ((System.IComparable<SceneRenderSystem.SortPriority>)near).CompareTo(far);
+			Check("render depth priority precedes atlas grouping", atlasOrder < 0, "comparison=" + atlasOrder);
 			Check("layer defaults", PartBuildLayer.Default.Value == 1 && PartBuildLayer.Clamp(0) == 1 && PartBuildLayer.Clamp(17) == 16 && PartBuildLayer.MinLayer == 1 && PartBuildLayer.MaxLayer == 16, "clamp(0)=" + PartBuildLayer.Clamp(0) + " clamp(17)=" + PartBuildLayer.Clamp(17));
 
 			manager.LoadEmptyScene("LayerConnectionQA");
@@ -259,6 +265,32 @@ namespace Bpsim.QA
 
 			scene.Unmanaged.SetActiveLayer(2);
 			Check("active layer 2", scene.Unmanaged.ActiveLayer == 2);
+			yield return new WaitForSeconds(.3f);
+			EntityManager renderEm = manager.System.EntityManager;
+			bool hasLayerOneRenderer = TryGetRenderer(renderEm, first, out Entity lowRenderer);
+			bool hasLayerTwoRenderer = TryGetRenderer(renderEm, second, out Entity highRenderer);
+			bool depthOrder = false;
+			bool layerTint = false;
+			if (hasLayerOneRenderer && hasLayerTwoRenderer)
+			{
+				LocalToWorld lowWorld = renderEm.GetComponentData<LocalToWorld>(lowRenderer);
+				LocalToWorld highWorld = renderEm.GetComponentData<LocalToWorld>(highRenderer);
+				int lowPriority = renderEm.GetComponentData<PartRenderInfo>(lowRenderer).Priority;
+				int highPriority = renderEm.GetComponentData<PartRenderInfo>(highRenderer).Priority;
+				depthOrder = math.abs((lowWorld.Position.z - highWorld.Position.z) - PartBuildLayer.DepthStep) < .001f
+					&& highPriority > lowPriority;
+				float4 lowTint = renderEm.GetComponentData<PartLayerTint>(lowRenderer).Value;
+				float4 highTint = renderEm.GetComponentData<PartLayerTint>(highRenderer).Value;
+				layerTint = math.all(math.abs(lowTint - new float4(.55f, .58f, .65f, 1f)) < .001f)
+					&& math.all(math.abs(highTint - new float4(1f)) < .001f);
+			}
+			Check("overlapping build layers render in depth order", depthOrder,
+				"low=" + hasLayerOneRenderer + " high=" + hasLayerTwoRenderer
+				+ (hasLayerOneRenderer && hasLayerTwoRenderer ? " z=" + renderEm.GetComponentData<LocalToWorld>(lowRenderer).Position.z.ToString("F3")
+					+ "/" + renderEm.GetComponentData<LocalToWorld>(highRenderer).Position.z.ToString("F3")
+					+ " priority=" + renderEm.GetComponentData<PartRenderInfo>(lowRenderer).Priority
+					+ "/" + renderEm.GetComponentData<PartRenderInfo>(highRenderer).Priority : string.Empty));
+			Check("active layer tint dims only the inactive layer", layerTint);
 			bool movedLayer2 = scene.Unmanaged.TryMovePartContent(0, 0, 1, 0);
 			bool layer1Kept = scene.Unmanaged.FindPartGridAt(0, 0, 1, out var keptGrid) && (keptGrid.HasPart || keptGrid.HasPartContainer);
 			bool layer2Moved = scene.Unmanaged.FindPartGridAt(1, 0, 2, out _);
@@ -338,6 +370,25 @@ namespace Bpsim.QA
 		private static Entity PlaceFrame(PartScene scene, PartManager manager, int x, int y, int layer)
 		{
 			return PlacePart(scene, manager, new PartTypeInfo(PartType.MetalFrame, 0), x, y, layer);
+		}
+
+		private static bool TryGetRenderer(EntityManager entityManager, Entity part, out Entity renderer)
+		{
+			renderer = Entity.Null;
+			if (!entityManager.Exists(part) || !entityManager.HasBuffer<LinkedEntityGroup>(part)) return false;
+			DynamicBuffer<LinkedEntityGroup> group = entityManager.GetBuffer<LinkedEntityGroup>(part, isReadOnly: true);
+			for (int i = 0; i < group.Length; i++)
+			{
+				Entity candidate = group[i].Value;
+				if (entityManager.HasComponent<LocalToWorld>(candidate)
+					&& entityManager.HasComponent<PartRenderInfo>(candidate)
+					&& entityManager.HasComponent<PartLayerTint>(candidate))
+				{
+					renderer = candidate;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private static Entity PlacePart(PartScene scene, PartManager manager, PartTypeInfo info, int x, int y, int layer)

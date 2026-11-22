@@ -304,6 +304,8 @@ namespace Bpsim.Mods
 		/// </remarks>
 		public static bool FrameShapesEnabled => FrameShapeSystem.FeatureEnabled;
 
+		public static bool BpirCompatibilityToolsEnabled { get; set; }
+
 		/// <summary>
 		/// 打开/关闭「部件形状」特性。开启后 <see cref="FrameShapeSystem.SetShape"/>
 		/// 才会真正写组件并重建凸包，属性面板的「形状」按钮也会出现。

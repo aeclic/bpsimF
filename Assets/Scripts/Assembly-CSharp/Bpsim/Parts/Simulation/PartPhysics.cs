@@ -55,9 +55,14 @@ namespace Bpsim.Parts.Simulation
 		}
 
 		/// <summary>Create a leaf collider with its authored material, before compound construction.</summary>
-		public static BlobAssetReference<Collider> CreateCollider(UnityEngine.Collider source)
+		public static BlobAssetReference<Collider> CreateCollider(UnityEngine.Collider source, bool hingeHalf = false)
 		{
 			Material material = ConvertMaterial(source.sharedMaterial);
+			if (hingeHalf)
+			{
+				material.Friction = HingePlate.Friction;
+				material.FrictionCombinePolicy = Material.CombinePolicy.ArithmeticMean;
+			}
 			if (source is UnityEngine.BoxCollider box)
 			{
 				return CreateBox(box.center, box.size, material);

@@ -6,6 +6,10 @@ namespace Bpsim
 	{
 		private SimulationType m_simulationType;
 
+		private bool m_stableHingePlate;
+
+		private bool m_canHingePlateConnectComponents = true;
+
 		private float m_fixedTimeStep;
 
 		private int m_solverIterationCount;
@@ -108,6 +112,18 @@ namespace Bpsim
 			{
 				SetProperty(ref m_createJoints, value, "CreateJoints");
 			}
+		}
+
+		public bool StableHingePlate
+		{
+			get => m_stableHingePlate;
+			set => SetProperty(ref m_stableHingePlate, value, nameof(StableHingePlate));
+		}
+
+		public bool CanHingePlateConnectComponents
+		{
+			get => m_canHingePlateConnectComponents;
+			set => SetProperty(ref m_canHingePlateConnectComponents, value, nameof(CanHingePlateConnectComponents));
 		}
 
 		public bool InfiniteConnectionStrength
@@ -226,13 +242,14 @@ namespace Bpsim
 		{
 			UpdateBpleParts(settings);
 			UpdateTnt(settings);
-			UpdateFactions(settings);
 			SimulationType = settings.SimulationType;
 			FixedTimeStep = settings.FixedTimeStep;
 			SolverIterationCount = settings.SolverIterationCount;
 			GravityX = settings.GravityX;
 			GravityY = settings.GravityY;
 			CreateJoints = settings.CreateJoints;
+			StableHingePlate = settings.StableHingePlate;
+			CanHingePlateConnectComponents = settings.CanHingePlateConnectComponents;
 			InfiniteConnectionStrength = settings.InfiniteConnectionStrength;
 			ConnectionStrengthFactor = settings.ConnectionStrengthFactor;
 			PartSelfCollision = settings.PartSelfCollision;

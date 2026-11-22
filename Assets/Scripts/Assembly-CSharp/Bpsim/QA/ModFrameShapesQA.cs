@@ -445,6 +445,32 @@ namespace Bpsim.QA
 			bool simulating = manager.IsSimulating;
 			int simulated = manager.PartSimulator != null ? manager.PartSimulator.Unmanaged.Parts.Length : -1;
 			Check("simulation starts", simulating && simulated >= 1, "parts=" + simulated);
+			if (simulating && em.Exists(part) && em.HasBuffer<LinkedEntityGroup>(part))
+			{
+				DynamicBuffer<LinkedEntityGroup> renderers = em.GetBuffer<LinkedEntityGroup>(part, isReadOnly: true);
+				int checkedRenderers = 0;
+				bool textureVisible = true;
+				bool alphaVisible = true;
+				bool colorMatches = true;
+				float4 expectedColor = ColoredFrame.GetColor(info);
+				for (int i = 0; i < renderers.Length; i++)
+				{
+					Entity renderer = renderers[i].Value;
+					if (!em.HasComponent<BlendFactor>(renderer) || !em.HasComponent<MaterialColor>(renderer)) continue;
+					BlendFactor blend = em.GetComponentData<BlendFactor>(renderer);
+					float4 color = em.GetComponentData<MaterialColor>(renderer).Value;
+					checkedRenderers++;
+					// Colored-frame roots use (1,1) for texture-multiply mode so the
+					// palette tint preserves the source sprite's texture detail.
+					textureVisible &= blend.Value.x > 0.99f && blend.Value.y > 0.99f;
+					alphaVisible &= color.w > 0.99f;
+					colorMatches &= math.all(math.abs(color - expectedColor) < 0.001f);
+				}
+				Check("colored frame renderers use the full palette color", checkedRenderers > 0 && textureVisible,
+					"renderers=" + checkedRenderers + " textureWeight=1 colorWeight=1");
+				Check("colored frame renderers stay opaque and match the palette", checkedRenderers > 0 && alphaVisible && colorMatches,
+					"alphaVisible=" + alphaVisible + " colorMatches=" + colorMatches);
+			}
 			if (simulating)
 			{
 				manager.EndSimulation();

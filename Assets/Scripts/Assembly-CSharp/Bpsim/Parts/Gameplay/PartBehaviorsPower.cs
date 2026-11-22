@@ -728,15 +728,19 @@ namespace Bpsim.Parts.Gameplay
 	/// </remarks>
 	public sealed class JetEngineBehavior : PartBehavior
 	{
-		private const float Acceleration = 22f;
+		// Matches BPIR PartSettings.JetEngineDefaultForce.
+		private const float DefaultForce = 1500f;
 
-		private const float MaxSpeed = 30f;
+		// The ECS solver already distributes the impulse through the welded
+		// assembly. BPIR's global JetEngineForce setting contributes the final
+		// scale, which is 0.08 in the stock sandbox profile.
+		private const float ForceScale = 0.08f;
 
 		/// <summary>空转消耗率（BPSS 里那个 0.1 的系数）。</summary>
 		private const float IdleRate = 0.1f;
 
-		/// <summary>BPSS 的燃料需求按 |force|/1000*0.2 换算，这里的"力"用加速度代表。</summary>
-		private const float ForcePerAcceleration = 0.2f / 1000f;
+		/// <summary>BPSS fuel consumption uses 0.2 units per 1000 force, plus 0.1 idle fuel.</summary>
+		private const float FuelPerThousandForce = 0.2f;
 
 		private int m_dryTicks;
 
@@ -750,6 +754,8 @@ namespace Bpsim.Parts.Gameplay
 		/// 立刻自我熄火（实测 dryTicks=1）。这里只在「还没见过一次非零供给」时放行等待。
 		/// </remarks>
 		private bool m_awaitingSupply;
+
+		public bool CanStart => HasFuelSource();
 
 		public override void Init()
 		{
@@ -766,7 +772,7 @@ namespace Bpsim.Parts.Gameplay
 			if (!Enabled)
 			{
 				// BPSS JetEngine.IsTriggerable()：组里没有燃料箱就不给开。
-				if (!HasFuelSource())
+				if (!CanStart)
 				{
 					Manager.Log("jetengine: no fuel source in group, refusing to start");
 					return;
@@ -780,12 +786,7 @@ namespace Bpsim.Parts.Gameplay
 
 		private bool HasFuelSource()
 		{
-			if (!Em.HasComponent<FuelGroupIndex>(Part) || FuelSystem.Instance == null)
-			{
-				return false;
-			}
-			return FuelSystem.Instance.TryGetState(Em.GetComponentData<FuelGroupIndex>(Part).Value, out FuelGroupState state)
-				&& state.Containers > 0;
+			return FuelSystem.Instance != null && FuelSystem.Instance.HasAvailableFuel(Part);
 		}
 
 		public override void Tick(float deltaTime)
@@ -805,7 +806,7 @@ namespace Bpsim.Parts.Gameplay
 				}
 				return;
 			}
-			float required = (Acceleration * ForcePerAcceleration + IdleRate) * deltaTime;
+			float required = (DefaultForce / 1000f * FuelPerThousandForce + IdleRate) * deltaTime;
 			float supplied = consumer.Supplied;
 			consumer.Requesting = 1;
 			consumer.Required = required;
@@ -818,7 +819,9 @@ namespace Bpsim.Parts.Gameplay
 				if (m_awaitingSupply)
 				{
 					// 第一帧 Supplied 还是上一帧的 0（见 m_awaitingSupply 注释），
-					// 这一步只等结算结果，不推进、也不熄火。
+					// 这一步只等结算结果，不推进、也不熄火。只允许等待一次，
+					// 否则无油发动机会永久保持 Enabled=true。
+					m_awaitingSupply = false;
 					return;
 				}
 				m_dryTicks++;
@@ -831,15 +834,13 @@ namespace Bpsim.Parts.Gameplay
 			}
 			m_awaitingSupply = false;
 			float3 forward = Forward();
-			float speed = math.dot(PartGameplayUtil.LinearVelocity(Part), forward);
-			if (speed >= MaxSpeed)
-			{
-				return;
-			}
 			float denominator = required - idle;
 			float ratio = (denominator > 1E-06f) ? math.saturate(usable / denominator) : 1f;
-			float accel = Acceleration * math.max(0f, 1f - speed / MaxSpeed) * ratio;
-			PartGameplayUtil.AddVelocity(Part, forward * (accel * deltaTime));
+			if (!Em.HasComponent<Unity.Physics.PhysicsMass>(Part)) return;
+			Unity.Physics.PhysicsMass mass = Em.GetComponentData<Unity.Physics.PhysicsMass>(Part);
+			if (mass.InverseMass <= 0f) return;
+			float deltaSpeed = DefaultForce * ForceScale * mass.InverseMass * deltaTime * ratio;
+			PartGameplayUtil.AddVelocity(Part, forward * deltaSpeed);
 		}
 
 		public override string Describe()

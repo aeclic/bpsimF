@@ -180,8 +180,11 @@ Shader "Bpsim/URP/Unlit_Texture_Instancing"
             half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, sampleUV);
 
             // _BlendFactor.x weights the sprite's own texture, .y weights _Color.  (1,0,0,0) is
-            // the identity for ordinary parts; (0,0.75,0,0) is used for a tinted frame.
-            half3 rgb = tex.rgb * (half)input.blend.x + (half3)input.tint.rgb * (half)input.blend.y;
+            // the identity for ordinary parts.  Colored frames use (1,1,0,0) so their palette
+            // color multiplies the source artwork while preserving its texture detail.
+            half3 rgb = (input.blend.x > 0.99h && input.blend.y > 0.99h)
+                ? tex.rgb * (half3)input.tint.rgb
+                : tex.rgb * (half)input.blend.x + (half3)input.tint.rgb * (half)input.blend.y;
             rgb *= (half3)input.layerTint.rgb;
             return half4(rgb, tex.a) * (half4)input.color * (half)input.tint.a;
         }

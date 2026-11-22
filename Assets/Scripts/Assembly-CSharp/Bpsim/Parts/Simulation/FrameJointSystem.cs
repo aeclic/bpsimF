@@ -29,7 +29,11 @@ namespace Bpsim.Parts.Simulation
 			[ReadOnly]
 			public PartAspect.Lookup PartAspectLookup;
 
-			public Reference<PartSimulatorUnmanaged> Simulator;
+			[ReadOnly]
+			public BufferLookup<PartRemoteConnection> RemoteLookup;
+
+			[ReadOnly]
+			public NativeArray<Entity> Parts;
 
 			public float ConnectionStrength;
 
@@ -38,8 +42,9 @@ namespace Bpsim.Parts.Simulation
 				NativeList<(Entity, byte)> nativeList = new NativeList<(Entity, byte)>(256, Allocator.Temp);
 				NativeList<Entity> nativeList2 = new NativeList<Entity>(256, Allocator.Temp);
 				NativeParallelHashMap<Entity, int> nativeParallelHashMap = new NativeParallelHashMap<Entity, int>(256, Allocator.Temp);
-				foreach (Entity part in Simulator.Value.Parts)
+				foreach (Entity part in Parts)
 				{
+					if (RemoteLookup.HasBuffer(part)) continue;
 					Entity value = part;
 					PartAspect partAspect = PartAspectLookup[value];
 					// 变体按基部件归类（BaseTypeInfo 是建实体时预烘的，不会查托管字典）。
@@ -179,7 +184,7 @@ namespace Bpsim.Parts.Simulation
 			}
 		}
 
-		private bool m_dirty;
+		private PartSimulator m_pendingSimulator;
 
 		private EntityCommandBufferSystem m_commandBufferSystem;
 
@@ -189,9 +194,9 @@ namespace Bpsim.Parts.Simulation
 
 		private ComponentLookup<PartTransform> __Bpsim_Parts_PartTransform_RO_ComponentLookup;
 
-		public void SetDirty()
+		public void RequestBuild(PartSimulator simulator)
 		{
-			m_dirty = true;
+			m_pendingSimulator = simulator;
 		}
 
 		[Preserve]
@@ -203,9 +208,12 @@ namespace Bpsim.Parts.Simulation
 		[Preserve]
 		protected override void OnUpdate()
 		{
-			if (m_dirty)
+			PartSimulator simulator = m_pendingSimulator;
+			if (simulator != null)
 			{
-				m_dirty = false;
+				m_pendingSimulator = null;
+				PartManager manager = PartManager.Instance;
+				if (manager == null || !manager.IsSimulating || manager.PartSimulator != simulator) return;
 				SimulationSettings simulationSettings = UserSettings.Instance.SimulationSettings;
 				float num = (simulationSettings.InfiniteConnectionStrength ? float.PositiveInfinity : simulationSettings.ConnectionStrengthFactor);
 				__Bpsim_Parts_PartTransform_RO_ComponentLookup.Update(ref base.CheckedStateRef);
@@ -218,7 +226,8 @@ namespace Bpsim.Parts.Simulation
 					PartTypeLookup = __Bpsim_Parts_PartTypeValue_RO_ComponentLookup,
 					PartTransformLookup = __Bpsim_Parts_PartTransform_RO_ComponentLookup,
 					PartAspectLookup = new PartAspect.Lookup(ref base.CheckedStateRef, isReadOnly: true),
-					Simulator = PartManager.Instance.PartSimulator.UnmanagedRef,
+					RemoteLookup = GetBufferLookup<PartRemoteConnection>(isReadOnly: true),
+					Parts = simulator.Unmanaged.Parts.AsArray(),
 					ConnectionStrength = num * 24f
 				}, base.Dependency);
 				m_commandBufferSystem.AddJobHandleForProducer(base.Dependency);

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -202,6 +203,24 @@ namespace Bpsim.Parts.Gameplay
 		{
 			RenderPipelineManager.endCameraRendering -= RenderDarkness;
 			if (m_quad != null) Destroy(m_quad);
+		}
+
+		internal void ApplyControlFrameAlpha()
+		{
+			if (!m_running) return;
+			foreach (Entity frame in m_autoFrames)
+				PartGameplayUtil.SetAlpha(frame, .25f, VoidLightBehavior.AlphaRestore);
+		}
+	}
+
+	[UpdateInGroup(typeof(PresentationSystemGroup))]
+	[UpdateAfter(typeof(UpdatePresentationSystemGroup))]
+	[UpdateBefore(typeof(Bpsim.Parts.SceneRenderSystem))]
+	internal partial class VoidLightVisualSystem : SystemBase
+	{
+		protected override void OnUpdate()
+		{
+			BpleLightRuntime.Instance?.ApplyControlFrameAlpha();
 		}
 	}
 }

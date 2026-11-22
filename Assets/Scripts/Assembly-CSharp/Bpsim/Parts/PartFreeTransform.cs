@@ -20,6 +20,12 @@ namespace Bpsim.Parts
 		/// <summary>根实体附加缩放；默认 (1,1)。</summary>
 		public float2 Scale;
 
+		public int DrawLayer;
+
+		public const int MaxDrawLayer = 50;
+
+		public const float DrawDepthStep = 0.01f;
+
 		/// <summary>BPRC <c>BasePart.ValidScale</c> 的同一区间：单轴 0.05 ~ 20。</summary>
 		public const float MinScale = 0.05f;
 
@@ -32,21 +38,19 @@ namespace Bpsim.Parts
 			Scale = new float2(1f, 1f)
 		};
 
-		public bool IsIdentity => Offset.x == 0f && Offset.y == 0f && RotationDegrees == 0f && Scale.x == 1f && Scale.y == 1f;
+		public bool IsIdentity => Offset.x == 0f && Offset.y == 0f && RotationDegrees == 0f && Scale.x == 1f && Scale.y == 1f && DrawLayer == 0;
 
 		/// <summary>Shared by build updates and the one-time simulation seed. Input is the grid pose, not an already-composed pose.</summary>
-		internal static LocalTransform Compose(LocalTransform gridPose, in PartFreeTransform value, int layer)
+		internal static LocalTransform Compose(LocalTransform gridPose, in PartFreeTransform value, int layer, out PostTransformScale visualScale)
 		{
 			PartFreeTransform free = Sanitize(value);
-			gridPose.Position += new float3(free.Offset, -(PartBuildLayer.Clamp(layer) - PartBuildLayer.MinLayer) * PartBuildLayer.DepthStep);
-			gridPose.Rotation = math.mul(gridPose.Rotation, quaternion.RotateZ(math.radians(free.RotationDegrees)));
+			visualScale = new PostTransformScale { Value = float3x3.Scale(free.Scale.x, free.Scale.y, 1f) };
+			gridPose.Position += new float3(free.Offset, -(PartBuildLayer.Clamp(layer) - PartBuildLayer.MinLayer) * PartBuildLayer.DepthStep - free.DrawLayer * DrawDepthStep);
+			if (free.RotationDegrees != 0f)
+			{
+				gridPose.Rotation = math.mul(quaternion.RotateZ(math.radians(free.RotationDegrees)), gridPose.Rotation);
+			}
 			return gridPose;
-		}
-
-		internal static PostTransformScale VisualScale(in PartFreeTransform value)
-		{
-			PartFreeTransform free = Sanitize(value);
-			return new PostTransformScale { Value = float3x3.Scale(free.Scale.x, free.Scale.y, 1f) };
 		}
 
 		/// <summary>
@@ -83,7 +87,8 @@ namespace Bpsim.Parts
 			{
 				Offset = offset,
 				RotationDegrees = rotation,
-				Scale = scale
+				Scale = scale,
+				DrawLayer = math.clamp(value.DrawLayer, -MaxDrawLayer, MaxDrawLayer)
 			};
 		}
 	}

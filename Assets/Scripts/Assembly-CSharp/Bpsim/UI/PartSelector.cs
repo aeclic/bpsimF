@@ -246,6 +246,7 @@ namespace Bpsim.UI
 			{
 				return;
 			}
+			ApplyFrameTint(icon, info);
 			SpriteBase sprite = icon.GetComponent<SpriteBase>();
 			if (sprite == null)
 			{
@@ -341,6 +342,23 @@ namespace Bpsim.UI
 				sprite.Apply();
 				NormalizeScale(icon);
 			}
+		}
+
+		private static void ApplyFrameTint(RectTransform icon, PartTypeInfo info)
+		{
+			RawImage rawImage = icon.GetComponent<RawImage>();
+			if (rawImage == null)
+			{
+				return;
+			}
+			Color color = Color.white;
+			if (BasePart.BelongsTo(info, BasePart.ColoredFrames))
+			{
+				var frameColor = ColoredFrame.GetColor(info);
+				color = new Color(frameColor.x, frameColor.y, frameColor.z, 1f);
+			}
+			color.a = rawImage.color.a;
+			rawImage.color = color;
 		}
 
 		/// <summary>把模板里那格 RawImage 换成程序生成的蒙皮图标。</summary>

@@ -174,7 +174,7 @@ namespace Bpsim.QA
             var report = new PerformanceReport { label = label, runId = Guid.NewGuid().ToString("N"),
                 utc = DateTime.UtcNow.ToString("O"), unity = Application.unityVersion, fingerprint = Fingerprint(),
                 benchmarkSha256 = FileHash(Path.Combine(root, "Assets/Scripts/Assembly-CSharp/Bpsim/QA/AnvilParityQA.Performance.cs")),
-                nativeSha256 = FileHash(Path.Combine(root, "Assets/Plugins/x86_64/box3d.dll")),
+                nativeSha256 = FileHash(Path.Combine(root, "Assets/Plugins/x86_64/" + AnvilNative.Library + ".dll")),
                 havokSha256 = FileHash(Path.Combine(root, "Assets/Plugins/x86_64/HavokNative.dll")) };
             foreach (SimulationType backend in new[] { SimulationType.UnityPhysics, SimulationType.HavokPhysics, SimulationType.AnvilPhysics })
                 foreach (string scenario in new[] { "free-flight-512-q8", "welded-1024-q4", "welded-1024-q8",

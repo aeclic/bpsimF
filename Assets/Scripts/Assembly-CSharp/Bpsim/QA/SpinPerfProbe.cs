@@ -1,9 +1,10 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR || BPSIM_SAVE_BENCHMARK
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using Bpsim.Background;
 using Bpsim.Levels;
@@ -45,12 +46,138 @@ namespace Bpsim.QA
 	public class SpinPerfProbe : MonoBehaviour
 	{
 		private const string LogFile = "Logs/spinperf.log";
+		private const int FixedStartupSteps = 4;
 
 		private static SpinPerfProbe s_instance;
 
 		private static readonly StringBuilder s_report = new StringBuilder();
 
 		private static string s_status = "idle";
+
+		private static string s_logPath = LogFile;
+
+		private static string s_jsonPath;
+
+		[Serializable]
+		private sealed class SaveRunReport
+		{
+			public int schema = 2;
+			public string runId;
+			public string utc;
+			public string unity;
+			public string host;
+			public string spec;
+			public string inputPath;
+			public string inputSha256;
+			public string requestedBackend;
+			public string actualBackend;
+			public string error;
+			public string physicsAssemblyId;
+			public string nativeSha256;
+			public int nativeBridgeVersion;
+			public bool nativeWarmStarting;
+			public int startupSteps;
+			public int loadedJointEntities;
+			public int parts;
+			public int joints;
+			public int components;
+			public int jointEntities;
+			public int solverIterations;
+			public int workerCount;
+			public float fixedTimeStep;
+			public float gravityX;
+			public float gravityY;
+			public List<SavePhaseReport> phases = new List<SavePhaseReport>();
+		}
+
+		[Serializable]
+		private sealed class SavePhaseReport
+		{
+			public string label;
+			public int frames;
+			public int jointsBefore;
+			public int jointsAfter;
+			public int componentsBefore;
+			public int componentsAfter;
+			public double frameP50Ms;
+			public double frameP95Ms;
+			public double frameP99Ms;
+			public double frameMaxMs;
+			public double physicsP50Ms;
+			public double physicsP95Ms;
+			public double physicsP99Ms;
+			public double physicsMaxMs;
+			public int completedPhysicsSteps;
+			public int anvilStepDelta;
+			public string stateSha256;
+			public double centroidX;
+			public double centroidY;
+			public double meanSpeed;
+			public double maxSpeed;
+			public double meanAngularSpeed;
+			public double maxAngularSpeed;
+			public int fixedJointCount;
+			public double rmsFixedAnchorError;
+			public double maxFixedAnchorError;
+			public int nonFiniteParts;
+			public List<float> frameTimesMs = new List<float>();
+			public List<PhysicsStepSample> physicsSteps = new List<PhysicsStepSample>();
+		}
+
+		[Serializable]
+		private struct PhysicsStepSample
+		{
+			public double totalMs;
+			public double worldBuildWaitMs;
+			public double syncToMs;
+			public double stepMs;
+			public double syncFromMs;
+			public double treeMs;
+			public double nativeMs;
+			public double nativeSolveMs;
+			public double nativePrepareMs;
+			public double nativeWarmStartMs;
+			public double nativeSolveImpulseMs;
+			public double nativeRelaxMs;
+			public int anvilStepDelta;
+			public bool integratedSubsteps;
+		}
+
+		private static SaveRunReport s_runReport;
+
+		private static List<PhysicsStepSample> s_physicsSamples;
+
+		private static long s_physicsStart;
+
+		private static int s_anvilStepStart;
+
+		private static int s_physicsAnvilStepStart;
+
+		private static bool s_capturePhysics;
+
+		private static int s_measureSteps;
+
+		private static int s_captureTargetSteps;
+
+		private static bool s_fixedClock;
+		private static float s_captureDeltaBackup;
+		private static FixedStepSimulationSystemGroup s_captureGroup;
+		private static IRateManager s_rateBackup;
+		private static int s_completedPhysicsSteps;
+		private static int s_traceFirstTick;
+		private static int s_traceSteps;
+
+		private static bool s_backendOverride;
+
+		private static SimulationType s_backendBackup;
+
+		private static bool s_workersChanged;
+
+		private static int s_workersBackup;
+
+		private static int s_originalSceneId = -1;
+
+		private static int s_testSceneId = -1;
 
 		private static float s_gravityBackup = -9.81f;
 
@@ -109,18 +236,71 @@ namespace Bpsim.QA
 			return s_status + "\n" + s_report;
 		}
 
+#if BPSIM_SAVE_BENCHMARK && !UNITY_EDITOR
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+		private static void RunPlayerBenchmark()
+		{
+			string[] args = Environment.GetCommandLineArgs();
+			int index = Array.IndexOf(args, "-bpsimSaveBenchmark");
+			if (index < 0) return;
+			if (index + 1 == args.Length)
+			{
+				Application.Quit(2);
+				return;
+			}
+			Ensure().StartCoroutine(PlayerBenchmark(args[index + 1]));
+		}
+
+		private static IEnumerator PlayerBenchmark(string spec)
+		{
+			Application.runInBackground = true;
+			QualitySettings.vSyncCount = 0;
+			float deadline = Time.realtimeSinceStartup + 120f;
+			while ((PartManager.Instance == null || !PartManager.Instance.IsReady || UserSettings.Instance == null)
+				&& Time.realtimeSinceStartup < deadline)
+				yield return null;
+			if (!Run(spec).StartsWith("started:", StringComparison.Ordinal))
+			{
+				Application.Quit(2);
+				yield break;
+			}
+			while (s_status == "running") yield return null;
+			bool complete = s_runReport.error == null && s_runReport.phases.Count == 2 && File.Exists(s_jsonPath);
+			Application.Quit(complete ? 0 : 1);
+		}
+#endif
+
 		public static string Run(string spec)
 		{
 			if (s_status == "running")
 			{
 				return "already running\n" + s_report;
 			}
+			string actualSpec = spec ?? string.Empty;
+			string label = SpecWord(actualSpec, "label", null);
+			if (!string.IsNullOrEmpty(label) && !IsSafeLabel(label))
+			{
+				return "error: label may contain only letters, digits, '_' and '-'";
+			}
 			SpinPerfProbe probe = Ensure();
 			s_report.Length = 0;
+			s_logPath = string.IsNullOrEmpty(label) ? LogFile : Path.Combine("Logs", "spinperf-" + label + ".log");
+			s_jsonPath = string.IsNullOrEmpty(label) ? null : Path.Combine("Logs", "spinperf-" + label + ".json");
+			s_runReport = new SaveRunReport
+			{
+				runId = Guid.NewGuid().ToString("N"),
+				utc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
+				unity = Application.unityVersion,
+				host = Application.isEditor ? "Editor" : "Player",
+				spec = actualSpec,
+				requestedBackend = SpecWord(actualSpec, "backend", ""),
+				physicsAssemblyId = typeof(AnvilWorld).Module.ModuleVersionId.ToString("N")
+			};
+			s_measureSteps = math.max(0, SpecInt(actualSpec, "steps", 0));
 			s_status = "running";
 			GameObject go = probe.gameObject;
 			go.name = "[SpinPerfProbe]";
-			probe.StartCoroutine(probe.RunRoutine(spec ?? string.Empty));
+			probe.StartCoroutine(probe.RunRoutine(actualSpec));
 			return "started: " + spec;
 		}
 
@@ -131,7 +311,8 @@ namespace Bpsim.QA
 				s_instance.StopAllCoroutines();
 			}
 			s_status = "stopped";
-			RestoreSystems();
+			RestoreProbeState();
+			WriteLog();
 			return Status();
 		}
 
@@ -162,6 +343,59 @@ namespace Bpsim.QA
 		private IEnumerator RunRoutine(string spec)
 		{
 			yield return StartCoroutine(RunCore(spec));
+			RestoreProbeState();
+			s_status = "done";
+			Line("=== done ===");
+			WriteLog();
+		}
+
+		private static void RestoreProbeState()
+		{
+			s_capturePhysics = false;
+			s_physicsSamples = null;
+			s_captureTargetSteps = 0;
+			s_traceSteps = 0;
+			if (s_fixedClock)
+			{
+				Time.captureDeltaTime = s_captureDeltaBackup;
+				if (s_captureGroup != null && s_captureGroup.World.IsCreated)
+					s_captureGroup.RateManager = s_rateBackup;
+				s_captureGroup = null;
+				s_rateBackup = null;
+				s_fixedClock = false;
+			}
+			if (s_backendOverride)
+			{
+				PartManager manager = PartManager.Instance;
+				if (manager != null && manager.IsSimulating)
+				{
+					manager.EndSimulation();
+				}
+				if (AnvilStepSystem.Anvil != null && AnvilStepSystem.Anvil.IsCreated)
+				{
+					AnvilStepSystem.Anvil.Dispose();
+				}
+				if (UserSettings.Instance != null)
+				{
+					UserSettings.Instance.SimulationSettings.SimulationType = s_backendBackup;
+				}
+				if (manager != null && s_testSceneId >= 0)
+				{
+					manager.UnloadScene(s_testSceneId);
+					if (s_originalSceneId >= 0)
+					{
+						manager.SelectScene(s_originalSceneId);
+					}
+				}
+				s_testSceneId = -1;
+				s_originalSceneId = -1;
+				s_backendOverride = false;
+			}
+			if (s_workersChanged)
+			{
+				AnvilStepSystem.WorkerCount = s_workersBackup;
+				s_workersChanged = false;
+			}
 			RestoreSystems();
 			if (s_gravityChanged && UserSettings.Instance != null)
 			{
@@ -211,9 +445,6 @@ namespace Bpsim.QA
 				}
 				Line("megadrop ground destroyed");
 			}
-			s_status = "done";
-			Line("=== done ===");
-			WriteLog();
 		}
 
 		private IEnumerator RunCore(string spec)
@@ -221,6 +452,8 @@ namespace Bpsim.QA
 			float duration = SpecFloat(spec, "dur", 2.5f);
 			int solver = SpecInt(spec, "solver", -1);
 			int workers = SpecInt(spec, "workers", -1);
+			int warmupSteps = math.max(0, SpecInt(spec, "warmupsteps", 0));
+			string backendName = SpecWord(spec, "backend", null);
 			float gravity = SpecFloat(spec, "gravity", float.NaN);
 			float spin = SpecFloat(spec, "spin", 32f);
 			bool bisect = SpecInt(spec, "bisect", 1) != 0;
@@ -265,6 +498,11 @@ namespace Bpsim.QA
 				yield break;
 			}
 			Line("worlds: manager.IsReady=" + manager.IsReady + " simulating=" + manager.IsSimulating);
+			if (!string.IsNullOrEmpty(backendName) && manager.IsSimulating)
+			{
+				Line("error: backend benchmark refuses to replace an active simulation");
+				yield break;
+			}
 
 			if (manager.IsSimulating)
 			{
@@ -283,8 +521,30 @@ namespace Bpsim.QA
 				Line("error: schematics file not found");
 				yield break;
 			}
+			s_originalSceneId = manager.ActiveScene == null ? -1 : manager.ActiveScene.SceneID;
+			if (UserSettings.Instance == null)
+			{
+				Line("error: UserSettings is unavailable");
+				yield break;
+			}
+			if (s_runReport != null)
+			{
+				s_runReport.inputPath = Path.GetFullPath(path);
+				s_runReport.inputSha256 = HashFile(path);
+			}
+			SimulationType requestedBackend = SimulationType.UnityPhysics;
+			if (!string.IsNullOrEmpty(backendName))
+			{
+				if (!Enum.TryParse(backendName, true, out requestedBackend) || !Enum.IsDefined(typeof(SimulationType), requestedBackend))
+				{
+					Line("error: unknown backend " + backendName);
+					yield break;
+				}
+				s_backendBackup = UserSettings.Instance.SimulationSettings.SimulationType;
+				s_backendOverride = true;
+			}
 
-			if (!float.IsNaN(gravity) || solver >= 0 || infinite >= 0 || !float.IsNaN(strengthFactor) || createJoints >= 0 || selfCollide >= 0 || mega >= 0 || !float.IsNaN(megaBreak))
+			if (!float.IsNaN(gravity) || solver >= 0 || infinite >= 0 || !float.IsNaN(strengthFactor) || createJoints >= 0 || selfCollide >= 0 || mega >= 0 || !float.IsNaN(megaBreak) || !string.IsNullOrEmpty(backendName))
 			{
 				SimulationSettings settings = UserSettings.Instance.SimulationSettings;
 				if (!s_settingsChanged)
@@ -304,6 +564,10 @@ namespace Bpsim.QA
 				if (solver >= 0)
 				{
 					settings.SolverIterationCount = solver;
+				}
+				if (!string.IsNullOrEmpty(backendName))
+				{
+					settings.SimulationType = requestedBackend;
 				}
 				if (infinite >= 0)
 				{
@@ -348,15 +612,53 @@ namespace Bpsim.QA
 					+ " mega=" + settings.MegaStructure + " breakSpeed=" + F(settings.MegaStructureBreakSpeed));
 			}
 
+			if (warmupSteps > 0 && s_measureSteps > 0)
+			{
+				if (Time.timeScale != 1f)
+				{
+					RejectRun("Fixed-step benchmark requires timeScale=1");
+					yield break;
+				}
+				int remainingJoints = JointEntityCount(PartGameplayUtil.Em);
+				if (remainingJoints != 0)
+				{
+					RejectRun("Fixed-step benchmark requires a clean world. Existing joint entities: " + remainingJoints);
+					yield break;
+				}
+				s_captureDeltaBackup = Time.captureDeltaTime;
+				float fixedTimeStep = UserSettings.Instance.SimulationSettings.FixedTimeStep;
+				s_captureGroup = PartGameplayUtil.Em.World.GetExistingSystemManaged<FixedStepSimulationSystemGroup>();
+				s_rateBackup = s_captureGroup.RateManager;
+				s_captureGroup.RateManager = new RateUtils.FixedRateSimpleManager(fixedTimeStep);
+				Time.captureDeltaTime = fixedTimeStep;
+				s_fixedClock = true;
+			}
+
 			string error = null;
 			bool loaded = false;
+			PartScene loadedScene = null;
+			Action<PartScene> sceneLoaded = scene => loadedScene = scene;
+			manager.SceneLoaded += sceneLoaded;
 			try
 			{
-				loaded = LevelSession.LoadSceneFile(path, SchematicsFormat.Csv, out error);
+				using (Stream stream = File.OpenRead(path))
+				{
+					manager.LoadScene(stream, Path.GetFileNameWithoutExtension(path), SchematicsFormat.Auto);
+				}
+				loaded = loadedScene != null;
+				if (loaded)
+				{
+					manager.SelectScene(loadedScene.SceneID);
+					s_testSceneId = loadedScene.SceneID;
+				}
 			}
 			catch (Exception exception)
 			{
 				error = exception.ToString();
+			}
+			finally
+			{
+				manager.SceneLoaded -= sceneLoaded;
 			}
 			Line("load result=" + loaded + " error=" + (error ?? "none"));
 			if (!loaded)
@@ -389,15 +691,53 @@ namespace Bpsim.QA
 
 			if (workers > 0)
 			{
+				if (!s_workersChanged)
+				{
+					s_workersBackup = AnvilStepSystem.WorkerCount;
+					s_workersChanged = true;
+				}
 				AnvilStepSystem.WorkerCount = workers;
 				Line("anvil workers=" + workers + " (applies on next Anvil step)");
 			}
 			System.Diagnostics.Stopwatch startWatch = System.Diagnostics.Stopwatch.StartNew();
+			int startupTick = s_completedPhysicsSteps;
+			int startupAnvil = AnvilStepSystem.StepCount;
 			manager.StartSimulation();
 			startWatch.Stop();
+			s_traceFirstTick = startupTick;
+			s_traceSteps = math.clamp(SpecInt(spec, "tracesteps", 0), 0, 256);
+			if (SpecInt(spec, "traceignorehalfcolliders", 0) != 0)
+			{
+				EntityManager entityManager = PartGameplayUtil.Em;
+				using EntityQuery query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<HingePlateCollisionNetwork>(), ComponentType.ReadOnly<PhysicsCollider>());
+				using NativeArray<Entity> entities = query.ToEntityArray(Allocator.Temp);
+				foreach (Entity entity in entities)
+					if (entityManager.GetComponentData<HingePlateCollisionNetwork>(entity).IsHalf)
+						entityManager.RemoveComponent<PhysicsCollider>(entity);
+			}
+			if (s_fixedClock)
+			{
+				s_runReport.loadedJointEntities = JointEntityCount(PartGameplayUtil.Em);
+				Line("start: loaded joint entities=" + s_runReport.loadedJointEntities);
+			}
 			Line("start: StartSimulation " + F((float)startWatch.Elapsed.TotalMilliseconds) + "ms");
-			yield return null;
-			yield return null;
+			if (s_fixedClock)
+			{
+				float deadline = Time.realtimeSinceStartup + math.clamp(SpecInt(spec, "startupseconds", 180), 30, 600);
+				while (s_completedPhysicsSteps - startupTick < FixedStartupSteps && Time.realtimeSinceStartup < deadline)
+					yield return null;
+				s_runReport.startupSteps = s_completedPhysicsSteps - startupTick;
+				if (s_runReport.startupSteps != FixedStartupSteps)
+				{
+					RejectRun("Fixed-step startup ran " + s_runReport.startupSteps + " ticks; expected " + FixedStartupSteps);
+					yield break;
+				}
+			}
+			else
+			{
+				yield return null;
+				yield return null;
+			}
 
 			// 早退开关：在 warmup 之前关掉整块玩法或 BPLE 灯运行时，用来把「初始 5250 关节时的
 			// 物理开销」与「玩法开销」分开，而不是等二分阶段部件已经散架。
@@ -429,6 +769,51 @@ namespace Bpsim.QA
 			}
 			EntityManager jointsEm = PartGameplayUtil.Em;
 			int jointEntities = JointEntityCount(jointsEm);
+			SimulationType actualBackend = SimulationType.UnityPhysics;
+			using (EntityQuery stepQuery = jointsEm.CreateEntityQuery(ComponentType.ReadOnly<PhysicsStep>()))
+			{
+				if (stepQuery.CalculateEntityCount() == 1)
+				{
+					actualBackend = stepQuery.GetSingleton<PhysicsStep>().SimulationType;
+				}
+			}
+			if (s_fixedClock && actualBackend != SimulationType.AnvilPhysics)
+			{
+				using EntityQuery simulationQuery = jointsEm.CreateEntityQuery(ComponentType.ReadOnly<SimulationSingleton>());
+				if (!simulationQuery.TryGetSingleton(out SimulationSingleton simulation) || simulation.Type != actualBackend)
+				{
+					RejectRun("The scheduled simulation does not match PhysicsStep");
+					yield break;
+				}
+			}
+			if (s_fixedClock && actualBackend == SimulationType.AnvilPhysics && AnvilStepSystem.StepCount - startupAnvil != FixedStartupSteps)
+			{
+				RejectRun("Anvil did not advance every startup tick; inspect the Unity console");
+				yield break;
+			}
+			if (s_runReport != null)
+			{
+				s_runReport.actualBackend = actualBackend.ToString();
+				s_runReport.nativeBridgeVersion = actualBackend == SimulationType.AnvilPhysics ? AnvilWorld.NativeBridgeVersion : 0;
+				s_runReport.nativeWarmStarting = actualBackend == SimulationType.AnvilPhysics && AnvilStepSystem.Anvil?.WarmStartingEnabled == true;
+				if (actualBackend != SimulationType.UnityPhysics)
+				{
+					string library = actualBackend == SimulationType.AnvilPhysics ? AnvilNative.Library : "HavokNative";
+					string nativePath = Path.Combine(Application.dataPath, "Plugins", "x86_64", library + ".dll");
+					s_runReport.nativeSha256 = File.Exists(nativePath) ? HashFile(nativePath) : null;
+				}
+				s_runReport.parts = sim.Unmanaged.Parts.Length;
+				s_runReport.joints = sim.Unmanaged.Joints.Length;
+				s_runReport.components = sim.Unmanaged.ConnectedComponents.Length;
+				s_runReport.jointEntities = jointEntities;
+				s_runReport.solverIterations = UserSettings.Instance.SimulationSettings.SolverIterationCount;
+				s_runReport.workerCount = AnvilStepSystem.WorkerCount;
+				s_runReport.fixedTimeStep = UserSettings.Instance.SimulationSettings.FixedTimeStep;
+				s_runReport.gravityX = UserSettings.Instance.SimulationSettings.GravityX;
+				s_runReport.gravityY = UserSettings.Instance.SimulationSettings.GravityY;
+			}
+			Line("backend: requested=" + (string.IsNullOrEmpty(backendName) ? "unchanged" : backendName)
+				+ " actual=" + actualBackend + " AnvilActive=" + AnvilStepSystem.Active);
 			Line("simulation: parts=" + sim.Unmanaged.Parts.Length + " joints=" + sim.Unmanaged.Joints.Length
 				+ " components=" + sim.Unmanaged.ConnectedComponents.Length + " jointEntities=" + jointEntities);
 			Line("mega: active=" + MegaStructure.Active + " body=" + MegaStructure.Body.Index + ":" + MegaStructure.Body.Version
@@ -552,7 +937,7 @@ namespace Bpsim.QA
 				if (!forceBisect)
 				{
 					yield return StartCoroutine(Phase("idle-nj w=0", ModeNone, 0f, duration));
-					yield return StartCoroutine(Phase("rigid-nj w=32", ModeRigid, 32f, duration));
+					yield return StartCoroutine(Phase("rigid-nj w=" + F(spin), ModeRigid, spin, duration, s_measureSteps));
 					Line("diag end: " + Diagnose(manager));
 					yield break;
 				}
@@ -568,8 +953,20 @@ namespace Bpsim.QA
 				Line("diag after enable: " + Diagnose(manager) + " jointEntities=" + JointEntityCount(jointsEm));
 			}
 
-			// 让世界稳定一帧再开始测。
-			yield return StartCoroutine(Phase("warmup", ModeNone, 0f, 0.5f));
+			if (s_fixedClock)
+			{
+				int startTick = s_completedPhysicsSteps;
+				yield return Phase("warmup", ModeNone, 0f, 0.5f, warmupSteps);
+				if (s_completedPhysicsSteps - startTick != warmupSteps)
+				{
+					RejectRun("Unmatched or unmeasured ticks at the warmup boundary");
+					yield break;
+				}
+			}
+			else
+			{
+				yield return StartCoroutine(Phase("warmup", ModeNone, 0f, 0.5f, warmupSteps));
+			}
 
 			// 1) ω 扫描：刚体自旋（关节不承受应力），看平均帧时间有没有随 ω 增长。
 			//    sweep=0 时只测 spin 这一档（这样每次调用都是干净样本：新载入 + 一个 ω）。
@@ -583,7 +980,7 @@ namespace Bpsim.QA
 			}
 			else
 			{
-				yield return StartCoroutine(Phase("single w=" + F(spin), ModeRigid, spin, duration));
+				yield return Phase("single w=" + F(spin), ModeRigid, spin, duration, s_measureSteps);
 			}
 
 			// 诊断：阶段结束后在主线程重新 apply 一次，看能不能把断链后遗漏的过滤补上。
@@ -743,7 +1140,7 @@ namespace Bpsim.QA
 			}
 		}
 
-		private IEnumerator Phase(string label, int mode, float omega, float seconds)
+		private IEnumerator Phase(string label, int mode, float omega, float seconds, int targetPhysicsSteps = 0)
 		{
 			PartManager manager = PartManager.Instance;
 			PartSimulator sim = manager == null ? null : manager.PartSimulator;
@@ -758,11 +1155,24 @@ namespace Bpsim.QA
 			int componentsBefore = sim.Unmanaged.ConnectedComponents.Length;
 			int gcBefore = GC.CollectionCount(0);
 			List<float> deltas = new List<float>(4096);
+			List<PhysicsStepSample> physicsSamples = new List<PhysicsStepSample>(math.max(256, targetPhysicsSteps));
+			s_physicsSamples = physicsSamples;
+			s_captureTargetSteps = targetPhysicsSteps;
+			s_physicsStart = 0;
+			s_anvilStepStart = AnvilStepSystem.StepCount;
+			s_capturePhysics = true;
+			int firstTick = s_completedPhysicsSteps;
 			float started = Time.realtimeSinceStartup;
+			long frameStart = System.Diagnostics.Stopwatch.GetTimestamp();
 			int frames = 0;
 			int longFrames = 0;
-			while (Time.realtimeSinceStartup - started < seconds)
+			while (targetPhysicsSteps > 0 ? physicsSamples.Count < targetPhysicsSteps : Time.realtimeSinceStartup - started < seconds)
 			{
+				if (targetPhysicsSteps > 0 && Time.realtimeSinceStartup - started > 300f)
+				{
+					Line("[" + label + "] fixed-step capture timed out at " + physicsSamples.Count + "/" + targetPhysicsSteps);
+					break;
+				}
 				yield return null;
 				frames++;
 				// writev=0：不写速度场。巨构模式下写部件速度等于"假装玩家每步在施力"
@@ -786,13 +1196,18 @@ namespace Bpsim.QA
 						DriveSpin(sim, omega);
 					}
 				}
-				float delta = Time.unscaledDeltaTime;
+				long frameEnd = System.Diagnostics.Stopwatch.GetTimestamp();
+				float delta = s_fixedClock ? (float)((frameEnd - frameStart) / (double)System.Diagnostics.Stopwatch.Frequency) : Time.unscaledDeltaTime;
+				frameStart = frameEnd;
 				deltas.Add(delta);
 				if (delta > 0.033f)
 				{
 					longFrames++;
 				}
 			}
+			s_capturePhysics = false;
+			s_physicsSamples = null;
+			s_captureTargetSteps = 0;
 			float elapsed = Time.realtimeSinceStartup - started;
 			int gc = GC.CollectionCount(0) - gcBefore;
 			deltas.Sort();
@@ -831,7 +1246,56 @@ namespace Bpsim.QA
 				+ " joints=" + jointsBefore + "->" + sim.Unmanaged.Joints.Length
 				+ " comp=" + componentsBefore + "->" + sim.Unmanaged.ConnectedComponents.Length
 				+ " " + spinStats + megaStats);
-			if (AnvilStepSystem.Active)
+			SavePhaseReport phaseReport = new SavePhaseReport
+			{
+				label = label,
+				completedPhysicsSteps = s_completedPhysicsSteps - firstTick,
+				frames = frames,
+				jointsBefore = jointsBefore,
+				jointsAfter = sim.Unmanaged.Joints.Length,
+				componentsBefore = componentsBefore,
+				componentsAfter = sim.Unmanaged.ConnectedComponents.Length,
+				frameP50Ms = p50,
+				frameP95Ms = p95,
+				frameP99Ms = p99,
+				frameMaxMs = max
+			};
+			for (int i = 0; i < deltas.Count; i++)
+			{
+				phaseReport.frameTimesMs.Add(deltas[i] * 1000f);
+			}
+			phaseReport.physicsSteps.AddRange(physicsSamples);
+			double[] physicsTimes = new double[physicsSamples.Count];
+			for (int i = 0; i < physicsSamples.Count; i++)
+			{
+				physicsTimes[i] = physicsSamples[i].totalMs;
+			}
+			Array.Sort(physicsTimes);
+			phaseReport.physicsP50Ms = Percentile(physicsTimes, 0.50);
+			phaseReport.physicsP95Ms = Percentile(physicsTimes, 0.95);
+			phaseReport.physicsP99Ms = Percentile(physicsTimes, 0.99);
+			phaseReport.physicsMaxMs = Percentile(physicsTimes, 1.00);
+			CaptureState(sim, phaseReport);
+			if (s_fixedClock)
+			{
+				CaptureFixedAnchorError(PartGameplayUtil.Em, phaseReport);
+				if (targetPhysicsSteps > 0 && (phaseReport.completedPhysicsSteps != targetPhysicsSteps || physicsSamples.Count != targetPhysicsSteps))
+					RejectRun(label + " did not execute and sample exactly " + targetPhysicsSteps + " ticks");
+			}
+			if (s_runReport != null)
+			{
+				s_runReport.phases.Add(phaseReport);
+			}
+			Line("  physics pipeline: samples=" + physicsSamples.Count + " p50/p95/p99/max="
+				+ phaseReport.physicsP50Ms.ToString("F3", CultureInfo.InvariantCulture) + "/"
+				+ phaseReport.physicsP95Ms.ToString("F3", CultureInfo.InvariantCulture) + "/"
+				+ phaseReport.physicsP99Ms.ToString("F3", CultureInfo.InvariantCulture) + "/"
+				+ phaseReport.physicsMaxMs.ToString("F3", CultureInfo.InvariantCulture) + "ms"
+				+ " state=" + phaseReport.stateSha256
+				+ " AnvilSteps=" + (AnvilStepSystem.StepCount - s_anvilStepStart));
+
+			phaseReport.anvilStepDelta = AnvilStepSystem.StepCount - s_anvilStepStart;
+			if (phaseReport.anvilStepDelta > 0)
 			{
 				b3Profile anvilProfile = AnvilStepSystem.LastProfile;
 				Line("  anvil: step=" + F(anvilProfile.step) + " pairs=" + F(anvilProfile.pairs)
@@ -849,6 +1313,277 @@ namespace Bpsim.QA
 						+ " islands=" + counters.islandCount);
 				}
 			}
+		}
+
+		internal static void BeginPhysicsStepTiming()
+		{
+			if (s_capturePhysics)
+			{
+				s_physicsStart = System.Diagnostics.Stopwatch.GetTimestamp();
+				s_physicsAnvilStepStart = AnvilStepSystem.StepCount;
+			}
+		}
+
+		internal static void CompletePhysicsStepTiming(EntityManager entityManager)
+		{
+			s_completedPhysicsSteps++;
+			if (s_traceSteps > 0 && s_completedPhysicsSteps - s_traceFirstTick <= s_traceSteps)
+				TracePhysicsStep(entityManager, s_completedPhysicsSteps - s_traceFirstTick);
+			if (!s_capturePhysics || s_physicsSamples == null || s_physicsStart == 0
+				|| (s_captureTargetSteps > 0 && s_physicsSamples.Count >= s_captureTargetSteps))
+			{
+				return;
+			}
+			if (s_fixedClock)
+			{
+				entityManager.CompleteDependencyBeforeRO<LocalTransform>();
+				entityManager.CompleteDependencyBeforeRO<PhysicsVelocity>();
+			}
+			long end = System.Diagnostics.Stopwatch.GetTimestamp();
+			PhysicsStepSample sample = new PhysicsStepSample
+			{
+				totalMs = (end - s_physicsStart) * 1000.0 / System.Diagnostics.Stopwatch.Frequency,
+				anvilStepDelta = AnvilStepSystem.StepCount - s_physicsAnvilStepStart
+			};
+			if (sample.anvilStepDelta > 0)
+			{
+				sample.worldBuildWaitMs = AnvilStepSystem.LastWorldBuildWaitMs;
+				sample.syncToMs = AnvilStepSystem.LastSyncToMs;
+				sample.stepMs = AnvilStepSystem.LastStepMs;
+				sample.syncFromMs = AnvilStepSystem.LastSyncFromMs;
+				sample.treeMs = AnvilStepSystem.LastTreeMs;
+				b3Profile profile = AnvilStepSystem.LastProfile;
+				sample.nativeMs = profile.step;
+				sample.nativeSolveMs = profile.solve;
+				sample.nativePrepareMs = profile.prepareConstraints;
+				sample.nativeWarmStartMs = profile.warmStart;
+				sample.nativeSolveImpulseMs = profile.solveImpulses;
+				sample.nativeRelaxMs = profile.relaxImpulses;
+				sample.integratedSubsteps = AnvilStepSystem.Anvil.UsedIntegratedSubsteps;
+			}
+			s_physicsSamples.Add(sample);
+			s_physicsStart = 0;
+		}
+
+		private static void TracePhysicsStep(EntityManager manager, int step)
+		{
+			using EntityQuery worlds = manager.CreateEntityQuery(ComponentType.ReadOnly<PhysicsWorldSingleton>());
+			using EntityQuery contacts = manager.CreateEntityQuery(ComponentType.ReadOnly<AnvilContactsSingleton>());
+			manager.CompleteDependencyBeforeRO<PhysicsWorldSingleton>();
+			PhysicsWorld world = worlds.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
+			int fastest = -1;
+			int fastestAngular = -1;
+			float maxLinearSquared = -1f;
+			float maxAngularSquared = -1f;
+			int nonFiniteBodies = 0;
+			for (int index = 0; index < world.NumDynamicBodies; index++)
+			{
+				MotionVelocity velocity = world.MotionVelocities[index];
+				RigidTransform transform = world.MotionDatas[index].WorldFromMotion;
+				if (!math.all(math.isfinite(velocity.LinearVelocity)) || !math.all(math.isfinite(velocity.AngularVelocity))
+					|| !math.all(math.isfinite(transform.pos)) || !math.all(math.isfinite(transform.rot.value)))
+				{
+					nonFiniteBodies++;
+					continue;
+				}
+				float linearSquared = math.lengthsq(velocity.LinearVelocity);
+				float angularSquared = math.lengthsq(velocity.AngularVelocity);
+				if (linearSquared > maxLinearSquared)
+				{
+					fastest = index;
+					maxLinearSquared = linearSquared;
+				}
+				if (angularSquared > maxAngularSquared)
+				{
+					fastestAngular = index;
+					maxAngularSquared = angularSquared;
+				}
+			}
+			if (fastest < 0)
+			{
+				Line($"trace tick={step} joints={world.NumJoints} nonfinite={nonFiniteBodies}");
+				return;
+			}
+			Entity fastestEntity = world.Bodies[fastest].Entity;
+			Entity fastestAngularEntity = world.Bodies[fastestAngular].Entity;
+			Line($"trace tick={step} joints={world.NumJoints} nonfinite={nonFiniteBodies} linear={F(math.sqrt(maxLinearSquared))} {TraceBody(manager, fastestEntity)} "
+				+ $"angular={F(math.sqrt(maxAngularSquared))} {TraceBody(manager, fastestAngularEntity)}");
+			if (!contacts.TryGetSingleton(out AnvilContactsSingleton contactEvents) || !contactEvents.Active) return;
+			using var breaks = new NativeList<Entity>(Allocator.Temp);
+			AnvilStepSystem.Anvil.CollectJointEvents(breaks);
+			Line($"trace contacts={contactEvents.Count} breakEvents={breaks.Length}");
+			for (int index = 0; index < math.min(4, breaks.Length); index++)
+			{
+				Entity joint = breaks[index];
+				if (!manager.HasComponent<PhysicsConstrainedBodyPair>(joint)) continue;
+				PhysicsConstrainedBodyPair pair = manager.GetComponentData<PhysicsConstrainedBodyPair>(joint);
+				JointType type = manager.GetComponentData<PhysicsJoint>(joint).JointType;
+				Line($"trace break {type} {TraceBody(manager, pair.EntityA)} -> {TraceBody(manager, pair.EntityB)}");
+			}
+			AnvilContactEvent largest = default;
+			for (int index = 0; index < contactEvents.Count; index++)
+			{
+				AnvilContactEvent contact = contactEvents.Events[index];
+				if (contact.Impulse > largest.Impulse) largest = contact;
+			}
+			if (largest.Impulse > 0f)
+				Line($"trace contact impulse={F(largest.Impulse)} {TraceBody(manager, largest.EntityA)} -> {TraceBody(manager, largest.EntityB)}");
+		}
+
+		private static string TraceBody(EntityManager manager, Entity entity)
+		{
+			if (entity == Entity.Null || !manager.Exists(entity)) return "static";
+			bool half = manager.HasComponent<HingePlateCollisionNetwork>(entity)
+				&& manager.GetComponentData<HingePlateCollisionNetwork>(entity).IsHalf;
+			PartTypeInfo type = manager.HasComponent<PartTypeValue>(entity) ? manager.GetComponentData<PartTypeValue>(entity).BaseValue : default;
+			float3 position = manager.HasComponent<LocalTransform>(entity) ? manager.GetComponentData<LocalTransform>(entity).Position : default;
+			return $"{entity.Index}/{manager.GetName(entity)}/{type.PartType}.{type.PartIndex}/half={half}@{position}";
+		}
+
+		private static double Percentile(double[] sorted, double percentile)
+		{
+			if (sorted == null || sorted.Length == 0)
+			{
+				return 0.0;
+			}
+			int index = (int)System.Math.Ceiling(sorted.Length * percentile) - 1;
+			index = System.Math.Max(0, System.Math.Min(sorted.Length - 1, index));
+			return sorted[index];
+		}
+
+		private static void CaptureState(PartSimulator sim, SavePhaseReport report)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			NativeList<Entity> parts = sim.Unmanaged.Parts;
+			double x = 0.0;
+			double y = 0.0;
+			double speed = 0.0;
+			double angularSpeed = 0.0;
+			float maxSpeed = 0f;
+			float maxAngularSpeed = 0f;
+			int counted = 0;
+			using (MemoryStream stream = new MemoryStream(parts.Length * 48))
+			using (BinaryWriter writer = new BinaryWriter(stream))
+			{
+				writer.Write(parts.Length);
+				for (int i = 0; i < parts.Length; i++)
+				{
+					Entity entity = parts[i];
+					bool exists = entity != Entity.Null && em.Exists(entity);
+					writer.Write(exists);
+					if (!exists)
+					{
+						continue;
+					}
+					bool hasTransform = em.HasComponent<LocalTransform>(entity);
+					writer.Write(hasTransform);
+					if (hasTransform)
+					{
+						LocalTransform transform = em.GetComponentData<LocalTransform>(entity);
+						if (!math.all(math.isfinite(transform.Position)) || !math.all(math.isfinite(transform.Rotation.value)))
+							report.nonFiniteParts++;
+						writer.Write(transform.Position.x);
+						writer.Write(transform.Position.y);
+						writer.Write(transform.Position.z);
+						writer.Write(transform.Rotation.value.x);
+						writer.Write(transform.Rotation.value.y);
+						writer.Write(transform.Rotation.value.z);
+						writer.Write(transform.Rotation.value.w);
+						writer.Write(transform.Scale);
+						x += transform.Position.x;
+						y += transform.Position.y;
+						counted++;
+					}
+					bool hasVelocity = em.HasComponent<PhysicsVelocity>(entity);
+					writer.Write(hasVelocity);
+					if (hasVelocity)
+					{
+						PhysicsVelocity velocity = em.GetComponentData<PhysicsVelocity>(entity);
+						if (!math.all(math.isfinite(velocity.Linear)) || !math.all(math.isfinite(velocity.Angular)))
+							report.nonFiniteParts++;
+						writer.Write(velocity.Linear.x);
+						writer.Write(velocity.Linear.y);
+						writer.Write(velocity.Linear.z);
+						writer.Write(velocity.Angular.x);
+						writer.Write(velocity.Angular.y);
+						writer.Write(velocity.Angular.z);
+						float linearMagnitude = math.length(velocity.Linear);
+						float angularMagnitude = math.length(velocity.Angular);
+						speed += linearMagnitude;
+						angularSpeed += angularMagnitude;
+						maxSpeed = math.max(maxSpeed, linearMagnitude);
+						maxAngularSpeed = math.max(maxAngularSpeed, angularMagnitude);
+					}
+				}
+				writer.Flush();
+				using (SHA256 sha = SHA256.Create())
+				{
+					report.stateSha256 = BitConverter.ToString(sha.ComputeHash(stream.GetBuffer(), 0, (int)stream.Length))
+						.Replace("-", string.Empty).ToLowerInvariant();
+				}
+			}
+			report.centroidX = counted == 0 ? 0.0 : x / counted;
+			report.centroidY = counted == 0 ? 0.0 : y / counted;
+			report.meanSpeed = counted == 0 ? 0.0 : speed / counted;
+			report.maxSpeed = maxSpeed;
+			report.meanAngularSpeed = counted == 0 ? 0.0 : angularSpeed / counted;
+			report.maxAngularSpeed = maxAngularSpeed;
+		}
+
+		private static void CaptureFixedAnchorError(EntityManager manager, SavePhaseReport report)
+		{
+			using EntityQuery query = manager.CreateEntityQuery(ComponentType.ReadOnly<PhysicsJoint>(), ComponentType.ReadOnly<PhysicsConstrainedBodyPair>());
+			using NativeArray<PhysicsJoint> joints = query.ToComponentDataArray<PhysicsJoint>(Allocator.Temp);
+			using NativeArray<PhysicsConstrainedBodyPair> pairs = query.ToComponentDataArray<PhysicsConstrainedBodyPair>(Allocator.Temp);
+			double squaredErrorSum = 0.0;
+			for (int index = 0; index < joints.Length; index++)
+			{
+				PhysicsJoint joint = joints[index];
+				if (joint.JointType != JointType.Fixed) continue;
+				PhysicsConstrainedBodyPair pair = pairs[index];
+				float3 anchorA = WorldAnchor(manager, pair.EntityA, joint.BodyAFromJoint.Position);
+				float3 anchorB = WorldAnchor(manager, pair.EntityB, joint.BodyBFromJoint.Position);
+				double squaredError = math.distancesq(anchorA, anchorB);
+				squaredErrorSum += squaredError;
+				report.maxFixedAnchorError = System.Math.Max(report.maxFixedAnchorError, System.Math.Sqrt(squaredError));
+				report.fixedJointCount++;
+			}
+			if (report.fixedJointCount > 0)
+				report.rmsFixedAnchorError = System.Math.Sqrt(squaredErrorSum / report.fixedJointCount);
+		}
+
+		private static float3 WorldAnchor(EntityManager manager, Entity entity, float3 anchor)
+		{
+			if (!manager.HasComponent<LocalTransform>(entity)) return anchor;
+			LocalTransform transform = manager.GetComponentData<LocalTransform>(entity);
+			return transform.Position + math.rotate(transform.Rotation, anchor);
+		}
+
+		private static void RejectRun(string reason)
+		{
+			s_runReport.error = reason;
+			Line("error: " + reason);
+		}
+
+		private static string HashFile(string path)
+		{
+			using (SHA256 sha = SHA256.Create())
+			{
+				return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-", string.Empty).ToLowerInvariant();
+			}
+		}
+
+		private static bool IsSafeLabel(string value)
+		{
+			for (int i = 0; i < value.Length; i++)
+			{
+				char character = value[i];
+				if (!char.IsLetterOrDigit(character) && character != '_' && character != '-')
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		private static float3 Centroid(PartSimulator sim)
@@ -1040,7 +1775,8 @@ namespace Bpsim.QA
 		{
 			try
 			{
-				return em.CreateEntityQuery(ComponentType.ReadOnly<PhysicsJoint>()).CalculateEntityCount();
+				using EntityQuery query = em.CreateEntityQuery(ComponentType.ReadOnly<PhysicsJoint>());
+				return query.CalculateEntityCount();
 			}
 			catch (Exception)
 			{
@@ -1304,7 +2040,11 @@ namespace Bpsim.QA
 			try
 			{
 				Directory.CreateDirectory("Logs");
-				File.WriteAllText(LogFile, s_report.ToString(), new UTF8Encoding(false));
+				File.WriteAllText(s_logPath, s_report.ToString(), new UTF8Encoding(false));
+				if (!string.IsNullOrEmpty(s_jsonPath) && s_runReport != null)
+				{
+					File.WriteAllText(s_jsonPath, JsonUtility.ToJson(s_runReport, true), new UTF8Encoding(false));
+				}
 			}
 			catch (Exception exception)
 			{
@@ -1313,6 +2053,24 @@ namespace Bpsim.QA
 		}
 
 		#endregion
+	}
+
+	[UpdateInGroup(typeof(PhysicsSystemGroup), OrderFirst = true)]
+	public partial class SpinPerfPhysicsStartSystem : SystemBase
+	{
+		protected override void OnUpdate()
+		{
+			SpinPerfProbe.BeginPhysicsStepTiming();
+		}
+	}
+
+	[UpdateInGroup(typeof(PhysicsSystemGroup), OrderLast = true)]
+	public partial class SpinPerfPhysicsEndSystem : SystemBase
+	{
+		protected override void OnUpdate()
+		{
+			SpinPerfProbe.CompletePhysicsStepTiming(EntityManager);
+		}
 	}
 }
 #endif

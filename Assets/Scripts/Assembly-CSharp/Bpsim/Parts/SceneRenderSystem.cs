@@ -19,7 +19,7 @@ namespace Bpsim.Parts
 	[UpdateInGroup(typeof(PresentationSystemGroup))]
 	internal partial class SceneRenderSystem : SystemBase
 	{
-		private readonly struct SortPriority : IComparable<SortPriority>
+		internal readonly struct SortPriority : IComparable<SortPriority>
 		{
 			public readonly int Index;
 
@@ -30,8 +30,8 @@ namespace Bpsim.Parts
 			public readonly int Group;
 
 			// Atlas id (PartAtlasIndex).  A draw command can only name one material, so instances
-			// that come from different atlases must land in different commands: atlas sorts right
-			// after the page, before the depth priority.
+			// that come from different atlases must land in different commands. Atlas is a draw
+			// command boundary, so it sorts after depth priority to preserve global layer order.
 			public readonly int Atlas;
 
 			public SortPriority(int index, int priority)
@@ -59,12 +59,12 @@ namespace Bpsim.Parts
 				{
 					return num;
 				}
-				num = Atlas.CompareTo(other.Atlas);
+				num = Priority.CompareTo(other.Priority);
 				if (num != 0)
 				{
 					return num;
 				}
-				num = Priority.CompareTo(other.Priority);
+				num = Atlas.CompareTo(other.Atlas);
 				if (num == 0)
 				{
 					return Index.CompareTo(other.Index);

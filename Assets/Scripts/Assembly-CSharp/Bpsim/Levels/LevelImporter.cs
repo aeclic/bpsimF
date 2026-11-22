@@ -29,6 +29,8 @@ namespace Bpsim.Levels
 
 		public Vector3 Anchor;
 
+		public float TerrainScale;
+
 		public int TerrainCount;
 
 		public int PropCount;
@@ -90,8 +92,11 @@ namespace Bpsim.Levels
 			// The main project's LevelLoader places every node at its absolute world
 			// position (parents carry no scale), so the shift is applied to each node
 			// rather than to the hierarchy root.
-			Vector3 anchor = FindAnchor(objects);
+			float mapScale = InteractionSettings.GetLevelMapScale();
+			Vector3 planeScale = new Vector3(mapScale, mapScale, 1f);
+			Vector3 anchor = Vector3.Scale(FindAnchor(objects), planeScale);
 			result.Anchor = anchor;
+			result.TerrainScale = LevelDocumentParser.TerrainScale * mapScale;
 			Vector3 offset = new Vector3(0f - anchor.x, 0f - anchor.y, DepthOffset);
 			GameObject root = new GameObject("BpsimLevel_" + entry.scene);
 			root.transform.SetParent(parent, false);
@@ -99,11 +104,11 @@ namespace Bpsim.Levels
 			result.Start = new Vector3(0f, 0f, DepthOffset);
 			foreach (LevelObject obj in objects)
 			{
-				BuildObject(obj, root.transform, entry, result, offset);
+				BuildObject(obj, root.transform, entry, result, offset, planeScale);
 			}
 			if (!result.HasTerrainBounds)
 			{
-				result.TerrainBounds = new Bounds(Vector3.zero, new Vector3(200f, 100f, 0f));
+				result.TerrainBounds = new Bounds(Vector3.zero, new Vector3(200f * mapScale, 100f * mapScale, 0f));
 				result.HasTerrainBounds = true;
 			}
 			return result;
@@ -156,21 +161,22 @@ namespace Bpsim.Levels
 			return Vector3.zero;
 		}
 
-		private static void BuildObject(LevelObject obj, Transform parent, LevelEntryJson entry, LevelImportResult result, Vector3 offset)
+		private static void BuildObject(LevelObject obj, Transform parent, LevelEntryJson entry, LevelImportResult result,
+			Vector3 offset, Vector3 planeScale)
 		{
 			GameObject gameObject = new GameObject(obj.Name);
 			gameObject.transform.SetParent(parent, false);
-			gameObject.transform.position = obj.Position + offset;
+			gameObject.transform.position = Vector3.Scale(obj.Position, planeScale) + offset;
 			if (obj.IsGroup)
 			{
 				foreach (LevelObject child in obj.Children)
 				{
-					BuildObject(child, gameObject.transform, entry, result, offset);
+					BuildObject(child, gameObject.transform, entry, result, offset, planeScale);
 				}
 				return;
 			}
 			gameObject.transform.rotation = Quaternion.Euler(obj.Euler);
-			gameObject.transform.localScale = obj.Scale;
+			gameObject.transform.localScale = Vector3.Scale(obj.Scale, planeScale);
 			string prefabName = GetPrefabName(entry, obj.PrefabIndex);
 			LevelPrefabJson prefab = LevelCatalog.FindPrefab(prefabName);
 			if (obj.Terrain != null)

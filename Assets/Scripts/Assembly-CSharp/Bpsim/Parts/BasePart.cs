@@ -235,14 +235,29 @@ namespace Bpsim.Parts
 		{
 			int rotation = part.Rotation;
 			bool flipped = part.Flipped;
-			if (part.BaseTypeInfo.PartType == PartType.PointLight && part.BaseTypeInfo.PartIndex == 6)
+			PartTypeInfo info = part.BaseTypeInfo;
+			if (info == AutoControlLight)
 			{
-				rotation = part.Rotation = (rotation % 5 + 5) % 5;
-				return Quaternion.Euler(0, 0, 90 * (rotation % 4));
+				rotation = (rotation % 5 + 5) % 5;
+				if (part.Rotation != rotation) part.Rotation = rotation;
+				return Quaternion.Euler(0, 0, 90 * (rotation & 3));
+			}
+			if (info.BelongsTo(HingePlates))
+			{
+				rotation = HingePlate.NormalizeLayout(rotation);
+				if (part.Rotation != rotation) part.Rotation = rotation;
+				return Quaternion.Euler(0, 0, 90 * HingePlate.QuarterTurns(rotation));
+			}
+			if (info.PartType == PartType.Kicker)
+			{
+				rotation = (rotation % 8 + 8) % 8;
+				if (part.Rotation != rotation) part.Rotation = rotation;
+				return Quaternion.identity;
 			}
 			if (part.PartType == PartType.ElectricalPart)
 			{
-				rotation = part.Rotation = CircuitPart.NormalizeRotation(part.PartIndex, rotation);
+				rotation = CircuitPart.NormalizeRotation(part.PartIndex, rotation);
+				if (part.Rotation != rotation) part.Rotation = rotation;
 				// Fixed wires and interfaces use rotation as a routing mode; children draw that mode.
 				if (part.PartIndex == 1 || part.PartIndex == 3 || part.PartIndex == 38 || part.PartIndex == 39) return Quaternion.identity;
 				// Extra meter orientations select probe/ohmmeter mode, keeping physical ports orthogonal.
@@ -250,13 +265,16 @@ namespace Bpsim.Parts
 				// BPIR's BasePart.SetFlipped has no whitelist: any stored part may be mirrored,
 				// so the flag has to survive the import even when CanFlip (an editor affordance) says no.
 				if (flipped)
+				{
 					return Quaternion.Euler(rotation % 2 == 0 ? 180f : 0f, rotation % 2 == 1 ? 180f : 0f, rotation * 90f);
+				}
 				return Quaternion.Euler(0f, 0f, rotation * 90f);
 			}
-			bool eightWay = IsEightWay(in part);
+			bool eightWay = IsEightWayResolved(info);
 			if (CanFlip(in part) || (flipped && !eightWay))
 			{
-				rotation = (part.Rotation = (rotation % 4 + 4) % 4);
+				rotation = (rotation % 4 + 4) % 4;
+				if (part.Rotation != rotation) part.Rotation = rotation;
 				int num2 = ((flipped && (rotation == 1 || rotation == 3)) ? 180 : 0);
 				int num3 = ((flipped && (rotation == 0 || rotation == 2)) ? 180 : 0);
 				int num4 = 90 * rotation;
@@ -264,13 +282,15 @@ namespace Bpsim.Parts
 			}
 			if (eightWay)
 			{
-				rotation = (part.Rotation = (rotation % 8 + 8) % 8);
+				rotation = (rotation % 8 + 8) % 8;
+				if (part.Rotation != rotation) part.Rotation = rotation;
 				// BPSS rotates only TNT's Visualization by the extra 45 degrees.
 				if (part.PartType == PartType.TNT) return Quaternion.Euler(0f, 0f, 90 * (rotation % 4));
 				int num6 = 90 * rotation + ((rotation >= 4) ? (-315) : 0);
 				return Quaternion.Euler(0f, flipped ? 180f : 0f, num6);
 			}
-			rotation = (part.Rotation = (rotation % 4 + 4) % 4);
+			rotation = (rotation % 4 + 4) % 4;
+			if (part.Rotation != rotation) part.Rotation = rotation;
 			int num8 = 90 * rotation;
 			return Quaternion.Euler(0f, 0f, num8);
 		}
@@ -462,7 +482,7 @@ namespace Bpsim.Parts
 			case PartType.SmallWheel:
 				return typeInfo.PartIndex == 7;
 			case PartType.ElectricalPart:
-				return typeInfo.PartIndex == 4 || typeInfo.PartIndex == 5 || typeInfo.PartIndex == 11 || typeInfo.PartIndex == 21 ||
+				return typeInfo.PartIndex == 4 || typeInfo.PartIndex == 5 || typeInfo.PartIndex == 21 ||
 					(typeInfo.PartIndex >= 42 && typeInfo.PartIndex <= 44) || typeInfo.PartIndex == 46 || typeInfo.PartIndex == 47;
 			case PartType.MechanicalPart:
 				// 0-4 = MechanicalGate1-5：点击开合闸门（BPSS MechanicalGate.OnTouch）。
@@ -505,6 +525,12 @@ namespace Bpsim.Parts
 			{
 				return Gameplay.PartGameplayManager.Instance?.Find(partAspect.Entity) is Gameplay.UmbrellaBehavior umbrella
 					&& umbrella.CanTrigger;
+			}
+			if (partAspect.PartType == PartType.JetEngine && partAspect.BaseTypeInfo.PartIndex <= 1
+				&& PartManager.Instance != null && PartManager.Instance.IsSimulating)
+			{
+				return Gameplay.PartGameplayManager.Instance?.Find(partAspect.Entity) is Gameplay.JetEngineBehavior engine
+					&& engine.CanStart;
 			}
 			return IsTriggerable(partAspect.TypeInfo);
 		}
@@ -564,6 +590,10 @@ namespace Bpsim.Parts
 		public static IEnumerable<PartTriggerButtonInfo> GetTriggerButtonInfo(PartAspect partAspect)
 		{
 			PartType partType = partAspect.PartType;
+			if (partType == PartType.ElectricalPart && partAspect.BaseTypeInfo.PartIndex == 11)
+			{
+				yield break;
+			}
 			if (partType == PartType.Umbrella)
 			{
 				yield return new PartTriggerButtonInfo(PartButtonType.Trigger, 0, partType,
@@ -593,6 +623,15 @@ namespace Bpsim.Parts
 
 		public static IEnumerable<PartSliderButtonInfo> GetSliderButtonInfo(PartAspect partAspect)
 		{
+			if (partAspect.BaseTypeInfo.PartType == PartType.ElectricalPart && partAspect.BaseTypeInfo.PartIndex == 11
+				&& PartManager.Instance != null && PartManager.Instance.System.EntityManager.HasComponent<CircuitPart>(partAspect.Entity))
+			{
+				CircuitPart resistor = PartManager.Instance.System.EntityManager.GetComponentData<CircuitPart>(partAspect.Entity);
+				yield return new PartSliderButtonInfo(PartButtonType.Slider, 0, PartType.ElectricalPart, 11,
+					partAspect.ConnectedComponent,
+					new PartSliderButton.Range(resistor.ValueA, 1f, 0.1f, 10f, 0.1f, 0.01f));
+				yield break;
+			}
 			// Directional umbrellas (#3/#5) are controlled by their single trigger button:
 			// tap toggles the canopy, horizontal drag adjusts DeltaAngle. A separate white
 			// slider button duplicated the control in the HUD, so it is intentionally absent.

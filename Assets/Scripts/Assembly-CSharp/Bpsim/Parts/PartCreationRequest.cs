@@ -37,6 +37,8 @@ namespace Bpsim.Parts
 
 		public readonly int FrameShape;
 
+		public readonly int DrawLayer;
+
 		/// <summary>
 		/// 落位后是否按邻居自动对齐朝向（BPSS <c>Contraption.AutoAlign</c>）。
 		/// </summary>
@@ -61,7 +63,7 @@ namespace Bpsim.Parts
 		{
 		}
 
-		public PartCreationRequest(Entity entity, int sceneID, PartTypeInfo typeInfo, int coordX, int coordY, int rotation, bool flipped, float offsetX, float offsetY, float rotationDegrees, float scaleX, float scaleY, int layer, bool autoAlign, int frameShape = 0)
+		public PartCreationRequest(Entity entity, int sceneID, PartTypeInfo typeInfo, int coordX, int coordY, int rotation, bool flipped, float offsetX, float offsetY, float rotationDegrees, float scaleX, float scaleY, int layer, bool autoAlign, int frameShape = 0, int drawLayer = 0)
 		{
 			Entity = entity;
 			SceneID = sceneID;
@@ -78,38 +80,39 @@ namespace Bpsim.Parts
 			Layer = PartBuildLayer.Clamp(layer);
 			AutoAlign = autoAlign;
 			FrameShape = global::Bpsim.Parts.FrameShape.Clamp(frameShape);
+			DrawLayer = drawLayer;
 		}
 
 		public PartCreationRequest(Entity entity, int sceneID, Schematics.Unit unit)
-			: this(entity, sceneID, new PartTypeInfo((PartType)unit.Type, unit.Index), unit.X, unit.Y, unit.Rotation, unit.Flipped, unit.OffsetX, unit.OffsetY, unit.RotationDegrees, unit.ScaleX, unit.ScaleY, unit.Layer, false, unit.FrameShape)
+			: this(entity, sceneID, new PartTypeInfo((PartType)unit.Type, unit.Index), unit.X, unit.Y, unit.Rotation, unit.Flipped, unit.OffsetX, unit.OffsetY, unit.RotationDegrees, unit.ScaleX, unit.ScaleY, unit.Layer, false, unit.FrameShape, unit.DrawLayer)
 		{
 		}
 
 		public PartCreationRequest WithPosition(int x, int y)
 		{
-			return new PartCreationRequest(Entity, SceneID, TypeInfo, x, y, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, AutoAlign, FrameShape);
+			return new PartCreationRequest(Entity, SceneID, TypeInfo, x, y, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, AutoAlign, FrameShape, DrawLayer);
 		}
 
 		public PartCreationRequest WithRotation(int rotation, bool flipped)
 		{
-			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, rotation, flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, AutoAlign, FrameShape);
+			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, rotation, flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, AutoAlign, FrameShape, DrawLayer);
 		}
 
 		public PartCreationRequest WithFreeTransform(in PartFreeTransform freeTransform)
 		{
 			PartFreeTransform value = PartFreeTransform.Sanitize(freeTransform);
-			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, Rotation, Flipped, value.Offset.x, value.Offset.y, value.RotationDegrees, value.Scale.x, value.Scale.y, Layer, AutoAlign, FrameShape);
+			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, Rotation, Flipped, value.Offset.x, value.Offset.y, value.RotationDegrees, value.Scale.x, value.Scale.y, Layer, AutoAlign, FrameShape, value.DrawLayer);
 		}
 
 		public PartCreationRequest WithLayer(int layer)
 		{
-			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, layer, AutoAlign, FrameShape);
+			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, layer, AutoAlign, FrameShape, DrawLayer);
 		}
 
 		/// <summary>请求落位后自动对齐（仅玩家手动放置路径使用）。</summary>
 		public PartCreationRequest WithAutoAlign(bool autoAlign)
 		{
-			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, autoAlign, FrameShape);
+			return new PartCreationRequest(Entity, SceneID, TypeInfo, CoordX, CoordY, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, autoAlign, FrameShape, DrawLayer);
 		}
 
 		public Entity Submit(in PartSceneUnmanaged partScene)
@@ -133,7 +136,8 @@ namespace Bpsim.Parts
 			{
 				Offset = new float2(OffsetX, OffsetY),
 				RotationDegrees = RotationDegrees,
-				Scale = new float2(ScaleX, ScaleY)
+				Scale = new float2(ScaleX, ScaleY),
+				DrawLayer = DrawLayer
 			});
 			if (!entityManager.HasComponent<PartFreeTransform>(entity))
 			{

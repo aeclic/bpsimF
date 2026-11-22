@@ -214,11 +214,6 @@ namespace Bpsim.EditorTools
 			if (m_previousPackage != null) { m_manager.Packages.Remove(m_previousPackage); ModRegistry.Rebuild(m_manager.Packages); }
 			Check(ButtonCount() == 0, "No menu entry without Mod");
 			Check(ModFluidSession.ActiveVolumeCount == 0, "No fluid system registrations without Mod");
-			int baseline = ModLevels.BuiltInLevels().Length;
-			Check(baseline > 0, "Built-in catalog available");
-			foreach (ModLevelDefinition info in ModLevels.BuiltInLevels()) ModLevels.Validate(ModLevels.ReadBuiltIn(info.Key));
-			m_report["validatedBuiltInLevels"] = baseline;
-
 			string modDirectory = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Mods", "LevelEditor");
 			string error;
 			ModManifest manifest = ModLoader.ReadManifest(modDirectory, out error);
@@ -232,12 +227,30 @@ namespace Bpsim.EditorTools
 			ModRegistry.Rebuild(m_manager.Packages);
 			m_manager.LoadPackage(m_package);
 			Check(m_package.IsLoaded, "Mod loads: " + m_package.Error);
+			if (ModLevels.BuiltInLevels().Length == 0)
+			{
+				string fixtureRoot = Path.Combine(Path.GetDirectoryName(modDirectory), "BpsimLevels", "BpsimLevels");
+				if (File.Exists(Path.Combine(fixtureRoot, "index.json"))) ModLevels.SetBuiltInRoot(m_package.EntryPoint, fixtureRoot);
+			}
+			ModLevelDefinition[] builtIn = ModLevels.BuiltInLevels();
+			Check(builtIn.Length > 0, "Built-in catalog available");
+			foreach (ModLevelDefinition info in builtIn) ModLevels.Validate(ModLevels.ReadBuiltIn(info.Key));
+			m_report["validatedBuiltInLevels"] = builtIn.Length;
+			ModLevels.OpenLevelPicker();
 			Check(ButtonCount() == 1, "One menu entry when enabled");
 			Check(ModFluidSession.ActiveVolumeCount == 0, "Enabling alone does not register any fluid volumes");
 			Check(Resources.FindObjectsOfTypeAll<GameObject>().Count(go => go.name.StartsWith("ModWebService_", StringComparison.Ordinal) && go.activeInHierarchy) == 0,
 				"Enabling alone does not start the web service");
 			m_manager.LoadPackage(m_package);
 			Check(ButtonCount() == 1, "Repeated enable does not duplicate the entry");
+			GameObject levelMenu = GameObject.Find("BpsimLevelMenu");
+			Button modEpisode = levelMenu.GetComponentsInChildren<Button>(true)
+				.Single(button => button.name == "Episode_mod_" + modId.ToString("N"));
+			modEpisode.onClick.Invoke();
+			Check(levelMenu.GetComponentsInChildren<Text>(true).Any(label => label.name == "Number" && label.text == "1-D1"),
+				"The in-game level tile shows the source mission number");
+			levelMenu.transform.Find("LevelMenuPanel/Close").GetComponent<Button>().onClick.Invoke();
+			CheckLevelGrid(ModLevels.ReadBuiltIn(builtIn[0].Key));
 
 			m_package.EntryPoint.GetType().GetMethod("OpenEditor").Invoke(m_package.EntryPoint, null);
 			m_service = (ModWebService)m_package.EntryPoint.GetType().GetField("m_server", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(m_package.EntryPoint);
@@ -299,6 +312,49 @@ namespace Bpsim.EditorTools
 			Check(JToken.DeepEquals(canonicalAdvanced, advancedReopened["document"]["water_bodies"]), "Physics/flow/visual parameters roundtrip together");
 			malformed = (JObject)advanced.DeepClone(); malformed["water_bodies"][0]["flow_x"] = "NaN";
 			Check((bool?)CallRaw("POST", "/api/play", malformed)["ok"] == false, "Invalid current cannot reach physics jobs");
+		}
+
+		private void CheckLevelGrid(ModLevelDefinition bple)
+		{
+			InteractionSettings settings = UserSettings.Instance.InteractionSettings;
+			float previousGridSize = settings.LevelGridSize;
+			ModLevelLoaded loaded = null;
+			ModLevels.SubscribeLoaded(m_package.EntryPoint, value => loaded = value);
+			object rc2 = m_package.EntryPoint.GetType().GetProperty("Rc2").GetValue(m_package.EntryPoint);
+			Type packType = rc2.GetType();
+			var sourceLevels = ((System.Collections.Generic.IEnumerable<JObject>)packType.GetMethod("LevelList").Invoke(rc2, null))
+				.Where(level => level["mission_id"] != null).ToArray();
+			Check(sourceLevels.Length == 17 && sourceLevels.Select(level => (string)level["level_number"]).Distinct().Count() == 17,
+				"Every source map has a distinct level number");
+			Check(sourceLevels.Any(level => (string)level["level_number"] == "1-D1" && (bool)level["listed_in_source"]),
+				"Delivery mission keeps its source number and location");
+			Vector3 originalTerrain = Vector3.zero;
+			try
+			{
+				foreach (float ratio in new[] { 1f, 2f })
+				{
+					settings.LevelGridSize = ratio;
+					Check(ModLevels.Load(m_package.EntryPoint, bple, out string error), "BPLE reloads with grid ratio: " + error);
+					Vector3 terrainScale = loaded.Root.GetComponentsInChildren<MeshFilter>().First(mesh => mesh.sharedMesh != null).transform.lossyScale;
+					if (ratio == 1f) originalTerrain = terrainScale;
+					Check(Mathf.Abs(loaded.TerrainScale - 8f / ratio) < .0001f &&
+						Mathf.Abs(terrainScale.x * ratio - originalTerrain.x) < .0001f,
+						"BPLE terrain and water receive the same map ratio");
+					string rc2Error = (string)packType.GetMethod("LoadOriginalForDiagnostics").Invoke(rc2, new object[] { "Mission_2" });
+					Check(rc2Error == null, "RC2 reloads with grid ratio: " + rc2Error);
+					var runtime = (Component)packType.GetProperty("Runtime").GetValue(rc2);
+					Check(Mathf.Abs(runtime.transform.lossyScale.x * ratio - 1f) < .0001f &&
+						(int)runtime.GetType().GetProperty("StaticColliders").GetValue(runtime) > 0, "RC2 source grid and colliders are loaded");
+					Check(runtime.GetComponentsInChildren<Renderer>(true).SelectMany(renderer => renderer.sharedMaterials)
+						.Any(material => material != null && material.renderQueue == 4000), "RC2 keeps the source terrain material queue");
+				}
+				m_report["levelGridRatios"] = new JArray(1f, 2f);
+			}
+			finally
+			{
+				settings.LevelGridSize = previousGridSize;
+				Check(ModLevels.Load(m_package.EntryPoint, bple, out string error), "Restore BPLE after grid QA: " + error);
+			}
 		}
 
 		private IEnumerator RuntimeChecks()

@@ -37,6 +37,9 @@ namespace Bpsim.Parts
 			xmlAttributeOverrides.Add(typeof(Schematics.Unit), "ScaleY", CreateMemberAttributes("partScaleY"));
 			xmlAttributeOverrides.Add(typeof(Schematics.Unit), "Layer", CreateMemberAttributes("layer"));
 			xmlAttributeOverrides.Add(typeof(Schematics.Unit), "FrameShape", CreateMemberAttributes("shape"));
+			xmlAttributeOverrides.Add(typeof(Schematics.Unit), "DrawLayer", CreateMemberAttributes("drawLayer"));
+			xmlAttributeOverrides.Add(typeof(Schematics.Unit), "RemoteLink", CreateMemberAttributes("remoteLink"));
+			xmlAttributeOverrides.Add(typeof(Schematics.Unit), "RemoteCells", CreateMemberAttributes("remoteCells"));
 			return xmlAttributeOverrides;
 			static XmlAttributes CreateMemberAttributes(string name)
 			{

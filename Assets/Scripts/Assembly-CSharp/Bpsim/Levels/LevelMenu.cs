@@ -329,7 +329,9 @@ namespace Bpsim.Levels
 					-gridWidth * 0.5f + TileStepX * ((float)column + 0.5f),
 					-TileStepY * ((float)row + 0.5f));
 				LevelEntryJson captured = level;
-				RectTransform tile = CreateTile(m_levelContent, "Level_" + level.scene, (index + 1).ToString(), level.title, position, delegate
+				string number = level.modDefinition?.DisplayNumber;
+				if (string.IsNullOrWhiteSpace(number)) number = (index + 1).ToString();
+				RectTransform tile = CreateTile(m_levelContent, "Level_" + level.scene, number, level.title, position, delegate
 				{
 					LoadLevel(captured);
 				});
@@ -493,7 +495,7 @@ namespace Bpsim.Levels
 			Text text = numberObject.AddComponent<Text>();
 			text.font = m_font;
 			text.text = number;
-			text.fontSize = 58;
+			text.fontSize = number.Length > 3 ? 36 : 58;
 			text.fontStyle = FontStyle.Bold;
 			text.alignment = TextAnchor.MiddleCenter;
 			text.color = TileNumberColor;
@@ -502,7 +504,7 @@ namespace Bpsim.Levels
 			text.raycastTarget = false;
 			text.supportRichText = false;
 			text.resizeTextForBestFit = true;
-			text.resizeTextMaxSize = 58;
+			text.resizeTextMaxSize = text.fontSize;
 			text.resizeTextMinSize = 22;
 			// Level title stays as the object name for tooling/debug; no on-screen label.
 			rectTransform.gameObject.name = name;

@@ -1,4 +1,5 @@
 """Prepare a small, private Unity project from this checkout's actual physics dependencies."""
+import argparse
 import hashlib
 import json
 import shutil
@@ -7,6 +8,9 @@ from pathlib import Path
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--native-dll", type=Path, help="stage a candidate Box3D DLL in the private project")
+    args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     destination = root / "_codex_work/anvil-parity/project"
     destination.mkdir(parents=True, exist_ok=True)
@@ -61,7 +65,8 @@ def main():
     ):
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(root / relative, target)
+        source = args.native_dll if args.native_dll and relative == "Assets/Plugins/x86_64/box3d.dll" else root / relative
+        shutil.copy2(source, target)
     builtin = {"com.unity.modules." + name: "1.0.0" for name in
                ("jsonserialize", "unitywebrequest", "assetbundle", "unityanalytics")}
     (destination / "Packages/manifest.json").write_text(json.dumps({"dependencies": builtin}) + "\n", encoding="utf-8")

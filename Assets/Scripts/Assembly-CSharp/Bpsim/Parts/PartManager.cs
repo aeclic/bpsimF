@@ -231,7 +231,7 @@ namespace Bpsim.Parts
 			PartScene partScene = CreateScene(sceneID, name, m_entityManager.World);
 			using NativeArray<Schematics.Unit> schematics2 = schematics.ToNative(Allocator.TempJob);
 			partScene.Unmanaged.EntityManager.CompleteAllTrackedJobs();
-			IJobExtensions.Run(PartSceneJobs.PlaceParts(partScene, overlay: false, schematics2));
+			IJobExtensions.Run(PartSceneJobs.PlaceParts(partScene, overlay: false, schematics2, freshScene: true));
 			partScene.State.CameraPosition = Vector2.zero;
 			partScene.State.CameraSize = 20f;
 			Entity entity = partScene.Unmanaged.FindLastPart(PartType.Pig);
@@ -272,16 +272,11 @@ namespace Bpsim.Parts
 				return;
 			}
 			ISchematicsLoader schematicsLoader = Schematics.CreateLoader(format);
-			Schematics schematics = new Schematics(value.Unmanaged.Parts.Length);
-			foreach (Entity part in value.Unmanaged.Parts)
-			{
-				PartTypeValue componentData = m_entityManager.GetComponentData<PartTypeValue>(part);
-				PartTransform componentData2 = m_entityManager.GetComponentData<PartTransform>(part);
-				PartFreeTransform freeTransform = m_entityManager.HasComponent<PartFreeTransform>(part) ? PartFreeTransform.Sanitize(m_entityManager.GetComponentData<PartFreeTransform>(part)) : PartFreeTransform.Identity;
-				int layer = m_entityManager.HasComponent<PartBuildLayer>(part) ? PartBuildLayer.Clamp(m_entityManager.GetComponentData<PartBuildLayer>(part).Value) : PartBuildLayer.MinLayer;
-				schematics.Units.Add(new Schematics.Unit(componentData2.X, componentData2.Y, (int)componentData.Type, componentData.Index, componentData2.Rotation, componentData2.Flipped, freeTransform.Offset.x, freeTransform.Offset.y, freeTransform.RotationDegrees, freeTransform.Scale.x, freeTransform.Scale.y, layer, m_entityManager.HasComponent<FrameShape>(part) ? m_entityManager.GetComponentData<FrameShape>(part).Value : 0));
-			}
-			schematicsLoader.Write(stream, schematics);
+			m_entityManager.CompleteAllTrackedJobs();
+			NativeList<Entity> parts = value.Unmanaged.Parts;
+			using NativeArray<Schematics.Unit> units = new NativeArray<Schematics.Unit>(parts.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+			IJobExtensions.Run(PartSceneJobs.SaveParts(parts, units));
+			schematicsLoader.Write(stream, Schematics.FromNative(units));
 		}
 
 		public void SelectScene(int id)

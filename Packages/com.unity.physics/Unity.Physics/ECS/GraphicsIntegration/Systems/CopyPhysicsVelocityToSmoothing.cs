@@ -52,7 +52,9 @@ namespace Unity.Physics.GraphicsIntegration
         }
 
         /// <summary>   An <see cref="IJobChunk"/> which writes to a body's <see cref="PhysicsGraphicalSmoothing"/> by copying it's <see cref="PhysicsVelocity"/>. </summary>
+#if !UNITY_ANDROID || UNITY_EDITOR
         [BurstCompile]
+#endif
         public struct CopyPhysicsVelocityJob : IJobChunk
         {
             /// <summary>   <see cref="PhysicsVelocity"/> component type handle. </summary>

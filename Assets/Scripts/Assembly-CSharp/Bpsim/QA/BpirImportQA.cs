@@ -5,12 +5,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Bpsim.Collections;
+using Bpsim.Mods;
 using Bpsim.Parts;
 using Bpsim.Parts.Simulation;
+using Bpsim.UI;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -26,14 +30,14 @@ namespace Bpsim.QA
 	/// 1. 解析 <c>savefile/Level_Sandbox_04_4</c>：287 行 → 286 件可用（第 74 行坐标溢出被拒）；
 	/// 2. 六层分布与存档一致，且 layer 列真的进了建造层；
 	/// 3. 成员串映射：offset / rotZ / stretch / @shape 落到 <see cref="PartFreeTransform" /> 与 FrameShape；
-	///    没有载体的键（<c>@layer</c> 等）必须出现在告警里，不能静默丢；
+	///    绘制层与建造层分离，远程目标进入实体关节；
 	/// 4. 整份存档真的能放进场景（放置数与解析数一致）；
 	/// 5. 跨层连接规则：同格优先、无同格才连层 1 四邻域、方向不对不连
 	///    （这是「不该连的连上了」的回归测试）。
 	///
 	/// 报告写到 &lt;project&gt;/Logs/bpsim-bpirimportqa.log。
 	/// </summary>
-	public sealed class BpirImportQA : MonoBehaviour
+	public sealed partial class BpirImportQA : MonoBehaviour
 	{
 		private const string SaveFileRelativePath = "savefile/Level_Sandbox_04_4";
 
@@ -67,6 +71,67 @@ namespace Bpsim.QA
 		public static string Status()
 		{
 			return s_status + " | pass=" + s_passed + " fail=" + s_failed + "\n" + s_report;
+		}
+
+		public static string MeasureImport(string fileName)
+		{
+			PartManager manager = PartManager.Instance;
+			if (manager == null || manager.IsSimulating || fileName != Path.GetFileName(fileName))
+			{
+				return "Requires an idle PartManager and a local savefile name.";
+			}
+			byte[] input = File.ReadAllBytes(Path.Combine(Application.dataPath, "..", "savefile", fileName));
+			const int runs = 7;
+			long[] allocated = new long[runs];
+			double[] parseMs = new double[runs];
+			double[] loadMs = new double[runs];
+			int placed = -1;
+			int parsed = -1;
+			double toMs = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+			using MemoryStream stream = new MemoryStream(input, writable: false);
+			for (int run = -1; run < runs; run++)
+			{
+				long beforeBytes = GC.GetAllocatedBytesForCurrentThread();
+				long start = System.Diagnostics.Stopwatch.GetTimestamp();
+				Schematics schematics = SchematicsBpirCsvLoader.Default.Read(stream);
+				long end = System.Diagnostics.Stopwatch.GetTimestamp();
+				long bytes = GC.GetAllocatedBytesForCurrentThread() - beforeBytes;
+				parsed = schematics.Units.Count;
+				stream.Position = 0;
+				PartScene created = null;
+				void Capture(PartScene scene) => created = scene;
+				manager.SceneLoaded += Capture;
+				long loadStart = System.Diagnostics.Stopwatch.GetTimestamp();
+				try
+				{
+					manager.LoadScene(stream, "BpirImportBenchmark", SchematicsFormat.BpirCsv);
+					long loadEnd = System.Diagnostics.Stopwatch.GetTimestamp();
+					int count = created.Unmanaged.Parts.Length;
+					if (placed >= 0 && count != placed) throw new InvalidOperationException("Placement count changed between runs.");
+					placed = count;
+					if (run >= 0)
+					{
+						allocated[run] = bytes;
+						parseMs[run] = (end - start) * toMs;
+						loadMs[run] = (loadEnd - loadStart) * toMs;
+					}
+				}
+				finally
+				{
+					manager.SceneLoaded -= Capture;
+					if (created != null)
+					{
+						manager.UnloadScene(created.SceneID);
+						DestroyImmediate(created.gameObject);
+					}
+					stream.Position = 0;
+				}
+			}
+			Array.Sort(allocated);
+			Array.Sort(parseMs);
+			Array.Sort(loadMs);
+			string parseBytes = allocated[runs / 2] > 0 ? allocated[runs / 2].ToString() : "unavailable";
+			return FormattableString.Invariant($"{fileName}: parsed={parsed} placed={placed} runs={runs} parseBytes={parseBytes} parseMs={parseMs[runs / 2]:F2} loadSceneMs={loadMs[runs / 2]:F2}");
 		}
 
 		private static BpirImportQA Ensure()
@@ -183,7 +248,7 @@ namespace Bpsim.QA
 				}
 			}
 			Check("warns about the broken row", warnedCoord, warningDump.ToString());
-			Check("@layer reported as unmapped", warnedLayer, warningDump.ToString());
+			Check("@layer mapped", !warnedLayer, warningDump.ToString());
 
 			// ---- 2. 层分布 ----
 			int[] expectedLayers = { 121, 40, 38, 35, 14, 38 };
@@ -208,23 +273,24 @@ namespace Bpsim.QA
 			Check("layer histogram", layersMatch, layerText.ToString());
 
 			// ---- 3. 成员串映射 ----
-			// 存档第 178 行写的是 @offY=1.3，但 BPIR PartPhysicsOverride.SetOffsetY 本身会把
-			// 偏移 clamp 到 -1..1（反编译源码 :2039/:2050 与 DecodeMembers :996/:1000），
-			// 所以原版读进来也是 1.0。断言要按 clamp 后的值写。
 			Schematics.Unit unit178 = FindUnit(schematics, 143, 630);
-			Check("stretched frame offsets", Near(unit178.OffsetY, 1f) && Near(unit178.ScaleX, 15f) && Near(unit178.ScaleY, 4f) && unit178.FrameShape == 2, Describe(unit178));
+			Check("stretched frame offsets", Near(unit178.OffsetY, 1.3f) && Near(unit178.ScaleX, 15f) && Near(unit178.ScaleY, 4f) && unit178.FrameShape == 2, Describe(unit178));
+			Schematics.Unit realDepth = FindUnit(schematics, 105, 633, 46, 2);
+			Check("negative unrestricted offset and independent depth", Near(realDepth.OffsetX, -1.05f) && realDepth.DrawLayer == -12 && realDepth.Layer == 3);
+			Schematics.Unit wheel = LoadSynthetic(loader, "10,7,10,10,0,0,-1,-1,-1,2,-1,-1,@wheelScale=0.8;@stretchX=3,1");
+			Check("wheel scale overrides legacy size and stretch", Near(wheel.ScaleX, .8f) && Near(wheel.ScaleY, .8f));
+			Schematics.Unit legacyRemote = LoadSynthetic(loader, "6,0,0,0,0,0,@remoteLink=1;@remoteCells=8,0,3|9,0,2");
+			Check("legacy narrow remote coordinates do not turn into size", legacyRemote.RemoteCells == "8:0:3|9:0:2" && Near(legacyRemote.ScaleX, 1f));
 			Schematics.Unit unit32 = FindUnit(schematics, 113, 633);
 			Check("rotZ folded into free rotation", Near(unit32.RotationDegrees, -90f), Describe(unit32));
 			Schematics.Unit first = schematics.Units[0];
 			Check("first row imported", first.Type == 6 && first.Index == 10 && first.X == 107 && first.Y == 633 && first.Layer == 2, Describe(first));
 
 			// ---- 3b. 模式码部件的 rotation 不能折进连续角 ----
-			// 铰接板（Rope 4-7）的 rotation 是 0..5 的布局码：5 → 布局 3（90*1），
-			// 不是「rot 5 再多 45 度」。旧实现会把它折成 rot=1 + rotZ=45。
 			Schematics.Unit hinge5 = FindUnit(schematics, 113, 631, 26, 4);
-			Check("hinge plate layout code kept", hinge5.Type == 26 && hinge5.Index == 4 && hinge5.Rotation == 3 && Near(hinge5.RotationDegrees, 0f), Describe(hinge5));
+			Check("hinge plate layout code kept", hinge5.Type == 26 && hinge5.Index == 4 && hinge5.Rotation == 5 && Near(hinge5.RotationDegrees, 0f), Describe(hinge5));
 			Schematics.Unit hinge4 = FindUnit(schematics, 105, 630, 26, 4);
-			Check("hinge plate layout 4 -> 2", hinge4.Type == 26 && hinge4.Rotation == 2 && Near(hinge4.RotationDegrees, 0f), Describe(hinge4));
+			Check("hinge plate layout 4 kept", hinge4.Type == 26 && hinge4.Rotation == 4 && Near(hinge4.RotationDegrees, 0f), Describe(hinge4));
 
 			// ---- 3c. 合成行：模式码 / 窄格式 / 自动识别 ----
 			// 这些件在采样存档里没有（或只有单一种），用合成行钉住映射规则，免得回归时没人发现。
@@ -239,6 +305,12 @@ namespace Bpsim.QA
 			Check("capacitor %2", LoadSynthetic(loader, "47,15,10,10,2,0").Rotation == 0, "BPIR CapacitorPart does rotation % Deg_180");
 			Check("magnetic field sign", LoadSynthetic(loader, "47,44,10,10,3,0").Rotation == 0 && LoadSynthetic(loader, "47,44,10,10,1,0").Rotation == 2, "1/2 -> 2, 0/3 -> 0");
 			Check("hinge layout 0 stays", LoadSynthetic(loader, "26,4,10,10,0,0").Rotation == 0 && LoadSynthetic(loader, "26,4,10,10,1,0").Rotation == 1, "layouts 0/1 are the side-by-side pair");
+			Check("auto control mode modulo 5", LoadSynthetic(loader, "44,6,10,10,9,0").Rotation == 4);
+			Check("fuel tube and wing source modes", LoadSynthetic(loader, "46,2,10,10,7,0").Rotation == 1
+				&& LoadSynthetic(loader, "46,3,10,10,3,0").Rotation == 0
+				&& LoadSynthetic(loader, "33,0,10,10,5,1").Rotation == 1);
+			Schematics.Unit wideMembers = LoadSynthetic(loader, "6,0,10,10,0,0,-1,-1,-1,2,-1,-1,@shape=2,1;@offX=.5,3");
+			Check("wide members with embedded comma", wideMembers.FrameShape == 2 && wideMembers.Layer == 3 && Near(wideMembers.OffsetX, .5f) && Near(wideMembers.ScaleX, 2f));
 
 			// 7 列是 BPIR 的窄导出：members 落在第 7 列（INContraptionDataManager.LoadDataFromCsv）。
 			Schematics.Unit narrow = LoadSynthetic(loader, "26,4,10,10,0,0,@offX=0.5;@offY=-0.25");
@@ -345,7 +417,22 @@ namespace Bpsim.QA
 			Check("placed layer histogram", layerCountsMatch, placedLayerText.ToString());
 			bool placed178 = loaded.Unmanaged.FindPartAt(143, 630, 1, out Entity entity178);
 			PartFreeTransform free178 = placed178 ? loaded.Unmanaged.GetPartFreeTransform(entity178) : PartFreeTransform.Identity;
-			Check("placed part keeps free transform", placed178 && Near(free178.Offset.y, 1f) && Near(free178.Scale.x, 15f) && Near(free178.Scale.y, 4f), "found=" + placed178 + " offset=" + free178.Offset + " scale=" + free178.Scale);
+			Check("placed part keeps free transform", placed178 && Near(free178.Offset.y, 1.3f) && Near(free178.Scale.x, 15f) && Near(free178.Scale.y, 4f), "found=" + placed178 + " offset=" + free178.Offset + " scale=" + free178.Scale);
+			EntityManager renderManager = loaded.System.EntityManager;
+			bool allRenderPositions = placed == schematics.Units.Count;
+			int drawCount = 0;
+			for (int index = 0; index < placed && allRenderPositions; index++)
+			{
+				Entity entity = loaded.Unmanaged.Parts[index];
+				Schematics.Unit unit = schematics.Units[index];
+				if (unit.DrawLayer != 0) drawCount++;
+				PartAspect aspect = renderManager.GetAspect<PartAspect>(entity);
+				float3 expected = new float3(unit.X + unit.OffsetX, unit.Y + unit.OffsetY,
+					-.1f + BasePart.GetZOffset(in aspect) - (unit.Layer - 1) * .02f - unit.DrawLayer * .01f);
+				allRenderPositions = renderManager.HasComponent<LocalToWorld>(entity) &&
+					math.distance(renderManager.GetComponentData<LocalToWorld>(entity).Position, expected) < .0005f;
+			}
+			Check("real save final render offsets and depth", allRenderPositions && drawCount > 0, "drawLayers=" + drawCount);
 			yield return null;
 
 			// ---- 4b. 自动识别：同一个文件不指定格式也能读成 BPIR ----
@@ -426,10 +513,169 @@ namespace Bpsim.QA
 					"deltaDegrees=" + rotationDelta.ToString("0.###") + " plain=" + plainRotation.value + " flipped=" + flippedRotation.value);
 			}
 			yield return null;
+			yield return CheckOrientationArtwork(manager);
+			yield return CheckHingePlates(manager);
 
 			// ---- 5. 跨层连接规则（回归「不该连的连上了」）----
 			yield return CheckCrossLayerRules(manager);
+			yield return CheckRemoteConnections(manager);
 			Finish();
+		}
+
+		private IEnumerator CheckRemoteConnections(PartManager manager)
+		{
+			const string Fixture = "6,0,0,0,0,0,-1,-1,-1,-1,-1,-1,@offX=2.5;@layer=4;@remoteLink=1;@remoteCells=8,0,3,1\n" +
+				"6,0,8,0,0,0,-1,-1,-1,-1,-1,-1,@remoteLink=1;@remoteCells=0:0:1,3\n" +
+				"6,0,1,0,0,0,-1,-1,-1,-1,-1,-1,,1\n";
+			using MemoryStream input = new MemoryStream(Encoding.UTF8.GetBytes(Fixture));
+			PartScene scene = LoadSceneSelected(manager, input, "BPIR Remote Connection", SchematicsFormat.Auto, out var used);
+			Check("remote fixture detects and places", used == SchematicsFormat.BpirCsv && scene != null && scene.Unmanaged.Parts.Length == 3);
+			if (scene == null || scene.Unmanaged.Parts.Length != 3) yield break;
+			yield return null;
+			yield return null;
+			EntityManager entityManager = scene.System.EntityManager;
+			Entity source = scene.Unmanaged.Parts[0];
+			Entity target = scene.Unmanaged.Parts[1];
+			Check("remote CSV binds legacy comma coordinates", entityManager.HasBuffer<PartRemoteConnection>(source) &&
+				entityManager.GetBuffer<PartRemoteConnection>(source).Length == 1 && entityManager.GetBuffer<PartRemoteConnection>(source)[0].Target == target);
+			LocalToWorld world = entityManager.GetComponentData<LocalToWorld>(source);
+			Check("remote fixture rendered pose and picking", Near(world.Position.x, 2.5f) && Near(world.Position.z, -.14f) &&
+				scene.Unmanaged.TryFindPartAtWorld(new float2(2.5f, 0f), 1, out Entity picked) && picked == source);
+			scene.Unmanaged.SetActiveLayer(3);
+			Check("remote target moves in place", scene.Unmanaged.TryMovePartContent(8, 0, 9, 0) && entityManager.Exists(target));
+			using (NativeList<Entity> selected = new NativeList<Entity>(Allocator.TempJob))
+			using (NativeArray<Schematics.Unit> copied = new NativeArray<Schematics.Unit>(1, Allocator.TempJob))
+			{
+				selected.Add(source);
+				IJobExtensions.Run(PartSceneJobs.SaveParts(selected, copied, restrictRemoteTargets: true));
+				Check("partial copy does not reconnect to an unrelated cell", copied[0].RemoteLink && copied[0].RemoteTargets.Length == 0);
+			}
+			foreach (SchematicsFormat format in new[] { SchematicsFormat.BpirCsv, SchematicsFormat.Csv, SchematicsFormat.Json, SchematicsFormat.Xml })
+			{
+				using MemoryStream output = new MemoryStream();
+				manager.SaveScene(output, scene.SceneID, format);
+				output.Position = 0;
+				SchematicsFormat detected = Schematics.DetectFormat(output);
+				output.Position = 0;
+				Schematics.Unit saved = FindUnit(Schematics.CreateLoader(detected).Read(output), 0, 0);
+				Check("remote roundtrip " + format, detected == format && saved.RemoteLink && saved.RemoteCells == "9:0:3" && saved.DrawLayer == 4 && Near(saved.OffsetX, 2.5f));
+				Check("translated blueprint targets " + format, saved.WithPosition(10, 5).RemoteCells == "19:5:3");
+			}
+			using BuildUndoHistory history = new BuildUndoHistory();
+			history.Record(scene, "remote delete");
+			bool removed = scene.Unmanaged.RemovePartAt(9, 0);
+			scene.Unmanaged.Update();
+			PlacePart(scene, manager, new PartTypeInfo(PartType.MetalFrame, 0), 9, 0, 0, 3);
+			yield return null;
+			Check("delete does not bind a replacement", removed && !entityManager.Exists(target) && entityManager.GetBuffer<PartRemoteConnection>(source)[0].Target == target);
+			yield return StartAndMeasure(manager, "deleted remote endpoint not welded", 3, 0);
+			Check("undo remote edit", history.Undo(scene));
+			yield return null;
+			yield return StartAndMeasure(manager, "reciprocal remote weld across layers without adjacent weld", 2, 1, new float3(2.5f, 0f, -.14f));
+			yield return CheckCompatibilityMod(scene);
+		}
+
+		private IEnumerator CheckCompatibilityMod(PartScene scene)
+		{
+			ModManager mods = ModManager.Instance;
+			ModPackage package = ModRegistry.GetModById("bpir-frame-shapes");
+			Check("compatibility package keeps legacy GUID", mods != null && package != null &&
+				package.Guid == new Guid("36e821d4-479b-4704-a6f2-72c9e92446b2") && package.Manifest.name == "BPIR 兼容 Mod");
+			if (mods == null || package == null) yield break;
+			bool wasLoaded = package.IsLoaded;
+			mods.LoadPackage(package);
+			yield return null;
+			yield return null;
+			Check("compatibility DLL enables tools and frame shapes", package.IsLoaded && ModParts.BpirCompatibilityToolsEnabled && ModParts.FrameShapesEnabled);
+			mods.UnloadPackage(package);
+			Check("unload compatibility hides editing tools", !ModParts.BpirCompatibilityToolsEnabled);
+			Entity source = scene.Unmanaged.Parts[0];
+			Check("unload retains remote connections and draw layer", scene.Unmanaged.EntityManager.HasBuffer<PartRemoteConnection>(source) &&
+				scene.Unmanaged.EntityManager.GetBuffer<PartRemoteConnection>(source).Length == 1 && scene.Unmanaged.GetPartFreeTransform(source).DrawLayer == 4);
+			if (wasLoaded) mods.LoadPackage(package);
+			yield return null;
+			Check("restore original compatibility mod state", package.IsLoaded == wasLoaded && ModParts.BpirCompatibilityToolsEnabled == wasLoaded);
+		}
+
+		private IEnumerator CheckOrientationArtwork(PartManager manager)
+		{
+			const string csv = "44,6,0,0,0,0\n44,6,2,0,4,0\n26,4,4,0,0,0\n26,4,6,0,3,0\n41,0,8,0,1,0\n47,5,10,0,0,1,@rotZ=30\n"
+				+ "39,0,20,0,0,0,-1,-1,-1,-1,-1,-1,,1\n6,0,21,0,0,0,-1,-1,-1,-1,-1,-1,,1\n6,0,19,0,0,0,-1,-1,-1,-1,-1,-1,,2\n";
+			StringBuilder orientationRows = new StringBuilder(csv);
+			foreach (int type in new[] { (int)PartType.Fan, (int)PartType.Propeller, (int)PartType.GrapplingHook })
+				for (int rotation = 0; rotation < 8; rotation++)
+					orientationRows.Append(type).Append(",0,").Append(30 + (type - 12) * 8 + rotation)
+						.Append(",0,").Append(rotation).Append(",0\n");
+			using var stream = new MemoryStream(Encoding.UTF8.GetBytes(orientationRows.ToString()), writable: false);
+			PartScene scene = LoadSceneSelected(manager, stream, "BpirArtwork", SchematicsFormat.Auto);
+			yield return null;
+			yield return null;
+			EntityManager em = scene.Unmanaged.EntityManager;
+			Entity At(int x) => scene.Unmanaged.FindPartAt(x, 0, 1, out Entity part) ? part : Entity.Null;
+			Entity plainLight = At(0);
+			Entity fullLight = At(2);
+			Entity plainHinge = At(4);
+			Entity offsetHinge = At(6);
+			Entity kicker = At(8);
+			Entity switchPart = At(10);
+			bool Facing(Entity part, float3 expected) => part != Entity.Null &&
+				math.distancesq(math.rotate(em.GetComponentData<LocalTransform>(part).Rotation, new float3(1f, 0f, 0f)), expected) < 0.00001f;
+			bool Visible(Entity part, string name)
+			{
+				Entity child = FindArtworkChild(em, part, name);
+				return child != Entity.Null && !em.HasComponent<DisableRendering>(child);
+			}
+			bool PlateHeight(Entity part, string name, float expected)
+			{
+				Entity child = FindArtworkChild(em, part, name);
+				return child != Entity.Null && Near(em.GetComponentData<LocalTransform>(child).Position.y, expected);
+			}
+			Check("auto control light actual artwork", Visible(plainLight, "InactivePointLightSprite") && !Visible(plainLight, "InactiveFullPointLightSprite")
+				&& !Visible(fullLight, "InactivePointLightSprite") && Visible(fullLight, "InactiveFullPointLightSprite")
+				&& Facing(plainLight, new float3(1f, 0f, 0f)) && Facing(fullLight, new float3(1f, 0f, 0f)));
+			Check("hinge actual layout and facing", PlateHeight(plainHinge, "Plate1", 0f) && PlateHeight(plainHinge, "Plate2", 0f)
+				&& PlateHeight(offsetHinge, "Plate1", -.5f) && PlateHeight(offsetHinge, "Plate2", -.5f) && Facing(offsetHinge, new float3(0f, 1f, 0f)));
+			Check("kicker actual orientation artwork", !Visible(kicker, "Deg0") && Visible(kicker, "Deg90") && !Visible(kicker, "Deg180")
+				&& !Visible(kicker, "Deg270") && Facing(kicker, new float3(1f, 0f, 0f)));
+			Check("mirrored switch world-space fine rotation", Facing(switchPart, new float3(.8660254f, .5f, 0f)));
+			bool eightWayFacing = true;
+			foreach (int type in new[] { (int)PartType.Fan, (int)PartType.Propeller, (int)PartType.GrapplingHook })
+			{
+				for (int rotation = 0; rotation < 8; rotation++)
+				{
+					int x = 30 + (type - 12) * 8 + rotation;
+					if (!scene.Unmanaged.FindPartAt(x, 0, 1, out Entity oriented))
+					{
+						eightWayFacing = false;
+						continue;
+					}
+					float angle = 90f * (rotation & 3) + (rotation >= 4 ? 45f : 0f);
+					float3 expected = new float3(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad), 0f);
+					eightWayFacing &= math.distancesq(math.rotate(em.GetComponentData<LocalTransform>(oriented).Rotation,
+						new float3(1f, 0f, 0f)), expected) < 0.0001f;
+				}
+			}
+			Check("BPIR fan, small propeller and suction gun eight-way facing", eightWayFacing);
+			Entity hook = At(20);
+			Check("batch attachments use final same-layer neighbours", Visible(hook, "RightAttachment") && !Visible(hook, "LeftAttachment")
+				&& !Visible(hook, "BottomAttachment"));
+			using var output = new MemoryStream();
+			manager.SaveScene(output, scene.SceneID, SchematicsFormat.BpirCsv);
+			output.Position = 0;
+			Schematics again = SchematicsBpirCsvLoader.Default.Read(output);
+			Check("BPIR mode codes roundtrip", FindUnit(again, 2, 0).Rotation == 4 && FindUnit(again, 6, 0).Rotation == 3);
+		}
+
+		private static Entity FindArtworkChild(EntityManager em, Entity part, string name)
+		{
+			if (part != Entity.Null)
+			{
+				foreach (LinkedEntityGroup child in em.GetBuffer<LinkedEntityGroup>(part))
+				{
+					if (em.GetName(child.Value) == name) return child.Value;
+				}
+			}
+			return Entity.Null;
 		}
 
 		/// <summary>
@@ -593,7 +839,7 @@ namespace Bpsim.QA
 			}
 		}
 
-		private IEnumerator StartAndMeasure(PartManager manager, string label, int expectedComponents)
+		private IEnumerator StartAndMeasure(PartManager manager, string label, int expectedComponents, int expectedJoints = -1, float3? expectedFirstPose = null)
 		{
 			PartScene scene = manager.HasActiveScene() ? manager.ActiveScene : null;
 			if (scene == null)
@@ -622,6 +868,11 @@ namespace Bpsim.QA
 			// BuildJointsAndComponentsJob 末尾会写 ConnectedComponents；这一行同样必须在
 			// 第一次 yield 之前读，才能确认 job 到底跑没跑、并查集有没有合并成功。
 			int componentsEarly = manager.PartSimulator.Unmanaged.ConnectedComponents.Length;
+			if (expectedFirstPose.HasValue && manager.PartSimulator.Unmanaged.Parts.Length > 0)
+			{
+				float3 position = em.GetComponentData<LocalTransform>(manager.PartSimulator.Unmanaged.Parts[0]).Position;
+				Check(label + ": initial simulation pose", math.distance(position, expectedFirstPose.Value) < .0005f, position.ToString());
+			}
 			yield return null;
 			yield return null;
 			if (startError != null || !manager.IsSimulating)
@@ -697,7 +948,7 @@ namespace Bpsim.QA
 			// 这些实体由 PartSimulationSystem 收进 Simulator.Joints。两个数字分开报，才能分清
 			// 「没焊」和「焊了但运行系统没接管」。
 			int jointEntities = em.CreateEntityQuery(ComponentType.ReadOnly<PartJointInfo>()).CalculateEntityCount();
-			Check(label, distinctComponents == expectedComponents,
+			Check(label, distinctComponents == expectedComponents && (expectedJoints < 0 || jointsEarly == expectedJoints),
 				"distinctComponents=" + distinctComponents + " expected=" + expectedComponents
 				+ " joints=" + joints + " jointEntities=" + jointEntities + " jointsEarly=" + jointsEarly
 				+ " jointsListEarly=" + jointsListEarly

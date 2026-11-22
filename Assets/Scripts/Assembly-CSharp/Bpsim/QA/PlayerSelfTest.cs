@@ -36,11 +36,19 @@ namespace Bpsim.QA
         private static readonly StringBuilder s_report = new StringBuilder();
         private static readonly List<string> s_errors = new List<string>();
         private static int s_errorCount;
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private const int HavokFixtureJointCount = 5;
+        private const float HavokFixtureFloorTop = -5f;
+        private static bool s_havokEventsFixture;
+#endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoStart()
         {
             string[] args = GetEffectiveArgs();
+#if UNITY_ANDROID && !UNITY_EDITOR
+            s_havokEventsFixture = Array.IndexOf(args, "-bpsimHavokEvents") >= 0;
+#endif
             bool marker = HasMarker();
             // Emit the resolved argv unconditionally: on Unity 2022 Android the "unity"
             // intent extra is not reliably surfaced through Environment.GetCommandLineArgs(),
@@ -240,6 +248,47 @@ namespace Bpsim.QA
             }
 
             pm.StartSimulation();
+            if (!pm.IsSimulating)
+            {
+                Line("FAIL: simulation did not start");
+                Finish(1);
+                yield break;
+            }
+#if UNITY_ANDROID && !UNITY_EDITOR
+            BlobAssetReference<Unity.Physics.Collider> floor = default;
+            Entity floorEntity = Entity.Null;
+            if (s_havokEventsFixture)
+            {
+                var entityManager = scene.Unmanaged.EntityManager;
+                var simulator = pm.PartSimulator.UnmanagedRef;
+                int initialJoints = simulator.Value.Joints.Length;
+                Line("events: contacts and impulse fixture enabled, initial joints=" + initialJoints);
+                if (initialJoints != HavokFixtureJointCount)
+                {
+                    pm.EndSimulation();
+                    Line("FAIL: expected " + HavokFixtureJointCount + " initial joints");
+                    Finish(1);
+                    yield break;
+                }
+                var material = Unity.Physics.Material.Default;
+                material.CollisionResponse = CollisionResponsePolicy.CollideRaiseCollisionEvents;
+                floor = PartPhysics.CreateBox(float3.zero, new float3(14f, 1f, 5f), material);
+                floorEntity = entityManager.CreateEntity();
+                entityManager.AddComponentData(floorEntity, LocalTransform.FromPosition(1.5f, HavokFixtureFloorTop - 0.5f, 0f));
+                entityManager.AddComponentData(floorEntity, new PhysicsCollider { Value = floor });
+                entityManager.AddSharedComponent(floorEntity, new PhysicsWorldIndex(0));
+                foreach (var jointEntity in simulator.Value.Joints)
+                {
+                    var joint = entityManager.GetComponentData<PhysicsJoint>(jointEntity);
+                    joint.SetImpulseEventThresholdAllConstraints(new float3(0.01f), float.PositiveInfinity);
+                    entityManager.SetComponentData(jointEntity, joint);
+                }
+                var firstPart = simulator.Value.Parts[0];
+                var velocity = entityManager.GetComponentData<PhysicsVelocity>(firstPart);
+                velocity.Linear.y = 5f;
+                entityManager.SetComponentData(firstPart, velocity);
+            }
+#endif
             yield return null;
             Reference<PartSimulatorUnmanaged> simRef = pm.PartSimulator.UnmanagedRef;
             NativeList<Entity> simParts = simRef.Value.Parts;
@@ -259,24 +308,58 @@ namespace Bpsim.QA
 
             float maxDelta = MaxDrop(em, simParts);
             Line("sim: maxDrop=" + maxDelta.ToString("0.###") + " m (expect > 1.0 with gravity on)");
+#if UNITY_ANDROID && !UNITY_EDITOR
+            bool eventsPassed = !s_havokEventsFixture || CheckHavokEventsFixture(em, simParts, simRef.Value.Joints.Length);
+#endif
             pm.EndSimulation();
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (floor.IsCreated)
+            {
+                em.DestroyEntity(floorEntity);
+                em.CompleteAllTrackedJobs();
+                floor.Dispose();
+            }
+#endif
             Line("sim: ended IsSimulating=" + pm.IsSimulating);
 
-            bool moved = maxDelta > 1.0f;
             Line("errors: count=" + s_errorCount);
             foreach (string e in s_errors)
             {
                 Line("  " + e);
             }
-            Line(moved ? "PASS: physics integrated positions in the player build"
-                       : "FAIL: parts never moved (physics backend did not integrate)");
-            if (!moved)
+            bool passed = maxDelta > 1.0f;
+            if (!passed) Line("FAIL: parts never moved (physics backend did not integrate)");
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (s_havokEventsFixture && (!eventsPassed || pm.IsSimulating || s_errorCount != 0))
             {
-                Finish(1);
-                yield break;
+                passed = false;
+                Line("FAIL: Havok fixture must break all joints, land, and stop without errors");
             }
-            Finish(0);
+#endif
+            if (passed) Line("PASS: physics integrated positions in the player build");
+            Finish(passed ? 0 : 1);
         }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private static bool CheckHavokEventsFixture(EntityManager em, NativeList<Entity> parts, int remainingJoints)
+        {
+            using var query = em.CreateEntityQuery(ComponentType.ReadOnly<SimulationSingleton>());
+            bool havok = query.TryGetSingleton(out SimulationSingleton simulation) && simulation.Type == SimulationType.HavokPhysics;
+            bool landed = false;
+            foreach (Entity part in parts)
+            {
+                float height = em.GetComponentData<LocalTransform>(part).Position.y;
+                float verticalSpeed = em.GetComponentData<PhysicsVelocity>(part).Linear.y;
+                if (height >= HavokFixtureFloorTop && height < HavokFixtureFloorTop + 1f && math.abs(verticalSpeed) < 0.5f)
+                {
+                    landed = true;
+                    break;
+                }
+            }
+            Line($"events: remaining joints={remainingJoints} landed={landed} havok={havok}");
+            return remainingJoints == 0 && landed && havok;
+        }
+#endif
 
         // 反射读 PartManager 的私有字段：LoadEmptyScene 在 Player 里 NRE 过，先判断是
         // 场景预制体丢了（m_scenePrefab == null）还是 world/entityManager 没就绪。

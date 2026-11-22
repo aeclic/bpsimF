@@ -1,5 +1,7 @@
 # ANVIL_PHYSICS_BACKEND.md — 逆向 Anvil Physics demo，做成 bpsim 可切换物理后端，并与 Havok 对比
 
+2026-11-20 已用 Burst AOT Windows Player 重测四份真实存档。当前结果见 [Anvil 真实存档性能](plans/anvil-real-save-performance.md)，原生重建见 [Box3D 构建说明](../Tools/AnvilNative/README.md)。以下为 2026-11-04 的接口与历史基准记录，不代表当前后端性能排名。
+
 日期：2026-11-04　工程：`bpsim-main`（Unity 中国版 2022.2.23f1c1）
 目标（用户）：**对 `https://valgore.com/anvil/demo/` 做逆向，逆向成可用的可切换物理后端给本项目用，并做一份和 Havok 的性能对比验证。**
 

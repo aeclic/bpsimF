@@ -12,7 +12,7 @@
 //
 // 与 Unity.Physics 的差异（必须知道）：
 //   * 没有 ColliderKey：box3d 的 compound 被拆成多个 shape 挂在同一 body 上，不产生子形状 key。
-//   * Impulse 是该接触点本步的法向冲量总量（Box3D 的 normalImpulse），不是 EstimatedImpulse 的估算值。
+//   * Impulse 来自 Box3D 求解后的法向冲量，覆盖该接触的各接触点和物理子步。
 //   * 只含「真的产生了接触」的 pair；传感器（isSensor）另有 sensor events，暂未接线。
 using Unity.Collections;
 using Unity.Entities;

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using Bpsim.Background;
 using Bpsim.ComponentModel;
+using Bpsim.Updates;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -162,11 +163,31 @@ namespace Bpsim.UI
 		{
 			AddSectionHeader("Mod");
 			AddButton("打开 Mod 管理器", OpenModManager);
+			AddButton("检查游戏更新", CheckGameUpdate);
 		}
 
 		private void OpenModManager()
 		{
 			Bpsim.Mods.ModManagerUI.Open();
+		}
+
+		private void CheckGameUpdate()
+		{
+			BpsimUpdater.Check(Bpsim.Mods.ModManager.Ensure(), (update, error) =>
+			{
+				if (update == null)
+				{
+					Bpsim.Mods.ModManager.Ensure().Toast(error ?? "更新检查失败");
+					return;
+				}
+				if (!update.HasUpdate)
+				{
+					Bpsim.Mods.ModManager.Ensure().Toast("当前已是最新版本 v" + update.Version);
+					return;
+				}
+				Bpsim.Mods.ModManagerUI.ShowBpsimUpdate(update);
+			});
+			Bpsim.Mods.ModManager.Ensure().Toast("正在检查游戏更新");
 		}
 
 		/// <summary>
@@ -237,11 +258,11 @@ namespace Bpsim.UI
 				gameObject.transform.SetParent(RowParent, worldPositionStays: false);
 				gameObject.transform.Find("Name").GetComponent<Text>().text = item.Key switch
 				{
-					"BuildFactionOutlines" => "建造界面阵营描边",
-					"RuntimeFactionOutlines" => "运行时阵营描边（默认关闭）",
-					"FactionOutlineWidth" => "阵营描边宽度（1–8 像素）",
+					"LevelGridSize" => "关卡网格大小（0.25–4，重载关卡生效）",
 					"BpleLightSystem" => "BPLE 实体光（光柱 / 光盾 / 光箱）",
 					"BpleSpecialUmbrellas" => "BPLE 特殊雨伞功能",
+					"StableHingePlate" => "稳定化铰链板",
+					"CanHingePlateConnectComponents" => "铰链板可连通载具",
 					"BpleSeparatedLightButtons" => "灯光按方向和连通块分组",
 					"BpleDarkness" => "BPLE 夜景照明与夜视",
 					"BpleLightReaction" => "实体光反作用力（实验功能）",

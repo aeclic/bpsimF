@@ -95,8 +95,6 @@ namespace Bpsim.Mods
 	/// </summary>
 	public static class WorkshopService
 	{
-		private const string DefaultIndexUrl = "https://gitee.com/bpsim/workshop/raw/master/index.json";
-
 		public static WorkshopIndex Index { get; private set; }
 
 		public static bool Loading { get; private set; }
@@ -106,8 +104,9 @@ namespace Bpsim.Mods
 		public static string LastError { get; private set; }
 
 		private static string s_indexUrl;
+		private static int s_requestId;
 
-		/// <summary>索引地址：优先 modworkshop.config.json，其次默认值。可在运行时覆盖。</summary>
+		/// <summary>当前仓库索引地址，可在运行时覆盖。</summary>
 		public static string IndexUrl
 		{
 			get
@@ -116,7 +115,7 @@ namespace Bpsim.Mods
 				{
 					return s_indexUrl;
 				}
-				s_indexUrl = ReadConfiguredUrl() ?? DefaultIndexUrl;
+				s_indexUrl = WorkshopRepository.IndexUrl;
 				return s_indexUrl;
 			}
 			set => s_indexUrl = value;
@@ -154,10 +153,22 @@ namespace Bpsim.Mods
 			}
 			Loading = true;
 			LastError = null;
-			host.StartCoroutine(LoadIndexRoutine(forceRemote, onDone));
+			int requestId = ++s_requestId;
+			host.StartCoroutine(LoadIndexRoutine(forceRemote, onDone, requestId));
 		}
 
-		private static IEnumerator LoadIndexRoutine(bool forceRemote, Action onDone)
+		public static void ReloadIndex(MonoBehaviour host, Action onDone)
+		{
+			s_requestId++;
+			Loading = false;
+			Index = null;
+			FromCache = false;
+			LastError = null;
+			s_indexUrl = null;
+			LoadIndex(host, onDone, forceRemote: true);
+		}
+
+		private static IEnumerator LoadIndexRoutine(bool forceRemote, Action onDone, int requestId)
 		{
 			// 1) 缓存
 			if (!forceRemote)
@@ -165,6 +176,7 @@ namespace Bpsim.Mods
 				WorkshopIndex cached = TryReadCache();
 				if (cached != null)
 				{
+					if (requestId != s_requestId) yield break;
 					Index = cached;
 					FromCache = true;
 					Loading = false;
@@ -179,6 +191,7 @@ namespace Bpsim.Mods
 			{
 				req.timeout = 20;
 				yield return req.SendWebRequest();
+				if (requestId != s_requestId) yield break;
 				if (req.result != UnityWebRequest.Result.Success)
 				{
 					LastError = req.error;
@@ -253,7 +266,7 @@ namespace Bpsim.Mods
 		{
 			try
 			{
-				string path = ModPaths.WorkshopIndexCachePath;
+				string path = WorkshopRepository.IndexCachePath;
 				if (!File.Exists(path))
 				{
 					return null;
@@ -278,33 +291,12 @@ namespace Bpsim.Mods
 			try
 			{
 				ModPaths.EnsureDirectory(ModPaths.WorkshopCacheDir);
-				File.WriteAllText(ModPaths.WorkshopIndexCachePath, text, Encoding.UTF8);
+				File.WriteAllText(WorkshopRepository.IndexCachePath, text, Encoding.UTF8);
 			}
 			catch (Exception ex)
 			{
 				Debug.LogWarning("[Workshop] 写缓存失败：" + ex.Message);
 			}
-		}
-
-		private static string ReadConfiguredUrl()
-		{
-			try
-			{
-				string cfg = Path.Combine(ModPaths.WorkshopRoot, "config.json");
-				if (File.Exists(cfg))
-				{
-					var jo = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(cfg));
-					if (jo != null && jo.TryGetValue("indexUrl", out string u) && !string.IsNullOrWhiteSpace(u))
-					{
-						return u;
-					}
-				}
-			}
-			catch (Exception)
-			{
-				// ignore
-			}
-			return null;
 		}
 	}
 
@@ -326,7 +318,7 @@ namespace Bpsim.Mods
 		private static IEnumerator InstallRoutine(WorkshopPack pack, Action<bool, string> onDone)
 		{
 			ModPaths.EnsureDirectory(ModPaths.WorkshopDownloadsDir);
-			string tmpZip = Path.Combine(ModPaths.WorkshopDownloadsDir, pack.id + "-" + pack.version + ".zip");
+			string tmpZip = Path.Combine(ModPaths.WorkshopDownloadsDir, Guid.NewGuid().ToString("N") + ".zip");
 
 			string lastError = null;
 			bool downloaded = false;
@@ -351,6 +343,12 @@ namespace Bpsim.Mods
 				onDone?.Invoke(false, "下载失败：" + (lastError ?? "无可用地址"));
 				yield break;
 			}
+			if (pack.size > 0 && new FileInfo(tmpZip).Length != pack.size)
+			{
+				try { File.Delete(tmpZip); } catch { }
+				onDone?.Invoke(false, "下载文件大小校验失败");
+				yield break;
+			}
 
 			if (!string.IsNullOrEmpty(pack.sha256))
 			{
@@ -371,6 +369,10 @@ namespace Bpsim.Mods
 			catch (Exception ex)
 			{
 				onDone?.Invoke(false, ex.Message);
+			}
+			finally
+			{
+				try { if (File.Exists(tmpZip)) File.Delete(tmpZip); } catch { }
 			}
 		}
 

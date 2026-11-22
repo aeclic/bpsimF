@@ -401,23 +401,24 @@ ModParts.TryAddSkinVariant(PartType.WoodenFrame, 0, 9000, "异形木框",
    少了 `netstandard` 就会回到原始报错 `CS0012: The type 'System.Object' is defined in an assembly
    that is not referenced ... 'netstandard, Version=2.1.0.0'`。
 
-## 10. 样例：BPIR 变形框
+## 10. 内置 BPIR 兼容 Mod
 
-`Assets/StreamingAssets/Mods/bpir-frame-shapes/` 是一个**能直接跑**的源码 Mod：
+`Assets/StreamingAssets/Mods/bpir-frame-shapes/` 保留了原「BPIR 变形框」Mod 的目录和 ID，因此沿用原启用设置：
 
 ```
 bpir-frame-shapes/
   Mod.xml
+  BpirFrameShapes.dll
   Code/BpirFrameShapes.cs
 ```
 
 它做的事：
 
-1. 建一个 `ShapeFeatureEnabler` 常驻对象，每 0.5s 重试 `ModParts.SetFrameShapesEnabled(true)` 直到成功 ——
-   打开之后**任何容器框**（木框 / 铁框 / 彩色框 / 透明框）的部件属性面板里都会多出「形状」一行，
-   点它循环 长方形 → 直角三角 → 半圆 → 圆；
-2. `OnUnload` 把形状特性关掉（所有框恢复方框外观与碰撞，存档里的形状值保留）；
-3. `IsRequiredForMachine` 在存档 JSON 里出现 `"FrameShape":1|2|3` 时返回 true —— 宿主会把 GUID 记进载具。
+1. 开启后，容器框可切换长方形、直角三角、半圆和圆。卸载只关闭由本 Mod 开启的形状特性，保留存档值。
+2. 部件属性面板增加「绘制层」与「远程连接」。绘制层越大越靠前，不改变格子占用或网格连接规则。
+3. 打开远程连接后，在属性面板输入目标 `X:Y:建造层`，多个目标用 `|` 分隔，例如 `8:0:3|12:4:1`。远程连接替代该部件的网格焊接，移动目标保留连接，删除目标后不会改连同格的新部件。
+
+BPIR CSV 的偏移、绘制层、越野轮尺寸、远程连接由宿主读取、保存和还原；关闭 Mod 只隐藏附加编辑工具，不删除这些存档数据。修改 Mod 源码后需要用更新过的宿主引用重新编译 `BpirFrameShapes.dll`。
 
 **它不新增任何部件**：建造列表和原版完全一致，没有 9000+ 索引，也没有多余图标。
 最初版本是「每形状一个变体」，实测下来有三个副作用（列表多出三格、图标只能是基部件那张图、

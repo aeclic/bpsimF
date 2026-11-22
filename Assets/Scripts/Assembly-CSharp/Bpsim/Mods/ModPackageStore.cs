@@ -103,28 +103,30 @@ namespace Bpsim.Mods
 					throw new InvalidDataException("清单解析失败（Mod.xml / manifest.json）");
 				}
 
-				string target = Path.Combine(ModPaths.Root, probe.Manifest.id);
-				if (Directory.Exists(target))
-				{
-					if (!overwrite)
-					{
-						throw new InvalidDataException("目标已存在：" + probe.Manifest.id);
-					}
-					Directory.Delete(target, true);
-				}
-				CopyDirectory(packageRoot, target);
-
-				ModPackage installed = TryLoadPackage(target, ModSource.Installed);
-				if (installed == null)
-				{
-					throw new InvalidDataException("安装后重新解析失败");
-				}
-				return installed;
+				return InstallPackage(probe, overwrite);
 			}
 			finally
 			{
 				try { if (Directory.Exists(work)) Directory.Delete(work, true); } catch { }
 			}
+		}
+
+		internal static ModPackage InstallPackage(ModPackage source, bool overwrite)
+		{
+			string id = source.Id;
+			if (string.IsNullOrEmpty(id) || id.StartsWith(".", StringComparison.Ordinal) ||
+				id.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || id.IndexOfAny(new[] { '/', '\\', ':' }) >= 0)
+			{
+				throw new InvalidDataException("无效的 Mod ID：" + id);
+			}
+			string target = Path.Combine(ModPaths.EnsureRoot(), id);
+			if (Directory.Exists(target))
+			{
+				if (!overwrite) throw new InvalidDataException("目标已存在：" + id);
+				Directory.Delete(target, true);
+			}
+			CopyDirectory(source.Directory, target);
+			return TryLoadPackage(target, ModSource.Installed) ?? throw new InvalidDataException("安装后重新解析失败");
 		}
 
 		/// <summary>

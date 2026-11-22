@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Bpsim.Modding;
+using Bpsim.Updates;
 using Bpsim.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -47,6 +48,15 @@ namespace Bpsim.Mods
 		private Button m_import;
 		private RectTransform m_importMenu;
 		private bool m_installing;
+		private RectTransform m_workshopDialog;
+		private InputField m_uploadToken;
+		private InputField m_uploadId;
+		private InputField m_uploadName;
+		private InputField m_uploadVersion;
+		private InputField m_uploadAuthor;
+		private InputField m_uploadSummary;
+		private Text m_uploadFileLabel;
+		private string m_uploadZipPath;
 
 		public static bool IsOpen => s_instance != null && s_instance.m_canvas != null;
 
@@ -85,6 +95,29 @@ namespace Bpsim.Mods
 			{
 				s_instance.m_canvas.gameObject.SetActive(false);
 			}
+		}
+
+		public static void ShowBpsimUpdate(BpsimUpdateInfo update)
+		{
+			if (update == null) return;
+			Open();
+			if (s_instance == null || s_instance.m_canvas == null) return;
+			RectTransform card = s_instance.ShowWorkshopDialog("bpsimF v" + update.Version + " 更新", 900f, 500f);
+			Text notes = ModUiKit.Label(card, string.IsNullOrWhiteSpace(update.Notes) ? "" : update.Notes,
+				18, TextDim, TextAnchor.UpperLeft);
+			notes.horizontalOverflow = HorizontalWrapMode.Wrap;
+			notes.verticalOverflow = VerticalWrapMode.Truncate;
+			ModUiKit.SetRect(notes.rectTransform, Vector2.zero, Vector2.one,
+				new Vector2(30f, 90f), new Vector2(-30f, -100f));
+			Button install = MakeButton(card, "下载并安装", BtnGreen, () =>
+			{
+				s_instance.CloseWorkshopDialog();
+				ModManager.Ensure().Toast("正在下载 bpsimF v" + update.Version);
+				BpsimUpdater.Install(s_instance, update, (ok, message) =>
+					ModManager.Ensure().Toast(ok ? message : "更新失败：" + message));
+			}, 18);
+			Place(install.GetComponent<RectTransform>(), new Vector2(620f, 410f), new Vector2(180f, 48f));
+			s_instance.m_workshopDialog.SetAsLastSibling();
 		}
 
 		private void Awake()
@@ -264,14 +297,18 @@ namespace Bpsim.Mods
 			footer.SetParent(frame, false);
 			ModUiKit.SetRect(footer, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(30f, 22f), new Vector2(-30f, 78f));
 
+			float importOffset = 0f;
+#if !UNITY_ANDROID || UNITY_EDITOR
 			Button openFolder = MakeButton(footer, "打开 Mods 目录", BtnNeutral, OpenModsFolder, 20);
 			Place(footer, openFolder, 0f, 190f);
+			importOffset = 204f;
+#endif
 
 			m_installClipboard = MakeButton(footer, "从剪贴板安装", BtnNeutral, InstallFromClipboard, 20);
-			Place(footer, m_installClipboard, 204f, 190f);
+			Place(footer, m_installClipboard, importOffset, 190f);
 
 			m_import = MakeButton(footer, "导入 Mod ▾", Accent, ToggleImportMenu, 20);
-			Place(footer, m_import, 408f, 190f);
+			Place(footer, m_import, importOffset + 204f, 190f);
 
 			// 列表容器
 			RectTransform bodyHost = ModUiKit.Panel(frame, new Color(0f, 0f, 0f, 0.18f), 12);
@@ -337,7 +374,7 @@ namespace Bpsim.Mods
 			m_importMenu.name = "ImportMenu";
 			m_importMenu.anchorMin = m_importMenu.anchorMax = new Vector2(0f, 0f);
 			m_importMenu.pivot = new Vector2(0f, 0f);
-			m_importMenu.anchoredPosition = new Vector2(438f, 108f); // 对齐「导入 Mod」按钮上方
+			m_importMenu.anchoredPosition = new Vector2(m_import.GetComponent<RectTransform>().anchoredPosition.x + 30f, 108f);
 			m_importMenu.sizeDelta = new Vector2(280f, 128f);
 			Button menuSelf = m_importMenu.gameObject.AddComponent<Button>();
 			menuSelf.transition = Selectable.Transition.None; // 吃掉菜单空白处的点击
@@ -355,7 +392,7 @@ namespace Bpsim.Mods
 			}, 20);
 			ModUiKit.SetRect(folder.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(10f, 10f), new Vector2(-10f, 62f));
 
-			m_importMenu.gameObject.SetActive(false);
+			blocker.gameObject.SetActive(false);
 		}
 
 		private void ToggleImportMenu()
@@ -735,6 +772,7 @@ namespace Bpsim.Mods
 
 		private void BuildWorkshopContent(RectTransform content)
 		{
+			BuildWorkshopToolbar(content);
 			if (WorkshopService.Loading)
 			{
 				Text t = ModUiKit.Label(content, "正在获取工坊索引…", 22, TextDim, TextAnchor.UpperLeft);
@@ -743,20 +781,14 @@ namespace Bpsim.Mods
 			}
 			if (WorkshopService.Index == null || WorkshopService.Index.packs == null || WorkshopService.Index.packs.Count == 0)
 			{
-				Text t = ModUiKit.Label(content, "工坊索引为空或未配置。\n"
-					+ (string.IsNullOrEmpty(WorkshopService.LastError) ? "索引地址：" + WorkshopService.IndexUrl : "错误：" + WorkshopService.LastError),
+				string message = WorkshopService.Index == null
+					? "工坊索引不可用。\n" + (string.IsNullOrEmpty(WorkshopService.LastError)
+						? "索引地址：" + WorkshopService.IndexUrl : "错误：" + WorkshopService.LastError)
+					: "该仓库目前没有工坊内容。";
+				Text t = ModUiKit.Label(content, message,
 					22, TextDim, TextAnchor.UpperLeft);
 				t.horizontalOverflow = HorizontalWrapMode.Wrap;
 				ModUiKit.Size(t.gameObject, 100f);
-				Button fetch = MakeButton(content, "获取工坊索引", Accent, () =>
-				{
-					WorkshopService.LoadIndex(this, () =>
-					{
-						if (s_instance != null && s_instance.m_tab == 1) s_instance.Rebuild();
-					});
-					Rebuild();
-				}, 18);
-				ModUiKit.Size(fetch.gameObject, 46f);
 				return;
 			}
 
@@ -765,6 +797,213 @@ namespace Bpsim.Mods
 			{
 				BuildWorkshopRow(content, pack);
 			}
+		}
+
+		private void BuildWorkshopToolbar(RectTransform content)
+		{
+			GameObject row = new GameObject("WorkshopToolbar", typeof(RectTransform));
+			RectTransform rowRect = row.GetComponent<RectTransform>();
+			rowRect.SetParent(content, false);
+			rowRect.anchorMin = new Vector2(0f, 1f);
+			rowRect.anchorMax = new Vector2(1f, 1f);
+			rowRect.pivot = new Vector2(0.5f, 1f);
+			ModUiKit.Size(row, 58f);
+
+			Button source = MakeButton(rowRect, "来源：" + WorkshopRepository.ProviderLabel, Accent, () =>
+			{
+				WorkshopRepository.Provider = WorkshopRepository.Provider == WorkshopProvider.Gitee
+					? WorkshopProvider.GitHub : WorkshopProvider.Gitee;
+				WorkshopService.ReloadIndex(this, () =>
+				{
+					if (s_instance != null && s_instance.m_tab == 1) s_instance.Rebuild();
+				});
+				Rebuild();
+			}, 18);
+			Place(source.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(190f, 48f));
+
+			Button repository = MakeButton(rowRect, WorkshopRepository.RepositoryLabel, BtnNeutral, OpenRepositoryDialog, 17);
+			Place(repository.GetComponent<RectTransform>(), new Vector2(202f, 0f), new Vector2(330f, 48f));
+
+			Button refresh = MakeButton(rowRect, "刷新", BtnNeutral, () =>
+			{
+				WorkshopService.ReloadIndex(this, () =>
+				{
+					if (s_instance != null && s_instance.m_tab == 1) s_instance.Rebuild();
+				});
+				Rebuild();
+			}, 18);
+			Place(refresh.GetComponent<RectTransform>(), new Vector2(544f, 0f), new Vector2(130f, 48f));
+
+			Button upload = MakeButton(rowRect, "上传 Mod", BtnGreen, OpenUploadDialog, 18);
+			Place(upload.GetComponent<RectTransform>(), new Vector2(686f, 0f), new Vector2(150f, 48f));
+		}
+
+		private void OpenRepositoryDialog()
+		{
+			WorkshopRepositorySettings settings = WorkshopRepository.Settings;
+			bool gitee = WorkshopRepository.Provider == WorkshopProvider.Gitee;
+			string owner = gitee ? settings.giteeOwner : settings.githubOwner;
+			string repository = gitee ? settings.giteeRepository : settings.githubRepository;
+			string branch = gitee ? settings.giteeBranch : settings.githubBranch;
+			string indexPath = gitee ? settings.giteeIndexPath : settings.githubIndexPath;
+			RectTransform card = ShowWorkshopDialog("仓库设置", 900f, 480f);
+			InputField ownerField = AddDialogField(card, "所有者", owner, 130f, 340f);
+			InputField repoField = AddDialogField(card, "仓库", repository, 130f, 280f);
+			InputField branchField = AddDialogField(card, "分支", branch, 190f, 340f);
+			InputField pathField = AddDialogField(card, "索引路径", indexPath, 190f, 280f);
+			Button save = MakeButton(card, "保存并刷新", Accent, () =>
+			{
+				try
+				{
+					WorkshopRepository.SetRepository(ownerField.text, repoField.text, branchField.text, pathField.text);
+					CloseWorkshopDialog();
+					WorkshopService.ReloadIndex(this, () =>
+					{
+						if (s_instance != null && s_instance.m_tab == 1) s_instance.Rebuild();
+					});
+					Rebuild();
+				}
+				catch (Exception ex)
+				{
+					ModManager.Instance.Toast("仓库设置无效：" + ex.Message);
+				}
+			}, 18);
+			Place(save.GetComponent<RectTransform>(), new Vector2(620f, 390f), new Vector2(180f, 48f));
+		}
+
+		private void OpenUploadDialog()
+		{
+			RectTransform card = ShowWorkshopDialog("上传 Mod 到 " + WorkshopRepository.ProviderLabel, 980f, 700f);
+			m_uploadToken = AddDialogField(card, "访问令牌", string.Empty, 105f, 520f, password: true);
+			m_uploadId = AddDialogField(card, "内容 ID", string.Empty, 165f, 520f);
+			m_uploadName = AddDialogField(card, "名称", string.Empty, 225f, 520f);
+			m_uploadVersion = AddDialogField(card, "版本", "1.0.0", 285f, 520f);
+			m_uploadAuthor = AddDialogField(card, "作者", string.Empty, 345f, 520f);
+			m_uploadSummary = AddDialogField(card, "简介", string.Empty, 405f, 520f);
+			m_uploadFileLabel = ModUiKit.Label(card, string.IsNullOrEmpty(m_uploadZipPath) ? "未选择 ZIP" : Path.GetFileName(m_uploadZipPath), 18, TextDim, TextAnchor.MiddleLeft);
+			ModUiKit.SetRect(m_uploadFileLabel.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(30f, -480f), new Vector2(-330f, -530f));
+			Button choose = MakeButton(card, "选择 ZIP", BtnNeutral, ChooseWorkshopZip, 18);
+			Place(choose.GetComponent<RectTransform>(), new Vector2(650f, 510f), new Vector2(150f, 48f));
+			Button publish = MakeButton(card, "开始上传", BtnGreen, PublishWorkshopZip, 18);
+			Place(publish.GetComponent<RectTransform>(), new Vector2(620f, 610f), new Vector2(180f, 48f));
+		}
+
+		private RectTransform ShowWorkshopDialog(string title, float width, float height)
+		{
+			CloseWorkshopDialog();
+			m_workshopDialog = ModUiKit.Panel(m_canvas.transform, new Color(0f, 0f, 0f, 0.68f), 2);
+			ModUiKit.SetRect(m_workshopDialog, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+			Button blocker = m_workshopDialog.gameObject.AddComponent<Button>();
+			blocker.transition = Selectable.Transition.None;
+			blocker.onClick.AddListener(CloseWorkshopDialog);
+			RectTransform card = ModUiKit.Panel(m_workshopDialog, FrameBg, 12);
+			card.name = "Dialog";
+			card.anchorMin = card.anchorMax = new Vector2(0.5f, 0.5f);
+			card.pivot = new Vector2(0.5f, 0.5f);
+			card.sizeDelta = new Vector2(width, height);
+			card.gameObject.AddComponent<Button>().transition = Selectable.Transition.None;
+			Text heading = ModUiKit.Label(card, title, 24, TextMain, TextAnchor.MiddleLeft);
+			ModUiKit.SetRect(heading.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(30f, -72f), new Vector2(-30f, -20f));
+			Button close = MakeButton(card, "关闭", BtnNeutral, CloseWorkshopDialog, 18);
+			Place(close.GetComponent<RectTransform>(), new Vector2(width - 145f, 18f), new Vector2(110f, 46f));
+			return card;
+		}
+
+		private InputField AddDialogField(RectTransform card, string label, string value, float top, float width, bool password = false)
+		{
+			Text title = ModUiKit.Label(card, label, 18, TextDim, TextAnchor.MiddleLeft);
+			ModUiKit.SetRect(title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(30f, -top - 42f), new Vector2(160f, -top));
+			RectTransform root = ModUiKit.Panel(card, CardBgAlt, 6);
+			root.anchorMin = root.anchorMax = new Vector2(0f, 1f);
+			root.pivot = new Vector2(0f, 1f);
+			root.anchoredPosition = new Vector2(170f, -top);
+			root.sizeDelta = new Vector2(width, 46f);
+			Image image = root.GetComponent<Image>();
+			InputField input = root.gameObject.AddComponent<InputField>();
+			input.targetGraphic = image;
+			input.lineType = InputField.LineType.SingleLine;
+			input.contentType = password ? InputField.ContentType.Password : InputField.ContentType.Standard;
+			Text text = ModUiKit.Label(root, string.Empty, 18, TextMain, TextAnchor.MiddleLeft);
+			ModUiKit.SetRect(text.rectTransform, Vector2.zero, Vector2.one, new Vector2(10f, 3f), new Vector2(-10f, -3f));
+			input.textComponent = text;
+			input.text = value ?? string.Empty;
+			return input;
+		}
+
+		private void CloseWorkshopDialog()
+		{
+			if (m_workshopDialog != null)
+			{
+				Destroy(m_workshopDialog.gameObject);
+				m_workshopDialog = null;
+			}
+			m_uploadToken = null;
+			m_uploadId = null;
+			m_uploadName = null;
+			m_uploadVersion = null;
+			m_uploadAuthor = null;
+			m_uploadSummary = null;
+			m_uploadFileLabel = null;
+		}
+
+		private async void ChooseWorkshopZip()
+		{
+			try
+			{
+				using FileSelection selected = await FileAPI.OpenFile(ModPaths.Root);
+				if (selected == null) return;
+				ModPaths.EnsureDirectory(ModPaths.WorkshopDownloadsDir);
+				string path = Path.Combine(ModPaths.WorkshopDownloadsDir, "publish-" + Guid.NewGuid().ToString("N") + ".zip");
+				File.Copy(selected.Path, path, true);
+				if (!string.IsNullOrEmpty(m_uploadZipPath) && File.Exists(m_uploadZipPath)) File.Delete(m_uploadZipPath);
+				m_uploadZipPath = path;
+				if (m_uploadFileLabel != null) m_uploadFileLabel.text = Path.GetFileName(path);
+			}
+			catch (Exception ex)
+			{
+				ModManager.Instance.Toast("选择 ZIP 失败：" + ex.Message);
+			}
+		}
+
+		private void PublishWorkshopZip()
+		{
+			if (m_installing) return;
+			if (string.IsNullOrEmpty(m_uploadZipPath) || m_uploadId == null || m_uploadToken == null)
+			{
+				ModManager.Instance.Toast("请先选择 ZIP 并填写上传信息");
+				return;
+			}
+			WorkshopRepository.SessionToken = m_uploadToken.text.Trim();
+			WorkshopPack pack = new WorkshopPack
+			{
+				id = m_uploadId.text.Trim(),
+				name = m_uploadName != null ? m_uploadName.text.Trim() : string.Empty,
+				version = m_uploadVersion != null ? m_uploadVersion.text.Trim() : string.Empty,
+				author = m_uploadAuthor != null ? m_uploadAuthor.text.Trim() : string.Empty,
+				summary = m_uploadSummary != null ? m_uploadSummary.text.Trim() : string.Empty,
+				contentType = "addon"
+			};
+			m_installing = true;
+			WorkshopRepository.Upload(this, m_uploadZipPath, pack, (ok, message) =>
+			{
+				m_installing = false;
+				WorkshopRepository.SessionToken = null;
+				if (!string.IsNullOrEmpty(m_uploadZipPath) && File.Exists(m_uploadZipPath))
+				{
+					try { File.Delete(m_uploadZipPath); } catch { }
+				}
+				m_uploadZipPath = null;
+				CloseWorkshopDialog();
+				ModManager.Instance.Toast(ok ? "上传完成：" + message : "上传失败：" + message);
+				if (ok)
+				{
+					WorkshopService.ReloadIndex(this, () =>
+					{
+						if (s_instance != null && s_instance.m_tab == 1) s_instance.Rebuild();
+					});
+				}
+				Rebuild();
+			});
 		}
 
 		private void BuildWorkshopRow(RectTransform content, WorkshopPack pack)
@@ -896,51 +1135,55 @@ namespace Bpsim.Mods
 		private async void InstallFromFile()
 		{
 			if (m_installing) return;
-			string selected = null;
 			SetInstalling(true);
 			try
 			{
-				selected = await FileAPI.OpenFile(ModPaths.Root);
+				using FileSelection selected = await FileAPI.OpenFile(ModPaths.Root);
+				if (selected == null) return;
+				SetInstalling(false);
+#if UNITY_ANDROID && !UNITY_EDITOR
+				InstallArchive(selected.Path);
+#else
+				if (!ModZipClipboard.TryNormalizePath(selected.Path, out string path, out string error))
+				{
+					ShowInstallFeedback(error, true);
+					return;
+				}
+				if (Directory.Exists(path)) InstallFolderAt(path);
+				else InstallArchive(path);
+#endif
 			}
 			catch (Exception ex) { ShowInstallFeedback("选择文件失败：" + ex.Message, true); }
 			finally { SetInstalling(false); }
-			if (string.IsNullOrEmpty(selected)) return;
-			if (!ModZipClipboard.TryNormalizePath(selected, out string path, out string error))
-			{
-				ShowInstallFeedback(error, true);
-				return;
-			}
-			if (Directory.Exists(path))
-			{
-				InstallFolderAt(path);
-				return;
-			}
-			InstallArchive(path);
 		}
 
 		private async void InstallFromFolder()
 		{
 			if (m_installing) return;
-			string selected = null;
 			SetInstalling(true);
 			try
 			{
-				selected = await FileAPI.OpenDirectory(ModPaths.Root);
+				using FileSelection selected = await FileAPI.OpenDirectory(ModPaths.Root);
+				if (selected == null) return;
+				SetInstalling(false);
+#if UNITY_ANDROID && !UNITY_EDITOR
+				InstallFolderAt(selected.Path, copy: true);
+#else
+				InstallFolderAt(selected.Path);
+#endif
 			}
 			catch (Exception ex) { ShowInstallFeedback("选择文件夹失败：" + ex.Message, true); }
 			finally { SetInstalling(false); }
-			if (string.IsNullOrEmpty(selected)) return;
-			InstallFolderAt(selected);
 		}
 
-		private void InstallFolderAt(string folderPath)
+		private void InstallFolderAt(string folderPath, bool copy = false)
 		{
 			if (m_installing) return;
 			SetInstalling(true);
 			ShowInstallFeedback("正在加载文件夹：" + Path.GetFileName(folderPath.TrimEnd('\\', '/')), false);
 			try
 			{
-				List<ModPackage> loaded = ModManager.Instance.InstallFolder(folderPath);
+				List<ModPackage> loaded = ModManager.Instance.InstallFolder(folderPath, copy);
 				Rebuild();
 				int ok = 0;
 				string firstError = null;
@@ -949,9 +1192,10 @@ namespace Bpsim.Mods
 					if (p.IsLoaded) ok++;
 					else if (firstError == null) firstError = p.DisplayName + "：" + (p.Error ?? p.State.ToString());
 				}
+				string success = copy ? "已安装并启用" : "已就地加载并启用";
 				if (loaded.Count == 1 && loaded[0].IsLoaded)
 				{
-					ShowInstallFeedback("已就地加载并启用：" + loaded[0].DisplayName + " · 目录：" + ModPaths.ToDisplay(loaded[0].Directory), false);
+					ShowInstallFeedback(success + "：" + loaded[0].DisplayName + " · 目录：" + ModPaths.ToDisplay(loaded[0].Directory), false);
 				}
 				else if (firstError != null)
 				{
@@ -959,8 +1203,7 @@ namespace Bpsim.Mods
 				}
 				else
 				{
-					ShowInstallFeedback("已就地加载并启用 " + ok + " 个 Mod · 目录：" +
-						ModPaths.ToDisplay(Path.GetFullPath(folderPath.TrimEnd('\\', '/'))), false);
+					ShowInstallFeedback(success + " " + ok + " 个 Mod", false);
 				}
 			}
 			catch (Exception ex)

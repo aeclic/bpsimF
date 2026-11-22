@@ -17,6 +17,12 @@ namespace Bpsim.Parts.Simulation
 
 		private NativeList<ConnectedComponentInfo> m_connectedComponents;
 
+		private NativeParallelHashMap<Entity, Entity> m_plateOwners;
+
+		private bool m_hingePlatesConnectComponents;
+
+		private int m_plateCollisionGroups;
+
 		/// <summary>
 		/// 模拟期按自由缩放重新烘焙出来的碰撞体 blob。它们不在实体之外任何地方登记，
 		/// 所以必须由模拟自己持有并在 <see cref="Dispose"/> 时释放，否则每次进入模拟都漏一批。
@@ -30,6 +36,31 @@ namespace Bpsim.Parts.Simulation
 		public PartGridMap<PartGridInfo> PartMap => m_partMap;
 
 		public NativeList<ConnectedComponentInfo> ConnectedComponents => m_connectedComponents;
+
+		internal void EnsurePlateOwners(int capacity, bool connectComponents)
+		{
+			if (m_plateOwners.IsCreated) return;
+			m_plateOwners = new NativeParallelHashMap<Entity, Entity>(capacity, Allocator.Persistent);
+			m_hingePlatesConnectComponents = connectComponents;
+		}
+
+		internal int AllocatePlateCollisionGroups(int count)
+		{
+			int first = m_plateCollisionGroups + 1;
+			m_plateCollisionGroups += count;
+			return first;
+		}
+
+		internal void RegisterPlateHalf(Entity half, Entity owner) => m_plateOwners.Add(half, owner);
+
+		internal Entity LogicalPart(Entity body) => m_plateOwners.IsCreated && m_plateOwners.TryGetValue(body, out Entity owner) ? owner : body;
+
+		internal bool CountsAsConnection(in PhysicsConstrainedBodyPair pair, out Entity first, out Entity second)
+		{
+			first = LogicalPart(pair.EntityA);
+			second = LogicalPart(pair.EntityB);
+			return first != second && (m_hingePlatesConnectComponents || (first == pair.EntityA && second == pair.EntityB));
+		}
 
 		public void Initialize(Reference<PartSceneUnmanaged> partScene)
 		{
@@ -137,6 +168,7 @@ namespace Bpsim.Parts.Simulation
 			m_joints.Dispose();
 			m_partMap.Dispose();
 			m_connectedComponents.Dispose();
+			if (m_plateOwners.IsCreated) m_plateOwners.Dispose();
 			for (int i = 0; i < m_scaledColliders.Length; i++)
 			{
 				BlobAssetReference<Collider> collider = m_scaledColliders[i];

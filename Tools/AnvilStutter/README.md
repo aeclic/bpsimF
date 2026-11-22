@@ -53,3 +53,16 @@ Run-Preview obtains an exclusive lease, reads actual readiness (DontSave hosts a
 The metadata contracts keep the exact pre-fix collision-enable failure fixture/criterion and test thresholds, frames and collision toggles without relying only on Version. Native lifecycle probes prove the required destroy-joint wake argument using sleeping positive controls. Retained final reports are under reports/.
 
 Source/native changes invalidate old performance data for current-build claims. Two copies of one report are not independent A/A runs. Do not overlap benchmark processes, or compare runs made under different background workloads.
+
+## Windows Player real saves
+
+Use a private copy with the desired save files under `savefile`, `MainScene` enabled in Build Settings, and the company name `Bpsim-Anvil-Save-QA`. Build with `-batchmode -quit -buildTarget Win64 -projectPath <private-project> -executeMethod Bpsim.EditorTools.WindowsPlayerBuild.BuildDefault -bpsimSaveBenchmarkBuild -outDir <output>`. Verify `result=Succeeded` in `Logs/player-build.log` and the presence of `bpsim_Data/Plugins/x86_64/lib_burst_generated.dll`. Set `TEMP` and `TMP` to a writable directory inside that project if the Burst linker cannot create a response file in the inherited temporary directory.
+
+```powershell
+& ./Tools/AnvilStutter/Run-Saves.ps1 -Label player-saves -ProjectPath $slot -PlayerExe $exe -BridgeVersion 4 -TimeoutSeconds 480
+python -X utf8 ./Tools/AnvilStutter/check_save_performance.py --directory "$slot/Logs" --baseline player-saves --require-comparable-topology
+```
+
+For the 192,012-joint save, include `-Saves '天使座' -WarmupSteps 8 -SampleSteps 32`. A fresh Player process is started for each run. Keep the save, build, sampling window and physics settings fixed when comparing DLLs. Full results and eligibility limits are recorded in [the real-save report](../../docs/plans/anvil-real-save-performance.md).
+
+Use `-Saves 'Level_Sandbox_04_4' -Backends AnvilPhysics -TraceSteps 164` in a separate replay to capture the four startup steps, 32 warmup steps and 128 sampled steps of the track fixture. Each `trace tick=` line records live joints, non-finite bodies and peak body speeds. Use a second label with tracing disabled for performance measurements. If backends retain different topologies, compare their physical results separately and do not rank the timings. The verifier warns in diagnostic mode and fails under `--require-comparable-topology`; a pass does not establish identical contact or solver workloads.

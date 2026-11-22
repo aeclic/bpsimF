@@ -42,9 +42,9 @@ namespace Bpsim.Parts
 				for (int i = 0; i < chunk.Count; i++)
 				{
 					PartFreeTransform free = freeTransforms[i];
-					int layer = hasLayer ? PartBuildLayer.Clamp(layers[i].Value) : PartBuildLayer.MinLayer;
-					localTransforms[i] = PartFreeTransform.Compose(localTransforms[i], in free, layer);
-					postScales[i] = PartFreeTransform.VisualScale(in free);
+					int layer = hasLayer ? layers[i].Value : PartBuildLayer.MinLayer;
+					localTransforms[i] = PartFreeTransform.Compose(localTransforms[i], in free, layer, out var scale);
+					postScales[i] = scale;
 				}
 			}
 		}

@@ -1,0 +1,70 @@
+diff --git a/src/weld_joint.c b/src/weld_joint.c
+--- a/src/weld_joint.c
++++ b/src/weld_joint.c
+@@ -191,6 +191,17 @@
+ 	}
+ }
+ 
++static inline b3Matrix3 b3WeldAnchorMass( b3Matrix3 inertia, b3Vec3 anchor )
++{
++	b3Vec3 columnX = b3Sub( b3MulSV( anchor.z, inertia.cy ), b3MulSV( anchor.y, inertia.cz ) );
++	b3Vec3 columnY = b3Sub( b3MulSV( anchor.x, inertia.cz ), b3MulSV( anchor.z, inertia.cx ) );
++	b3Vec3 columnZ = b3Sub( b3MulSV( anchor.y, inertia.cx ), b3MulSV( anchor.x, inertia.cy ) );
++	return (b3Matrix3){
++		b3Cross( anchor, columnX ), b3Cross( anchor, columnY ), b3Cross( anchor, columnZ ),
++	};
++}
++
+ void b3SolveWeldJoint( b3JointSim* base, b3StepContext* context, bool useBias )
+ {
+ 	float mA = base->invMassA;
+@@ -210,24 +221,22 @@
+ 	b3Vec3 vB = stateB->linearVelocity;
+ 	b3Vec3 wB = stateB->angularVelocity;
+ 
+-	bool fixedRotation = base->fixedRotation;
+-	b3Quat quatA = b3MulQuat( stateA->deltaRotation, joint->frameA.q );
+-	b3Quat quatB = b3MulQuat( stateB->deltaRotation, joint->frameB.q );
+-
+-	if ( b3DotQuat( quatA, quatB ) < 0.0f )
+-	{
+-		// this keeps the rotation angle in the range [-pi, pi]
+-		quatB = b3NegateQuat( quatB );
+-	}
+-
+-	b3Quat relQ = b3InvMulQuat( quatA, quatB );
+-
+ 	// angular constraint
+-	if ( fixedRotation == false )
++	if ( base->fixedRotation == false )
+ 	{
+ 		b3Vec3 bias = b3Vec3_zero;
+ 		float massScale = 1.0f;
+ 		float impulseScale = 0.0f;
+ 		if ( useBias || joint->angularHertz > 0.0f )
+ 		{
++			b3Quat quatA = b3MulQuat( stateA->deltaRotation, joint->frameA.q );
++			b3Quat quatB = b3MulQuat( stateB->deltaRotation, joint->frameB.q );
++			if ( b3DotQuat( quatA, quatB ) < 0.0f )
++			{
++				quatB = b3NegateQuat( quatB );
++			}
++			b3Quat relQ = b3InvMulQuat( quatA, quatB );
+ 			b3Quat targetQuat = b3Quat_identity;
+ 			b3Vec3 deltaRotation = b3DeltaQuatToRotation( relQ, targetQuat );
+ 			b3Vec3 c = b3Neg( b3RotateVector( quatA, deltaRotation ) );
+@@ -269,12 +278,10 @@
+ 			impulseScale = joint->linearSpring.impulseScale;
+ 		}
+ 
+-		//// K = [(1/m1 + 1/m2) * eye(2) - skew(r1) * invI1 * skew(r1) - skew(r2) * invI2 * skew(r2)]
+-		b3Matrix3 sA = b3Skew( rA );
+-		b3Matrix3 sB = b3Skew( rB );
+-		b3Matrix3 kA = b3MulMM( sA, b3MulMM( base->invIA, sA ) );
+-		b3Matrix3 kB = b3MulMM( sB, b3MulMM( base->invIB, sB ) );
++		// The zero diagonal of skew(r) does not contribute to the effective mass.
++		b3Matrix3 kA = b3WeldAnchorMass( iA, rA );
++		b3Matrix3 kB = b3WeldAnchorMass( iB, rB );
+ 		b3Matrix3 k = b3NegateMat3( b3AddMM( kA, kB ) );
+ 		k.cx.x += mA + mB;
+ 		k.cy.y += mA + mB;

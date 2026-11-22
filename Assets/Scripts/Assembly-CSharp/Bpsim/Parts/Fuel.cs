@@ -124,4 +124,8 @@ namespace Bpsim.Parts
 	public struct FuelTubeVisual : IComponentData
 	{
 	}
+
+	public struct JetExhaustVisual : IComponentData
+	{
+	}
 }

@@ -1,4 +1,5 @@
 using Bpsim.Collections;
+using Bpsim.Physics.Anvil;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -103,8 +104,8 @@ namespace Bpsim.Parts.Simulation
 							? EntityManager.GetComponentData<PartFreeTransform>(part) : PartFreeTransform.Identity;
 						int layer = EntityManager.HasComponent<PartBuildLayer>(part)
 							? EntityManager.GetComponentData<PartBuildLayer>(part).Value : PartBuildLayer.MinLayer;
-						localTransform = PartFreeTransform.Compose(localTransform, in free, layer);
-						visualScales[i] = PartFreeTransform.VisualScale(in free);
+						localTransform = PartFreeTransform.Compose(localTransform, in free, layer, out var visualScale);
+						visualScales[i] = visualScale;
 						localTransforms[i] = localTransform;
 						hasLocalTransform[i] = true;
 					}
@@ -156,6 +157,8 @@ namespace Bpsim.Parts.Simulation
 
 			public Reference<PartSimulatorUnmanaged> Destination;
 
+			public BufferLookup<PartRemoteConnection> RemoteLookup;
+
 			public void Execute()
 			{
 				int length = Source.Value.Parts.Length;
@@ -188,7 +191,16 @@ namespace Bpsim.Parts.Simulation
 				for (int j = 0; j < length; j++)
 				{
 					PartAspect partAspect2 = PartAspectLookup[Source.Value.Parts[j]];
-					PartAspect partAspect3 = PartAspectLookup[Destination.Value.Parts[j]];
+					Entity clone = Destination.Value.Parts[j];
+					PartAspect partAspect3 = PartAspectLookup[clone];
+					if (RemoteLookup.TryGetBuffer(clone, out var remoteLinks))
+					{
+						for (int index = 0; index < remoteLinks.Length; index++)
+						{
+							nativeParallelHashMap.TryGetValue(remoteLinks[index].Target, out Entity target);
+							remoteLinks[index] = new PartRemoteConnection { Target = target };
+						}
+					}
 					if (partAspect2.ContainedPart != Entity.Null)
 					{
 						partAspect3.ContainedPart = nativeParallelHashMap[partAspect2.ContainedPart];
@@ -310,6 +322,9 @@ namespace Bpsim.Parts.Simulation
 			[ReadOnly]
 			public ComponentLookup<PartBuildLayer> LayerLookup;
 
+			[ReadOnly]
+			public BufferLookup<PartRemoteConnection> RemoteLookup;
+
 			public Reference<PartSimulatorUnmanaged> Simulator;
 
 			public float ConnectionStrengthFactor;
@@ -334,18 +349,33 @@ namespace Bpsim.Parts.Simulation
 				{
 					Entity part2 = parts[pi];
 					PartAspect sourceAspect = PartAspectLookup[part2];
+					if (RemoteLookup.TryGetBuffer(part2, out var remoteLinks))
+					{
+						foreach (PartRemoteConnection link in remoteLinks)
+						{
+							Entity target = link.Target;
+							if (target == Entity.Null || target == part2 || !nativeParallelHashMap.TryGetValue(target, out int targetIndex)) continue;
+							if (targetIndex < pi && HasRemoteLink(target, part2)) continue;
+							PartAspect targetAspect = PartAspectLookup[target];
+							float impulse = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + targetAspect.ExtensionData.ConnectionStrength);
+							if (CreateJoints) PartSimulatorUnmanaged.AddFixedJoint(CommandBuffer, WorldTransformLookup, part2, target, impulse, enableCollision: false);
+							disjointSet.Union(pi, targetIndex);
+						}
+						continue;
+					}
 					int coordX = sourceAspect.CoordX;
 					int coordY = sourceAspect.CoordY;
 					int layer = LayerLookup.TryGetComponent(part2, out var buildLayer) ? PartBuildLayer.Clamp(buildLayer.Value) : PartBuildLayer.MinLayer;
-					if (BasePart.IsContainerResolved(sourceAspect.BaseTypeInfo) && sourceAspect.ContainedPart != Entity.Null)
+					if (BasePart.IsContainerResolved(sourceAspect.BaseTypeInfo) && sourceAspect.ContainedPart != Entity.Null && !RemoteLookup.HasBuffer(sourceAspect.ContainedPart))
 					{
 						PartAspect partAspect = PartAspectLookup[sourceAspect.ContainedPart];
-						float maxImpulse = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + partAspect.ExtensionData.ConnectionStrength);
-						if (CreateJoints)
+						if (!partAspect.BaseTypeInfo.BelongsTo(BasePart.HingePlates))
 						{
-							PartSimulatorUnmanaged.AddFixedJoint(CommandBuffer, WorldTransformLookup, part2, sourceAspect.ContainedPart, maxImpulse, enableCollision: false);
+							float maxImpulse = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + partAspect.ExtensionData.ConnectionStrength);
+							if (CreateJoints)
+								PartSimulatorUnmanaged.AddFixedJoint(CommandBuffer, WorldTransformLookup, part2, sourceAspect.ContainedPart, maxImpulse, enableCollision: false);
+							disjointSet.Union(nativeParallelHashMap[part2], nativeParallelHashMap[sourceAspect.ContainedPart]);
 						}
-						disjointSet.Union(nativeParallelHashMap[part2], nativeParallelHashMap[sourceAspect.ContainedPart]);
 					}
 					for (int j = 0; j < 4; j++)
 					{
@@ -358,7 +388,7 @@ namespace Bpsim.Parts.Simulation
 						for (int k = 0; k < 2; k++)
 						{
 							Entity entity = ((k == 0) ? part.PartContainer : part.Part);
-							if (!(entity == Entity.Null))
+							if (entity != Entity.Null && !RemoteLookup.HasBuffer(entity))
 							{
 								PartAspect targetAspect = PartAspectLookup[entity];
 								// ElectricalPart.CreateCustomJoints in BPLE welds facing electrical ports.
@@ -402,7 +432,7 @@ namespace Bpsim.Parts.Simulation
 						for (int k2 = 0; k2 < 2; k2++)
 						{
 							Entity entity2 = ((k2 == 0) ? belowCell.PartContainer : belowCell.Part);
-							if (entity2 == Entity.Null || entity2 == part2)
+							if (entity2 == Entity.Null || entity2 == part2 || RemoteLookup.HasBuffer(entity2))
 							{
 								continue;
 							}
@@ -436,7 +466,7 @@ namespace Bpsim.Parts.Simulation
 						for (int k2 = 0; k2 < 2; k2++)
 						{
 							Entity entity2 = ((k2 == 0) ? belowNeighbour.PartContainer : belowNeighbour.Part);
-							if (entity2 == Entity.Null || entity2 == part2)
+							if (entity2 == Entity.Null || entity2 == part2 || RemoteLookup.HasBuffer(entity2))
 							{
 								continue;
 							}
@@ -455,6 +485,14 @@ namespace Bpsim.Parts.Simulation
 					}
 				}
 				PartSimulation.UpdateConnectedComponents(Simulator, PartAspectLookup, disjointSet);
+			}
+
+			private bool HasRemoteLink(Entity source, Entity target)
+			{
+				if (!RemoteLookup.TryGetBuffer(source, out var links)) return false;
+				foreach (PartRemoteConnection link in links)
+					if (link.Target == target) return true;
+				return false;
 			}
 		}
 
@@ -480,7 +518,6 @@ namespace Bpsim.Parts.Simulation
 			SimulationSettings simulationSettings = UserSettings.Instance.SimulationSettings;
 			PartSceneSystem system = PartManager.Instance.System;
 			EntityManager entityManager = (m_entityManager = partScene.Value.EntityManager);
-			CreatePhysicsStep(entityManager);
 			// 超平坦场景：补一整块运动学地面（视觉地面顶边 y = -10，物理盒顶面与之对齐）。
 			// 与 bpsimtaffy 的 PartSimulator.CreateSandboxGround 等价：center (0,-12,0)、
 			// size (100000,4,1)。只有 LoadEmptyScene 建的空场景带 UseFlatGround 标记，
@@ -525,10 +562,24 @@ namespace Bpsim.Parts.Simulation
 				PartSceneIDLookup = system.GetComponentLookup<PartSceneID>(),
 				PartAspectLookup = new PartAspect.Lookup(ref system.CheckedStateRef, isReadOnly: false),
 				LayerLookup = system.GetComponentLookup<PartBuildLayer>(isReadOnly: true),
+				RemoteLookup = system.GetBufferLookup<PartRemoteConnection>(),
 				Source = partScene,
 				Destination = m_unmanaged
 			});
+			bool hasHingePlates = false;
+			foreach (Entity part in m_unmanaged.Value.Parts)
+			{
+				if (!entityManager.HasComponent<HingePlate>(part)) continue;
+				hasHingePlates = true;
+				break;
+			}
+			CreatePhysicsStep(entityManager, hasHingePlates);
 			bool mega = simulationSettings.MegaStructure;
+			if (mega && hasHingePlates)
+			{
+				mega = false;
+				Debug.Log("[PartSimulation] 履带板需要独立刚体，本次模拟停用巨构合并（不修改设置）。");
+			}
 			if (mega)
 			{
 				// Separators need independently movable connected components. A single
@@ -566,17 +617,19 @@ namespace Bpsim.Parts.Simulation
 					WorldTransformLookup = system.GetComponentLookup<WorldTransform>(isReadOnly: true),
 					PartAspectLookup = new PartAspect.Lookup(ref system.CheckedStateRef, isReadOnly: false),
 					LayerLookup = system.GetComponentLookup<PartBuildLayer>(isReadOnly: true),
+					RemoteLookup = system.GetBufferLookup<PartRemoteConnection>(isReadOnly: true),
 					Simulator = m_unmanaged,
 					ConnectionStrengthFactor = num * Time.fixedDeltaTime,
 					CreateJoints = !mega
 				});
 				if (!mega)
 				{
-					system.World.GetOrCreateSystemManaged<FrameJointSystem>().SetDirty();
+					system.World.GetOrCreateSystemManaged<FrameJointSystem>().RequestBuild(this);
 				}
 			}
 			commandBuffer.Playback(entityManager);
 			commandBuffer.Dispose();
+			if (hasHingePlates) HingePlateRuntime.Initialize(entityManager, ref m_unmanaged.Value, simulationSettings, Time.fixedDeltaTime);
 			// Enable pressure contacts before the first physics step and before mega
 			// copies child colliders into its compound collider.
 			foreach (Entity circuitPart in m_unmanaged.Value.Parts)
@@ -614,12 +667,17 @@ namespace Bpsim.Parts.Simulation
 			}
 		}
 
-		private void CreatePhysicsStep(EntityManager entityManager)
+		private void CreatePhysicsStep(EntityManager entityManager, bool hasHingePlates)
 		{
 			SimulationSettings simulationSettings = UserSettings.Instance.SimulationSettings;
 			Entity entity = entityManager.CreateEntity();
 			PhysicsStep componentData = PhysicsStep.Default;
 			componentData.SimulationType = simulationSettings.SimulationType;
+			if (hasHingePlates && componentData.SimulationType == SimulationType.AnvilPhysics && !AnvilWorld.SupportsCollisionTags)
+			{
+				componentData.SimulationType = SimulationType.HavokPhysics;
+				Debug.Log("[PartSimulation] 当前 Anvil 插件缺少履带碰撞过滤支持，本次使用 Havok。");
+			}
 			componentData.Gravity = new float3(simulationSettings.GravityX, simulationSettings.GravityY, 0f);
 			componentData.SolverIterationCount = simulationSettings.SolverIterationCount;
 			entityManager.AddComponentData(entity, componentData);
@@ -671,7 +729,6 @@ namespace Bpsim.Parts.Simulation
 			// 绳索 0-3：BPSS Rope.Awake 里 rigidbody.isKinematic = true / mass = 0，
 			// 绳子本身钉在建造位置上，只有内部节点链在动（bpsim 侧由 RopeSystem 的
 			// Verlet 求解负责），所以这里必须冻结，否则它会带着 1kg 质量往下掉。
-			// 4-7 是铰接板（HingePlate），原版是普通动态刚体，保持不动。
 			// 木框（WoodenFrame）在原版同样是**动态**刚体：BPSS BasePart.EnsureRigidbody
 			// 给所有部件加动态 Rigidbody（useGravity=true、有 mass、没有 isKinematic），
 			// 只有 Rope.cs 在 Start 里把自己设成 kinematic + mass 0。以前这里把木框

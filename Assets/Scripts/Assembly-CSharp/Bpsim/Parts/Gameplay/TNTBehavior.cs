@@ -4,6 +4,7 @@ using Bpsim.Parts.Simulation;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Bpsim.Parts.Gameplay
@@ -96,10 +97,15 @@ namespace Bpsim.Parts.Gameplay
 			{
 				Entity target = simulator.Parts[i];
 				if (target == Part || !PartGameplayUtil.Alive(target)) continue;
-				float3 delta = PartGameplayUtil.Position(target) - center;
-				delta.z = 0f;
-				if (math.lengthsq(delta) > Radius * Radius) continue;
-				ApplyImpulse(target, CalculateImpulse(Info.PartIndex, GridRotation, VisualRight, delta, force, Radius, m_dud));
+				if (Em.HasComponent<HingePlate>(target))
+				{
+					HingePlate plate = Em.GetComponentData<HingePlate>(target);
+					ApplyBlast(plate.Left, Em.GetComponentData<LocalTransform>(plate.Left).Position.xy - center.xy, force);
+					ApplyBlast(plate.Right, Em.GetComponentData<LocalTransform>(plate.Right).Position.xy - center.xy, force);
+					continue;
+				}
+				float2 delta = PartGameplayUtil.Position(target).xy - center.xy;
+				if (!ApplyBlast(target, delta, force)) continue;
 				if (Manager.Find(target) is TNTBehavior tnt)
 				{
 					if ((!alien && (tnt.Info.PartIndex == 0 || (Info.PartIndex == 4 && tnt.Info.PartIndex == 4)))
@@ -114,6 +120,14 @@ namespace Bpsim.Parts.Gameplay
 			Enabled = false;
 			RefreshButtons();
 			if (!alien) Manager.Retire(Part);
+		}
+
+		private bool ApplyBlast(Entity target, float2 delta, float force)
+		{
+			float radius = Radius;
+			if (math.lengthsq(delta) > radius * radius) return false;
+			ApplyImpulse(target, CalculateImpulse(Info.PartIndex, GridRotation, VisualRight, new float3(delta, 0f), force, radius, m_dud));
+			return true;
 		}
 
 		private IEnumerator FireGun(Entity gun)
@@ -215,13 +229,13 @@ namespace Bpsim.Parts.Gameplay
 			{
 				Entity target = simulator.Parts[i];
 				if (target == Part || !PartGameplayUtil.Alive(target)) continue;
-				float3 delta = PartGameplayUtil.Position(target) - m_center; delta.z = 0f;
-				float before = math.distance(PartGameplayUtil.Position(target).xy, oldCenter.xy), after = math.length(delta);
-				if (before < 0.5f || after < 0.5f) continue;
-				float amplitude = math.abs(WaveIntegral((m_radius - after) / m_radiusSpeed) - WaveIntegral((oldRadius - before) / oldSpeed));
-				// BlasterTNT applies physical impulse directly, without TNT's light-body compensation.
-				if (Em.HasComponent<PhysicsMass>(target)) TNTImpulse.Apply(target,
-					math.normalizesafe(delta) * (amplitude / math.max(after * after, 16f)));
+				if (Em.HasComponent<HingePlate>(target))
+				{
+					HingePlate plate = Em.GetComponentData<HingePlate>(target);
+					ApplyWave(plate.Left, Em.GetComponentData<LocalTransform>(plate.Left).Position.xy, oldCenter.xy, oldRadius, oldSpeed);
+					ApplyWave(plate.Right, Em.GetComponentData<LocalTransform>(plate.Right).Position.xy, oldCenter.xy, oldRadius, oldSpeed);
+				}
+				else ApplyWave(target, PartGameplayUtil.Position(target).xy, oldCenter.xy, oldRadius, oldSpeed);
 			}
 			DrawWave();
 			if (m_age >= 2f)
@@ -229,6 +243,15 @@ namespace Bpsim.Parts.Gameplay
 				PartGameplayUtil.DestroyLine(m_ring); m_ring = null;
 				if (m_destroyCorpse) Manager.Retire(Part);
 			}
+		}
+
+		private void ApplyWave(Entity target, float2 position, float2 oldCenter, float oldRadius, float oldSpeed)
+		{
+			float2 delta = position - m_center.xy;
+			float before = math.distance(position, oldCenter), after = math.length(delta);
+			if (before < 0.5f || after < 0.5f) return;
+			float amplitude = math.abs(WaveIntegral((m_radius - after) / m_radiusSpeed) - WaveIntegral((oldRadius - before) / oldSpeed));
+			TNTImpulse.Apply(target, new float3(math.normalizesafe(delta) * (amplitude / math.max(after * after, 16f)), 0f));
 		}
 
 		private void DrawWave()

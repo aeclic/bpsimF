@@ -7,6 +7,7 @@ using System.Text;
 using Bpsim.Parts;
 using Bpsim.Parts.Gameplay;
 using Bpsim.Parts.Simulation;
+using Bpsim.UI;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -39,6 +40,14 @@ namespace Bpsim.QA
 		/// 场景切换时不会被 <c>PartScene</c> 销毁，所以要自己管生命周期。
 		/// </summary>
 		private static Entity s_ground;
+
+		private static Entity s_voidLightPart;
+
+		private static string s_gunChassisDiagnostic;
+
+		private static readonly Dictionary<Entity, float> s_voidLightAlphaBefore = new Dictionary<Entity, float>();
+
+		private static readonly Dictionary<Entity, CollisionFilter> s_voidLightFiltersBefore = new Dictionary<Entity, CollisionFilter>();
 
 		public static string LogPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "bpsim-gameplayqa.log"));
 
@@ -147,7 +156,11 @@ namespace Bpsim.QA
 				}
 				if (scenario == "light" || scenario == "all")
 				{
-					yield return Scenario("light", BuildLightScene, TriggerFirst(PartType.PointLight, 6), VerifyLight);
+					yield return Scenario("light", BuildLightScene, TriggerVoidLight, VerifyLight);
+				}
+				if (scenario == "lightfull" || scenario == "all")
+				{
+					yield return Scenario("lightfull", BuildLightFullScene, TriggerVoidLight, VerifyLight);
 				}
 				if (scenario == "pointlight" || scenario == "all")
 				{
@@ -193,6 +206,18 @@ namespace Bpsim.QA
 					// 燃料箱 → 燃料管 → 喷气发动机，整排悬空：发动机必须在有油时才出力，
 					// 且油箱油量要真的下降。
 					yield return Scenario("fuel", BuildFuelScene, TriggerFirst(PartType.JetEngine, 0), VerifyFuel, 1.4f);
+				}
+				if (scenario == "jetempty" || scenario == "all")
+				{
+					yield return Scenario("jetempty", BuildEmptyJetScene, TriggerEmptyJet, VerifyEmptyJet, 0.5f);
+				}
+				if (scenario == "jetdrytank" || scenario == "all")
+				{
+					yield return Scenario("jetdrytank", BuildFuelScene, EmptyTankAndTriggerJet, VerifyDryTankJet, 0.5f);
+				}
+				if (scenario == "rheostat" || scenario == "all")
+				{
+					yield return Scenario("rheostat", BuildRheostatScene, SetRheostatValue, VerifyRheostat, 0.1f);
 				}
 				if (scenario == "fueldry" || scenario == "all")
 				{
@@ -523,6 +548,13 @@ namespace Bpsim.QA
 				result = "FAIL verifier exception: " + exception;
 			}
 			Line("   result: " + result);
+			if (name == "light" || name == "lightfull")
+			{
+				if (s_voidLightPart != Entity.Null && PartGameplayUtil.Alive(s_voidLightPart))
+					PartSimulation.ProcessTouch(s_voidLightPart);
+				yield return new WaitForSeconds(0.2f);
+				Line("   restore: " + VerifyLightRestored());
+			}
 			manager.EndSimulation();
 			yield return null;
 		}
@@ -604,6 +636,8 @@ namespace Bpsim.QA
 		private static bool s_manualInitialState;
 		private static float3 s_manualMuzzle;
 		private static float3 s_manualDirection;
+		private static int s_gunJointCountBefore;
+		private static bool s_gunChassisConnectedBefore;
 
 		private static void TriggerManualGun()
 		{
@@ -670,12 +704,22 @@ namespace Bpsim.QA
 
 		private static void BuildLightScene(PartScene scene)
 		{
+			BuildVoidLightScene(scene, 0);
+		}
+
+		private static void BuildLightFullScene(PartScene scene)
+		{
+			BuildVoidLightScene(scene, 4);
+		}
+
+		private static void BuildVoidLightScene(PartScene scene, int rotation)
+		{
 			Place(scene, PartType.WoodenFrame, 0, 0, 0, 0);
 			Place(scene, PartType.WoodenFrame, 0, 1, 0, 0);
 			// AutoControlLight must be enclosed INTO a frame (BPSS: light.enclosedInto != null),
 			// so the light is placed with overlay on the frame cell.
-			Place(scene, PartType.PointLight, 6, 1, 0, 0, overlay: true);
-			Place(scene, PartType.WoodenFrame, 0, 1, -3, 0);
+			Place(scene, PartType.PointLight, 6, 1, 0, rotation, overlay: true);
+			Place(scene, PartType.WoodenFrame, 0, 1, -4, 0);
 		}
 
 		/// <summary>
@@ -1831,6 +1875,28 @@ namespace Bpsim.QA
 				+ " target@(" + targetPosition.x.ToString("F2") + "," + targetPosition.y.ToString("F2") + ")";
 		}
 
+		private static bool TryGetGunChassis(out Entity first, out Entity second)
+		{
+			first = Entity.Null;
+			second = Entity.Null;
+			NativeList<Entity> parts = PartGameplayUtil.Simulator.Parts;
+			EntityManager entityManager = PartGameplayUtil.Em;
+			int woodenFrames = 0;
+			for (int i = 0; i < parts.Length; i++)
+			{
+				Entity part = parts[i];
+				if (!entityManager.Exists(part) || !entityManager.HasComponent<PartTypeValue>(part)) continue;
+				PartTypeValue type = entityManager.GetComponentData<PartTypeValue>(part);
+				if (type.Type != PartType.WoodenFrame || type.Index != 0) continue;
+				if (first == Entity.Null) first = part;
+				else if (second == Entity.Null) second = part;
+				woodenFrames++;
+			}
+			s_gunChassisDiagnostic = "partCount=" + parts.Length + " woodenFrames=" + woodenFrames
+				+ " found=" + (first != Entity.Null) + "/" + (second != Entity.Null);
+			return first != Entity.Null && second != Entity.Null;
+		}
+
 		private static string VerifyGun(PartScene scene)
 		{
 			PartGameplayManager manager = PartGameplayManager.Instance;
@@ -1854,9 +1920,22 @@ namespace Bpsim.QA
 			bool flew = exploded > 0 && explosionFromMuzzle > 1.2f;
 			// 视觉：弹丸必须真的被提交绘制，否则就是用户看到的「没有子弹射出」。
 			int drawn = AutoGunProjectileSystem.DrawnProjectiles;
-			bool pass = fired && spawned >= 1 && exploded >= 1 && flew && hitTarget && drawn >= 1;
+			bool foundChassis = TryGetGunChassis(out Entity chassisA, out Entity chassisB);
+			Entity gun = FindPart(PartType.GrapplingHook, 6);
+			int chassisAComponent = foundChassis ? PartGameplayUtil.ConnectedComponent(chassisA) : -1;
+			int chassisBComponent = foundChassis ? PartGameplayUtil.ConnectedComponent(chassisB) : -1;
+			int gunComponent = gun != Entity.Null ? PartGameplayUtil.ConnectedComponent(gun) : -1;
+			bool chassisConnected = foundChassis && gun != Entity.Null
+				&& chassisAComponent == chassisBComponent
+				&& chassisAComponent == gunComponent;
+			int jointsAfter = PartGameplayUtil.Simulator.Joints.Length;
+			bool chassisHeld = s_gunChassisConnectedBefore && chassisConnected && jointsAfter >= s_gunJointCountBefore;
+			bool pass = fired && spawned >= 1 && exploded >= 1 && flew && hitTarget && drawn >= 1 && chassisHeld;
 			return (pass ? "PASS" : "FAIL") + " autogun fired=" + fired + " spawned=" + spawned + " exploded=" + exploded
 				+ " reportedHit=" + reportedHit + " flew=" + flew + " drawn=" + drawn
+				+ " chassisHeld=" + chassisHeld + " joints=" + s_gunJointCountBefore + "->" + jointsAfter
+				+ " components=" + chassisAComponent + "/" + chassisBComponent + "/" + gunComponent
+				+ " chassisFound=" + foundChassis + " " + s_gunChassisDiagnostic
 				+ " explosionFromMuzzle=" + explosionFromMuzzle.ToString("F2")
 				+ " targetDisplacement=" + displacement.ToString("F2")
 				+ " target@(" + targetNow.x.ToString("F2") + "," + targetNow.y.ToString("F2") + ") state=" + state.Replace("\n", " | ");
@@ -1868,6 +1947,12 @@ namespace Bpsim.QA
 			return delegate
 			{
 				AutoGunProjectileSystem.ResetProbes();
+				bool foundChassis = TryGetGunChassis(out Entity chassisA, out Entity chassisB);
+				Entity gun = FindPart(PartType.GrapplingHook, 6);
+				s_gunChassisConnectedBefore = foundChassis && gun != Entity.Null
+					&& PartGameplayUtil.ConnectedComponent(chassisA) == PartGameplayUtil.ConnectedComponent(chassisB)
+					&& PartGameplayUtil.ConnectedComponent(chassisA) == PartGameplayUtil.ConnectedComponent(gun);
+				s_gunJointCountBefore = PartGameplayUtil.Simulator.Joints.Length;
 				Entity part = FindPart(PartType.GrapplingHook, 6);
 				if (part == Entity.Null)
 				{
@@ -1972,17 +2057,161 @@ namespace Bpsim.QA
 
 		private static string VerifyLight(PartScene scene)
 		{
-			PartGameplayManager manager = PartGameplayManager.Instance;
-			string state = (manager != null) ? manager.Describe() : "no manager";
-			bool voided = state.Contains("voided=2") || state.Contains("voided=3") || state.Contains("voided=1");
-			// AutoControlLight（索引 6）除了虚化，还要按「朝向 + 开关」在普通那对与 *Full 那对
-			// 之间选一对显示（BPSS CurrentType）。prefab 里 *Full 的两张图原本都是可见的，
-			// 所以这里同时校验「恰好只有 Active 普通图可见」。
-			string visual = VerifyLampVisual(scene, PartType.PointLight, 6, true, false);
-			bool visualOk = visual.StartsWith("PASS");
-			return ((voided && visualOk) ? "PASS" : "FAIL") + " voidlight voided=" + voided
-				+ " sprites=" + (visual.StartsWith("PASS") ? "ok" : "bad")
-				+ " state=" + state.Replace("\n", " | ") + " | visual=" + visual.Replace("\n", " | ");
+			Entity light = FindPart(PartType.PointLight, 6);
+			VoidLightBehavior behavior = PartGameplayManager.Instance != null
+				? PartGameplayManager.Instance.Find(light) as VoidLightBehavior : null;
+			if (light == Entity.Null || behavior == null) return "FAIL virtual light behavior missing";
+			EntityManager em = PartGameplayUtil.Em;
+			LocalTransform lightPose = em.GetComponentData<LocalTransform>(light);
+			float2 origin = lightPose.Position.xy;
+			float2 down = math.rotate(lightPose.Rotation, new float3(0, -1, 0)).xy;
+			int component = PartGameplayUtil.ConnectedComponent(light);
+			int ownFrames = 0, foreignDetectCandidates = 0, foreignCollisions = 0, alphaChildren = 0;
+			bool ownFramesVoided = true;
+			StringBuilder frameDetails = new StringBuilder();
+			PartSimulatorUnmanaged simulator = PartManager.Instance.PartSimulator.Unmanaged;
+			for (int i = 0; i < simulator.Parts.Length; i++)
+			{
+				Entity part = simulator.Parts[i];
+				PartType type = PartVariants.Resolve(PartGameplayUtil.TypeInfo(part)).PartType;
+				if (type != PartType.WoodenFrame && type != PartType.MetalFrame) continue;
+				float2 delta = em.GetComponentData<LocalTransform>(part).Position.xy - origin;
+				float x = math.dot(down, delta), y = down.y * delta.x - down.x * delta.y;
+				int frameComponent = PartGameplayUtil.ConnectedComponent(part);
+				bool inCollision = x >= -2.5f && x < 2.5f && y >= -2.5f && y < 2.5f;
+				if (!behavior.Full && x >= -2 && x < 6.5f && y >= -2.5f && y < 2.5f && frameComponent != component)
+					foreignDetectCandidates++;
+				if (!inCollision) continue;
+				if (frameComponent == component)
+				{
+					ownFrames++;
+					bool alphaVoided = IsFrameVoided(part, out int count);
+					bool collisionDisabled = IsCollisionDisabled(part);
+					bool frameVoided = alphaVoided && collisionDisabled;
+					alphaChildren += count;
+					ownFramesVoided &= frameVoided;
+					if (frameDetails.Length > 0) frameDetails.Append("; ");
+					frameDetails.Append(part.Index).Append(":" + (alphaVoided ? "alpha25" : "alphaWrong"))
+						.Append(",collision=" + collisionDisabled);
+					if (em.HasComponent<PhysicsCollider>(part))
+					{
+						CollisionFilter filter = em.GetComponentData<PhysicsCollider>(part).Value.Value.GetCollisionFilter();
+						frameDetails.Append(",filter=").Append(filter.BelongsTo.ToString("X8"))
+							.Append("/").Append(filter.CollidesWith.ToString("X8"));
+					}
+				}
+				else if (frameComponent != -1) foreignCollisions++;
+			}
+			bool lightColliderDisabled = IsCollisionDisabled(light);
+			string visual = VerifyLampVisual(scene, PartType.PointLight, 6, true, behavior.Full);
+			bool detectionMatches = behavior.Detected && (behavior.Full || foreignDetectCandidates > 0);
+			bool pass = behavior.Enabled && detectionMatches && !behavior.Collided && lightColliderDisabled
+				&& ownFrames > 0 && ownFramesVoided && alphaChildren > 0 && foreignCollisions == 0 && visual.StartsWith("PASS");
+			return (pass ? "PASS" : "FAIL") + " voidlight enabled=" + behavior.Enabled + " full=" + behavior.Full
+				+ " detected=" + behavior.Detected + " foreignDetect=" + foreignDetectCandidates + " collided=" + behavior.Collided
+				+ " ownFrames=" + ownFrames + " ownVoided=" + ownFramesVoided + " alphaChildren=" + alphaChildren
+				+ " frameDetails=[" + frameDetails + "] foreignCollisions=" + foreignCollisions + " lightColliderDisabled=" + lightColliderDisabled
+				+ " visual=" + visual.Replace("\n", " | ");
+		}
+
+		private static void TriggerVoidLight()
+		{
+			s_voidLightPart = FindPart(PartType.PointLight, 6);
+			s_voidLightAlphaBefore.Clear();
+			s_voidLightFiltersBefore.Clear();
+			PartSimulatorUnmanaged simulator = PartManager.Instance.PartSimulator.Unmanaged;
+			EntityManager em = PartGameplayUtil.Em;
+			for (int i = 0; i < simulator.Parts.Length; i++)
+			{
+				Entity part = simulator.Parts[i];
+				PartType type = PartVariants.Resolve(PartGameplayUtil.TypeInfo(part)).PartType;
+				if (type != PartType.WoodenFrame && type != PartType.MetalFrame) continue;
+				CaptureFrameState(part);
+			}
+			CaptureColliderState(s_voidLightPart);
+			PartSimulation.ProcessTouch(s_voidLightPart);
+		}
+
+		private static string VerifyLightRestored()
+		{
+			bool alphaRestored = true, filtersRestored = true;
+			foreach (KeyValuePair<Entity, float> item in s_voidLightAlphaBefore)
+				alphaRestored &= PartGameplayUtil.Alive(item.Key)
+					&& Mathf.Approximately(PartGameplayUtil.Em.GetComponentData<MaterialColor>(item.Key).Value.w, item.Value);
+			foreach (KeyValuePair<Entity, CollisionFilter> item in s_voidLightFiltersBefore)
+				filtersRestored &= PartGameplayUtil.Alive(item.Key)
+					&& SameFilter(PartGameplayUtil.Em.GetComponentData<PhysicsCollider>(item.Key).Value.Value.GetCollisionFilter(), item.Value);
+			VoidLightBehavior behavior = PartGameplayManager.Instance != null
+				? PartGameplayManager.Instance.Find(s_voidLightPart) as VoidLightBehavior : null;
+			bool disabled = behavior != null && !behavior.Enabled && !behavior.Detected;
+			bool pass = disabled && alphaRestored && filtersRestored && s_voidLightAlphaBefore.Count > 0;
+			return (pass ? "PASS" : "FAIL") + " voidlightOff enabled=" + (behavior != null && behavior.Enabled)
+				+ " detected=" + (behavior != null && behavior.Detected) + " alphaRestored=" + alphaRestored
+				+ " alphaCount=" + s_voidLightAlphaBefore.Count + " filtersRestored=" + filtersRestored
+				+ " filterCount=" + s_voidLightFiltersBefore.Count;
+		}
+
+		private static void CaptureFrameState(Entity part)
+		{
+			CaptureColliderState(part);
+			EntityManager em = PartGameplayUtil.Em;
+			if (em.HasBuffer<LinkedEntityGroup>(part))
+			{
+				DynamicBuffer<LinkedEntityGroup> group = em.GetBuffer<LinkedEntityGroup>(part);
+				for (int i = 0; i < group.Length; i++) CaptureAlphaState(group[i].Value);
+			}
+			else CaptureAlphaState(part);
+		}
+
+		private static void CaptureAlphaState(Entity entity)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			if (em.HasComponent<MaterialColor>(entity)) s_voidLightAlphaBefore[entity] = em.GetComponentData<MaterialColor>(entity).Value.w;
+		}
+
+		private static void CaptureColliderState(Entity entity)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			if (entity != Entity.Null && em.HasComponent<PhysicsCollider>(entity))
+			{
+				PhysicsCollider collider = em.GetComponentData<PhysicsCollider>(entity);
+				if (collider.Value.IsCreated) s_voidLightFiltersBefore[entity] = collider.Value.Value.GetCollisionFilter();
+			}
+		}
+
+		private static bool IsFrameVoided(Entity frame, out int alphaCount)
+		{
+			alphaCount = 0;
+			bool alphaMatches = true;
+			EntityManager em = PartGameplayUtil.Em;
+			if (em.HasBuffer<LinkedEntityGroup>(frame))
+			{
+				DynamicBuffer<LinkedEntityGroup> group = em.GetBuffer<LinkedEntityGroup>(frame);
+				for (int i = 0; i < group.Length; i++) CheckAlpha(group[i].Value, ref alphaCount, ref alphaMatches);
+			}
+			else CheckAlpha(frame, ref alphaCount, ref alphaMatches);
+			return alphaCount > 0 && alphaMatches;
+		}
+
+		private static void CheckAlpha(Entity entity, ref int alphaCount, ref bool alphaMatches)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			if (!em.HasComponent<MaterialColor>(entity)) return;
+			alphaCount++;
+			alphaMatches &= Mathf.Approximately(em.GetComponentData<MaterialColor>(entity).Value.w, .25f);
+		}
+
+		private static bool IsCollisionDisabled(Entity entity)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			if (!em.HasComponent<PhysicsCollider>(entity)) return false;
+			PhysicsCollider collider = em.GetComponentData<PhysicsCollider>(entity);
+			return collider.Value.IsCreated && collider.Value.Value.GetCollisionFilter().CollidesWith == 0;
+		}
+
+		private static bool SameFilter(CollisionFilter left, CollisionFilter right)
+		{
+			return left.BelongsTo == right.BelongsTo && left.CollidesWith == right.CollidesWith && left.GroupIndex == right.GroupIndex;
 		}
 
 		/// <summary>
@@ -2384,11 +2613,33 @@ namespace Bpsim.QA
 			Entity jet = FindPart(PartType.JetEngine, 0);
 			float3 position = PartGameplayUtil.Position(jet);
 			float3 velocity = PartGameplayUtil.LinearVelocity(jet);
+			EntityManager em = PartGameplayUtil.Em;
+			bool exhaustVisible = false;
+			bool exhaustInBounds = false;
+			if (jet != Entity.Null && em.HasBuffer<LinkedEntityGroup>(jet))
+			{
+				DynamicBuffer<LinkedEntityGroup> group = em.GetBuffer<LinkedEntityGroup>(jet, isReadOnly: true);
+				for (int i = 0; i < group.Length; i++)
+				{
+					Entity child = group[i].Value;
+					if (!em.HasComponent<JetExhaustVisual>(child)) continue;
+					exhaustVisible = !em.HasComponent<DisableRendering>(child);
+					if (em.HasComponent<LocalToWorld>(child) && em.HasComponent<PartRenderInfo>(child))
+					{
+						float3 exhaustPosition = em.GetComponentData<LocalToWorld>(child).Position;
+						AABB bounds = em.GetComponentData<PartRenderInfo>(child).Bounds;
+						exhaustInBounds = math.all(math.isfinite(exhaustPosition)) && math.all(math.isfinite(bounds.Extents))
+							&& math.all(bounds.Extents > 0f);
+					}
+					break;
+				}
+			}
 			// Placed at rotation 0 the thrust is +x; free fall cannot produce any
 			// horizontal motion, so 0.5 m is already unambiguous.
 			bool thrust = position.x > 0.5f || velocity.x > 1f;
-			return (thrust ? "PASS" : "FAIL") + " jetengine x=" + position.x.ToString("F2")
+			return (thrust && exhaustVisible && exhaustInBounds ? "PASS" : "FAIL") + " jetengine x=" + position.x.ToString("F2")
 				+ " vx=" + velocity.x.ToString("F2")
+				+ " exhaustVisible=" + exhaustVisible + " exhaustInBounds=" + exhaustInBounds
 				+ " state=" + state.Replace("\n", " | ");
 		}
 
@@ -2536,6 +2787,99 @@ namespace Bpsim.QA
 			Place(scene, PartType.JetEngine, 0, 2, 0, 0);
 		}
 
+		private static void BuildEmptyJetScene(PartScene scene)
+		{
+			Place(scene, PartType.JetEngine, 0, 0, 0, 0);
+		}
+
+		private static void TriggerEmptyJet()
+		{
+			Entity engine = FindPart(PartType.JetEngine, 0);
+			if (engine != Entity.Null) PartSimulation.ProcessTouch(engine);
+		}
+
+		private static void EmptyTankAndTriggerJet()
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			Entity tank = FindPart(PartType.JetEngine, 4);
+			if (tank != Entity.Null && em.HasComponent<FuelContainer>(tank))
+			{
+				FuelContainer fuel = em.GetComponentData<FuelContainer>(tank);
+				fuel.Amount = 0f;
+				em.SetComponentData(tank, fuel);
+			}
+			Entity engine = FindPart(PartType.JetEngine, 0);
+			if (engine != Entity.Null) PartSimulation.ProcessTouch(engine);
+		}
+
+		private static string VerifyDryTankJet(PartScene scene)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			Entity engine = FindPart(PartType.JetEngine, 0);
+			Entity tank = FindPart(PartType.JetEngine, 4);
+			if (engine == Entity.Null || tank == Entity.Null) return "FAIL jet or tank missing";
+			PartAspect aspect = em.GetAspect<PartAspect>(engine);
+			var behavior = PartGameplayManager.Instance.Find(engine) as JetEngineBehavior;
+			FuelContainer fuel = em.GetComponentData<FuelContainer>(tank);
+			bool hidden = !BasePart.IsTriggerable(aspect);
+			bool off = behavior != null && !behavior.Enabled;
+			return (hidden && off && fuel.Amount == 0f ? "PASS" : "FAIL")
+				+ " hudHidden=" + hidden + " off=" + off + " fuel=" + fuel.Amount.ToString("F3");
+		}
+
+		private static string VerifyEmptyJet(PartScene scene)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			Entity engine = FindPart(PartType.JetEngine, 0);
+			if (engine == Entity.Null) return "FAIL jet engine missing";
+			PartAspect aspect = em.GetAspect<PartAspect>(engine);
+			var behavior = PartGameplayManager.Instance.Find(engine) as JetEngineBehavior;
+			int generatedButtons = 0;
+			foreach (PartTriggerButtonInfo _ in BasePart.GetTriggerButtonInfo(aspect)) generatedButtons++;
+			bool hidden = !BasePart.IsTriggerable(aspect);
+			bool off = behavior != null && !behavior.Enabled;
+			float3 velocity = PartGameplayUtil.LinearVelocity(engine);
+			bool noThrust = math.abs(velocity.x) < 0.01f;
+			return (hidden && off && noThrust ? "PASS" : "FAIL")
+				+ " hudHidden=" + hidden + " generatedButtons=" + generatedButtons
+				+ " off=" + off + " noThrust=" + noThrust
+				+ " velocity=" + velocity;
+		}
+
+		private static void BuildRheostatScene(PartScene scene)
+		{
+			Place(scene, PartType.ElectricalPart, 11, 0, 0, 0);
+		}
+
+		private static void SetRheostatValue()
+		{
+			Entity part = FindPart(PartType.ElectricalPart, 11);
+			if (part != Entity.Null)
+				PartSimulation.SendButtonEvent(PartButtonEvent.CreateSliderEvent(part, 4.2f));
+		}
+
+		private static string VerifyRheostat(PartScene scene)
+		{
+			EntityManager em = PartGameplayUtil.Em;
+			Entity part = FindPart(PartType.ElectricalPart, 11);
+			if (part == Entity.Null || !em.HasComponent<CircuitPart>(part)) return "FAIL rheostat missing";
+			PartAspect aspect = em.GetAspect<PartAspect>(part);
+			int triggers = 0;
+			foreach (PartTriggerButtonInfo _ in BasePart.GetTriggerButtonInfo(aspect)) triggers++;
+			int sliders = 0;
+			PartSliderButtonInfo slider = default;
+			foreach (PartSliderButtonInfo info in BasePart.GetSliderButtonInfo(aspect)) { sliders++; slider = info; }
+			CircuitPart resistor = em.GetComponentData<CircuitPart>(part);
+			var sprites = PartButtonList.BuildSpriteInfoMap(null);
+			bool range = sliders == 1 && math.abs(slider.Range.Min - 0.1f) < 0.001f
+				&& math.abs(slider.Range.Max - 10f) < 0.001f;
+			bool updated = math.abs(resistor.ValueA - 4.2f) < 0.001f;
+			bool icon = sliders == 1 && PartButtonList.HasSprite(sprites, slider.Value);
+			return (triggers == 0 && range && updated && icon ? "PASS" : "FAIL")
+				+ " triggers=" + triggers + " sliders=" + sliders + " range=" + range
+				+ " value=" + resistor.ValueA.ToString("F2") + " updated=" + updated + " icon=" + icon;
+		}
+
 		private static void BuildFuelValveScene(PartScene scene)
 		{
 			Place(scene, PartType.JetEngine, 4, 0, 0, 0);
@@ -2589,15 +2933,21 @@ namespace Bpsim.QA
 			FuelConsumer consumer = entityManager.HasComponent<FuelConsumer>(engine) ? entityManager.GetComponentData<FuelConsumer>(engine) : default(FuelConsumer);
 			float3 velocity = PartGameplayUtil.LinearVelocity(engine);
 			float speed = math.length(velocity);
+			float requiredRate = consumer.Required / Time.fixedDeltaTime;
+			float consumedRate = container.SuppliedStep / Time.fixedDeltaTime;
 			bool engineOn = BasePart.IsEnabled(engine, entityManager);
 			bool drained = container.Amount < container.Capacity - 1E-03f;
 			bool fed = consumer.Supplied > 0f;
 			bool moved = speed > 0.3f;
-			bool passed = drained && fed && moved && engineOn;
+			bool referenceFuelRate = math.abs(requiredRate - 0.4f) < 0.01f
+				&& math.abs(consumedRate - requiredRate) < 0.03f;
+			bool passed = drained && fed && moved && engineOn && referenceFuelRate;
 			return (passed ? "PASS" : "FAIL") + " amount=" + container.Amount.ToString("F3")
 				+ " capacity=" + container.Capacity.ToString("F1")
 				+ " supplied=" + consumer.Supplied.ToString("F4")
 				+ " required=" + consumer.Required.ToString("F4")
+				+ " requiredRate=" + requiredRate.ToString("F3")
+				+ " consumedRate=" + consumedRate.ToString("F3")
 				+ " engineOn=" + engineOn
 				+ " speed=" + speed.ToString("F2")
 				+ " vx=" + velocity.x.ToString("F2")
@@ -2616,14 +2966,21 @@ namespace Bpsim.QA
 			FuelContainer container = entityManager.HasComponent<FuelContainer>(box) ? entityManager.GetComponentData<FuelContainer>(box) : default(FuelContainer);
 			FuelConsumer consumer = entityManager.HasComponent<FuelConsumer>(engine) ? entityManager.GetComponentData<FuelConsumer>(engine) : default(FuelConsumer);
 			float speed = math.length(PartGameplayUtil.LinearVelocity(engine));
+			float forwardSpeed = math.abs(PartGameplayUtil.LinearVelocity(engine).x);
 			bool engineOff = !BasePart.IsEnabled(engine, entityManager);
 			bool stopped = consumer.Requesting == 0;
 			bool empty = container.Amount <= 0.05f;
-			bool passed = engineOff && stopped && empty;
+			// BPIR removes thrust when fuel is exhausted but leaves the rigidbody's
+			// existing momentum intact.  Check that the shutdown state is finite
+			// instead of requiring an instantaneous physical brake.
+			bool finiteVelocity = math.all(math.isfinite(PartGameplayUtil.LinearVelocity(engine)));
+			bool noForwardThrust = engineOff && stopped && finiteVelocity;
+			bool passed = engineOff && stopped && empty && noForwardThrust;
 			return (passed ? "PASS" : "FAIL") + " engineOff=" + engineOff
 				+ " requesting=" + (consumer.Requesting != 0)
 				+ " amount=" + container.Amount.ToString("F4")
 				+ " speed=" + speed.ToString("F2")
+				+ " forwardSpeed=" + forwardSpeed.ToString("F2")
 				+ " state=" + Snapshot().Replace("\n", " | ");
 		}
 

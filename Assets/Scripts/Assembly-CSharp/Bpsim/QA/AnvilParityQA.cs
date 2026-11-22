@@ -16,6 +16,7 @@ using Joint = Unity.Physics.Joint;
 using MTransform = Unity.Physics.Math.MTransform;
 using RaycastHit = Unity.Physics.RaycastHit;
 using SphereCollider = Unity.Physics.SphereCollider;
+using FloatRange = Unity.Physics.Math.FloatRange;
 
 namespace Bpsim.QA
 {
@@ -77,6 +78,9 @@ namespace Bpsim.QA
                     GravityFactors(measurements, backend);
                     ChangedMass(measurements, backend);
                     WeldedChain(measurements, backend);
+                    JointMappings(measurements, backend);
+                    SignedHingeLimits(measurements, backend);
+                    WrappedHingeLimits(measurements, backend);
                     ReplacedBody(measurements, backend);
                     ScaledGeometry(measurements, backend);
                     BodyIdentityAfterGrowth(measurements, backend);
@@ -147,7 +151,7 @@ namespace Bpsim.QA
                              "Packages/com.unity.physics/Unity.Physics/Anvil/AnvilWorld.cs",
                              "Packages/com.unity.physics/Unity.Physics/Anvil/AnvilStepSystem.cs",
                              "Packages/com.unity.physics/Unity.Physics/Anvil/AnvilNative.cs",
-                             "Assets/Plugins/x86_64/box3d.dll",
+                             "Assets/Plugins/x86_64/" + AnvilNative.Library + ".dll",
                              "Assets/Plugins/Havok.Physics.dll",
                              "Assets/Plugins/x86_64/HavokNative.dll",
                              "Assets/Scripts/Assembly-CSharp/Bpsim/QA/AnvilParityQA.cs"
@@ -304,6 +308,155 @@ namespace Bpsim.QA
                 Add(output, backend, "welded-chain", "momentum-relative-error", "ratio", math.distance(f.Momentum(), momentum) / math.length(momentum), 0.005f);
                 Add(output, backend, "welded-chain", "energy-gain", "ratio", math.max(0f, maximumEnergy / energy - 1f), 0.01f);
                 Add(output, backend, "welded-chain", "max-connection-drift", "m", drift, 0.02f);
+            }
+        }
+
+        static void JointMappings(List<Measurement> output, SimulationType backend)
+        {
+            using (var f = new Fixture(backend, 2, 1))
+            {
+                f.Body(0, float3.zero);
+                f.Body(1, new float3(1f, 0f, 0f));
+                var frameA = new BodyFrame
+                {
+                    Position = new float3(0.5f, 0f, 0f),
+                    Axis = new float3(1f, 0f, 0f),
+                    PerpendicularAxis = new float3(0f, 1f, 0f)
+                };
+                var frameB = new BodyFrame
+                {
+                    Position = new float3(-0.5f, 0f, 0f),
+                    Axis = new float3(1f, 0f, 0f),
+                    PerpendicularAxis = new float3(0f, 1f, 0f)
+                };
+                f.SetJoint(0, 0, 1, PhysicsJoint.CreateLimitedHinge(frameA, frameB, new FloatRange(-0.35f, 0.35f)));
+                f.AngularVelocity(1, new float3(1f, 0f, 0f));
+                float anchorDrift = 0f;
+                for (int step = 0; step < 12; step++)
+                {
+                    f.Step();
+                    anchorDrift = math.max(anchorDrift, f.AnchorDrift());
+                }
+                float relativeSpeed = math.dot(f.Omega(1) - f.Omega(0), new float3(1f, 0f, 0f));
+                Add(output, backend, "joint-mapping", "limited-hinge-anchor-drift", "m", anchorDrift, 0.03f);
+                Add(output, backend, "joint-mapping", "limited-hinge-axis-speed-error", "rad/s", math.abs(relativeSpeed - 1f), 0.08f);
+                f.AngularVelocity(0, float3.zero);
+                f.AngularVelocity(1, new float3(8f, 0f, 0f));
+                for (int step = 0; step < 12; step++) f.Step();
+                quaternion relativeRotation = math.mul(math.inverse(f.Rotation(0)), f.Rotation(1));
+                float hingeAngle = 2f * math.atan2(relativeRotation.value.x, relativeRotation.value.w);
+                Add(output, backend, "joint-mapping", "limited-hinge-limit-excess", "rad", math.max(0f, math.abs(hingeAngle) - 0.35f), 0.06f);
+            }
+
+            using (var f = new Fixture(backend, 2, 1))
+            {
+                f.Body(0, float3.zero);
+                f.Body(1, new float3(1f, 0f, 0f));
+                f.SetJoint(0, 0, 1, PhysicsJoint.CreateLimitedDistance(float3.zero, float3.zero, new FloatRange(0f, 1.5f)));
+                f.LinearVelocity(1, new float3(6f, 0f, 0f));
+                for (int step = 0; step < 24; step++) f.Step();
+                float distance = math.distance(f.Position(0), f.Position(1));
+                Add(output, backend, "joint-mapping", "limited-distance-upper-limit-excess", "m", math.max(0f, distance - 1.5f), 0.08f);
+            }
+
+            using (var f = new Fixture(backend, 2, 1))
+            {
+                f.Body(0, float3.zero);
+                f.Body(1, new float3(1f, 0f, 0f));
+                var frameA = new BodyFrame
+                {
+                    Position = new float3(0.5f, 0f, 0f),
+                    Axis = new float3(1f, 0f, 0f),
+                    PerpendicularAxis = new float3(0f, 1f, 0f)
+                };
+                var frameB = new BodyFrame
+                {
+                    Position = new float3(-0.5f, 0f, 0f),
+                    Axis = new float3(1f, 0f, 0f),
+                    PerpendicularAxis = new float3(0f, 1f, 0f)
+                };
+                f.SetJoint(0, 0, 1, PhysicsJoint.CreatePrismatic(frameA, frameB, new FloatRange(-0.5f, 0.5f)));
+                f.LinearVelocity(1, new float3(0f, 2f, 0f));
+                f.AngularVelocity(1, new float3(0f, 1f, 0f));
+                for (int step = 0; step < 20; step++) f.Step();
+                float3 separation = math.rotate(math.inverse(f.Rotation(0)), f.Position(1) - f.Position(0));
+                Add(output, backend, "joint-mapping", "prismatic-perpendicular-drift", "m",
+                    math.length(new float2(separation.y, separation.z)), 0.05f);
+                Add(output, backend, "joint-mapping", "prismatic-relative-angular-speed", "rad/s",
+                    math.length(f.Omega(1) - f.Omega(0)), 0.08f);
+            }
+        }
+
+        static void SignedHingeLimits(List<Measurement> output, SimulationType backend)
+        {
+            const float halfWidth = math.PI / 12f;
+            const float frameOffset = 0.19f;
+            foreach (float centerSign in new[] { -1f, 1f })
+            foreach (float edgeSign in new[] { -1f, 1f })
+            {
+                using (var fixture = new Fixture(backend, 2, 1))
+                {
+                    float center = centerSign * math.PI / 2f;
+                    float edge = center + edgeSign * halfWidth;
+                    string scenario = "signed-hinge-" + (centerSign < 0f ? "negative-" : "positive-")
+                        + (edgeSign < 0f ? "lower" : "upper");
+                    var frameA = new BodyFrame(new RigidTransform(quaternion.identity, new float3(0.5f, 0f, 0f)));
+                    var frameB = new BodyFrame(new RigidTransform(quaternion.RotateX(frameOffset), new float3(-0.5f, 0f, 0f)));
+                    fixture.Body(0, float3.zero);
+                    fixture.Body(1, new float3(1f, 0f, 0f), rotation: quaternion.RotateX(-center - frameOffset));
+                    fixture.SetJoint(0, 0, 1, PhysicsJoint.CreateLimitedHinge(frameA, frameB, new FloatRange(center - halfWidth, center + halfWidth)));
+
+                    float TwistFromB()
+                    {
+                        quaternion worldFromA = math.mul(fixture.Rotation(0), frameA.AsRigidTransform().rot);
+                        quaternion worldFromB = math.mul(fixture.Rotation(1), frameB.AsRigidTransform().rot);
+                        quaternion relative = math.mul(math.inverse(worldFromB), worldFromA);
+                        float angle = 2f * math.atan2(relative.value.x, relative.value.w);
+                        return angle - 2f * math.PI * math.round((angle - center) / (2f * math.PI));
+                    }
+
+                    float restError = 0f;
+                    for (int step = 0; step < 6; step++)
+                    {
+                        fixture.Step();
+                        restError = math.max(restError, math.abs(TwistFromB() - center));
+                    }
+                    Add(output, backend, scenario, "rest-angle-error", "rad", restError, 0.01f);
+                    for (int step = 0; step < 36; step++)
+                    {
+                        fixture.AngularVelocity(0, float3.zero);
+                        fixture.AngularVelocity(1, new float3(-1.5f * edgeSign, 0f, 0f));
+                        fixture.Step();
+                    }
+                    Add(output, backend, scenario, "driven-limit-error", "rad", math.abs(TwistFromB() - edge), 0.06f);
+                }
+            }
+        }
+
+        static void WrappedHingeLimits(List<Measurement> output, SimulationType backend)
+        {
+            const float halfWidth = math.PI / 12f;
+            foreach (float centerSign in new[] { -1f, 1f })
+            {
+                using (var fixture = new Fixture(backend, 2, 1))
+                {
+                    float center = centerSign * math.PI / 2f;
+                    float start = center + centerSign * (math.PI - 0.35f);
+                    var frameA = new BodyFrame(new RigidTransform(quaternion.identity, new float3(0.5f, 0f, 0f)));
+                    var frameB = new BodyFrame(new RigidTransform(quaternion.identity, new float3(-0.5f, 0f, 0f)));
+                    fixture.Body(0, float3.zero);
+                    quaternion initial = quaternion.RotateX(start);
+                    fixture.Body(1, new float3(1f, 0f, 0f), rotation: math.inverse(initial));
+                    fixture.SetJoint(0, 0, 1, PhysicsJoint.CreateLimitedHinge(frameA, frameB, new FloatRange(center - halfWidth, center + halfWidth)));
+
+                    fixture.Step();
+                    quaternion relative = math.mul(math.inverse(fixture.Rotation(1)), fixture.Rotation(0));
+                    quaternion delta = math.mul(math.inverse(initial), relative);
+                    float twist = 2f * math.atan2(delta.value.x, delta.value.w);
+                    twist -= 2f * math.PI * math.round(twist / (2f * math.PI));
+                    string scenario = centerSign < 0f ? "signed-hinge-negative-wrap" : "signed-hinge-positive-wrap";
+                    Add(output, backend, scenario, "wrong-direction-correction", "rad", math.max(0f, centerSign * twist + 0.01f), 0f);
+                }
             }
         }
 
@@ -660,6 +813,11 @@ namespace Bpsim.QA
 
         static void NativeContactAndSleep(List<Measurement> output)
         {
+            if (AnvilWorld.SupportsCollisionTags)
+            {
+                NativeCollisionTags(output);
+                NativeTeleport(output);
+            }
             foreach (int sub in new[] { 1, 2, 4 })
             {
                 using (var f = new Fixture(SimulationType.AnvilPhysics, 1, 0, 2))
@@ -674,6 +832,55 @@ namespace Bpsim.QA
                     float reaction = f.Velocity(0).y + 4f;
                     Add(output, SimulationType.AnvilPhysics, "contact-sum-sub" + sub, "impulse-accounting-error", "N s", math.abs(f.NativeContactImpulse() - reaction), 0.005f);
                 }
+                using (var f = new Fixture(SimulationType.AnvilPhysics, 1, 0, 2))
+                {
+                    f.SubSteps = sub;
+                    f.Static(0, new float3(0f, -0.5f, 0f), f.Box(new float3(10f, 1f, 10f)));
+                    f.Body(0, new float3(0f, 0.249f, 0f), shape: f.Box(new float3(0.5f)));
+                    f.LinearVelocity(0, new float3(0f, -4f, 0f));
+                    f.Step();
+                    float reaction = f.Velocity(0).y + 4f;
+                    float reported = f.NativeContactImpulse();
+                    Add(output, SimulationType.AnvilPhysics, "contact-box-sub" + sub, "impulse-accounting-error", "N s",
+                        math.abs(reported - reaction), 0.005f, $"measured {reported:F4}, momentum change {reaction:F4}");
+                    Add(output, SimulationType.AnvilPhysics, "contact-box-sub" + sub, "minimum-reaction-shortfall", "N s",
+                        math.max(0f, 1f - reaction), 0f);
+                }
+            }
+            using (var f = new Fixture(SimulationType.AnvilPhysics, 2))
+            {
+                f.SubSteps = 8;
+                f.Body(0, new float3(-0.7f, 0f, 0f));
+                f.Body(1, new float3(0.7f, 0f, 0f));
+                f.LinearVelocity(0, new float3(65f, 0f, 0f));
+                f.LinearVelocity(1, new float3(-65f, 0f, 0f));
+                f.Step();
+                Add(output, SimulationType.AnvilPhysics, "swept-dynamic-pair", "crossed-centers", "m",
+                    math.max(0f, f.Motion(0).WorldFromMotion.pos.x - f.Motion(1).WorldFromMotion.pos.x), 0f);
+                Add(output, SimulationType.AnvilPhysics, "swept-dynamic-pair", "missed-impact", "m/s",
+                    math.max(0f, f.Velocity(0).x - 1f), 0f);
+            }
+            using (var f = new Fixture(SimulationType.AnvilPhysics, 1, 0, 2))
+            {
+                f.SubSteps = 8;
+                f.Static(0, new float3(0f, -0.5f, 0f), f.Box(new float3(10f, 1f, 10f)));
+                f.Body(0, new float3(0f, 0.91f, 0f));
+                f.LinearVelocity(0, new float3(0f, -60f, 0f));
+                f.Step();
+                Add(output, SimulationType.AnvilPhysics, "swept-static-contact", "missing-reaction", "N s",
+                    math.max(0f, 1f - f.NativeContactImpulse()), 0f);
+                Add(output, SimulationType.AnvilPhysics, "swept-static-contact", "penetration", "m",
+                    math.max(0f, 0.25f - f.Motion(0).WorldFromMotion.pos.y), 0.025f);
+            }
+            using (var f = new Fixture(SimulationType.AnvilPhysics, 2, 1))
+            {
+                f.SubSteps = 8;
+                f.Body(0, new float3(-0.5f, 0f, 0f));
+                f.Body(1, new float3(0.5f, 0f, 0f));
+                f.Weld(0, 0, 1);
+                f.Step();
+                Add(output, SimulationType.AnvilPhysics, "slow-weld-path", "wrong-step-path", "count",
+                    f.UsedIntegratedSubsteps == (AnvilWorld.NativeBridgeVersion == 3) ? 0f : 1f, 0f);
             }
             using (var f = new Fixture(SimulationType.AnvilPhysics, 1, 0, 2, sleep: true))
             {
@@ -690,6 +897,69 @@ namespace Bpsim.QA
             }
         }
 
+        static void NativeTeleport(List<Measurement> output)
+        {
+            const SimulationType backend = SimulationType.AnvilPhysics;
+            using (var f = new Fixture(backend, 2))
+            {
+                f.SubSteps = 1;
+                f.Body(0, new float3(-20f, 0f, 0f));
+                f.Body(1, float3.zero);
+                f.Step();
+                var motion = f.Motion(0);
+                motion.WorldFromMotion.pos.x = -0.49f;
+                f.Motion(0, motion);
+                f.LinearVelocity(0, new float3(5f, 0f, 0f));
+                f.Step();
+                Add(output, backend, "dynamic-teleport", "lost-pose", "m",
+                    math.max(0f, math.abs(f.Position(0).x + 0.49f) - 0.1f), 0f);
+                Add(output, backend, "dynamic-teleport", "late-contact", "m/s",
+                    math.max(0f, 0.5f - f.Velocity(1).x), 0f);
+            }
+        }
+
+        static void NativeCollisionTags(List<Measurement> output)
+        {
+            const SimulationType backend = SimulationType.AnvilPhysics;
+            using (var f = new Fixture(backend, 1, statics: 2))
+            {
+                f.SubSteps = 8;
+                f.Static(0, new float3(0f, -0.5f, 0f), f.Box(new float3(10f, 1f, 10f)));
+                f.Body(0, new float3(0f, 0.24f, 0f));
+                f.Gravity = new float3(0f, -9.81f, 0f);
+                int enclosingGroup = 0;
+                byte layer = 1;
+                f.CollisionTags = entity => entity.Index == 1 ? new AnvilCollisionTag(19, 1, true)
+                    : new AnvilCollisionTag(enclosingGroup, layer, false);
+                f.Step();
+                Add(output, backend, "collision-tags", "same-layer-wheel-impulse-missing", "N s",
+                    math.max(0f, 0.05f - f.NativeContactImpulse()), 0f);
+                enclosingGroup = 19;
+                f.Step();
+                Add(output, backend, "collision-tags", "enclosing-frame-impulse", "N s", f.NativeContactImpulse(), 0f);
+                enclosingGroup = 0;
+                layer = 2;
+                f.Step();
+                Add(output, backend, "collision-tags", "other-layer-impulse", "N s", f.NativeContactImpulse(), 0f);
+                layer = 1;
+                f.Step();
+                Add(output, backend, "collision-tags", "stationary-pair-did-not-refilter", "N s",
+                    math.max(0f, 0.05f - f.NativeContactImpulse()), 0f);
+            }
+
+            using (var f = new Fixture(backend, 1, statics: 2))
+            {
+                f.SubSteps = 8;
+                f.Static(0, new float3(0f, -0.5f, 0f), f.Box(new float3(10f, 1f, 10f)));
+                f.Body(0, new float3(0f, 0.91f, 0f));
+                f.LinearVelocity(0, new float3(0f, -60f, 0f));
+                f.CollisionTags = entity => new AnvilCollisionTag(0, entity.Index == 1 ? (byte)1 : (byte)2, entity.Index == 1);
+                f.Step();
+                Add(output, backend, "collision-tags", "ccd-rejected-filtered-pair", "m",
+                    math.abs(f.Position(0).y + 0.29f), 0.01f);
+            }
+        }
+
         sealed partial class Fixture : IDisposable
         {
             public PhysicsWorld World;
@@ -698,6 +968,8 @@ namespace Bpsim.QA
             public bool HadImpulse;
             public int SolverIterations = 8;
             public int SubSteps { set { if (m_Native != null) m_Native.SubStepCount = value; } }
+            public bool UsedIntegratedSubsteps => m_Native != null && m_Native.UsedIntegratedSubsteps;
+            public Func<Entity, AnvilCollisionTag> CollisionTags;
             readonly ISimulation m_Reference;
             readonly AnvilWorld m_Native;
             readonly NativeReference<int> m_StaticChanged;
@@ -877,12 +1149,28 @@ namespace Bpsim.QA
                 };
             }
 
+            public void SetJoint(int index, int a, int b, PhysicsJoint physicsJoint)
+            {
+                var joints = World.Joints;
+                joints[index] = new Joint
+                {
+                    BodyPair = new BodyIndexPair { BodyIndexA = a, BodyIndexB = b },
+                    AFromJoint = new MTransform(physicsJoint.BodyAFromJoint.AsRigidTransform()),
+                    BFromJoint = new MTransform(physicsJoint.BodyBFromJoint.AsRigidTransform()),
+                    Constraints = (ConstraintBlock3)ConstraintBlockField.GetValue(physicsJoint),
+                    Entity = new Entity { Index = 20000 + index, Version = 1 },
+                    Version = physicsJoint.Version,
+                    EnableCollision = 0
+                };
+            }
+
             public MotionData Motion(int index) => World.MotionDatas[index];
             public void Motion(int index, MotionData data) { var motions = World.MotionDatas; motions[index] = data; }
             public void MotionVelocity(int index, MotionVelocity data) { var velocities = World.MotionVelocities; velocities[index] = data; }
             public float3 Velocity(int index) => World.MotionVelocities[index].LinearVelocity;
             public float3 Omega(int index) => math.rotate(Motion(index).WorldFromMotion.rot, World.MotionVelocities[index].AngularVelocity);
             public float3 Position(int index) => math.mul(Motion(index).WorldFromMotion, math.inverse(Motion(index).BodyFromMotion)).pos;
+            public quaternion Rotation(int index) => math.mul(Motion(index).WorldFromMotion.rot, math.inverse(Motion(index).BodyFromMotion.rot));
             public void LinearVelocity(int index, float3 value) { var mv = World.MotionVelocities[index]; mv.LinearVelocity = value; MotionVelocity(index, mv); }
             public void AngularVelocity(int index, float3 worldValue)
             {
@@ -998,7 +1286,7 @@ namespace Bpsim.QA
                 if (m_Native != null)
                 {
                     m_Native.SetGravity(Gravity);
-                    m_Native.SyncToNative(ref World);
+                    m_Native.SyncToNative(ref World, CollisionTags);
                     m_Native.SyncJointsToNative(ref World, TimeStep);
                     m_Native.Step(TimeStep);
                     m_Native.SyncFromNative(ref World);

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Bpsim.Parts
 {
@@ -41,6 +42,18 @@ namespace Bpsim.Parts
 
 			public int FrameShape;
 
+			public int DrawLayer;
+
+			public bool RemoteLink;
+
+			internal FixedList64Bytes<int3> RemoteTargets;
+
+			public string RemoteCells
+			{
+				get => PartRemoteConnection.Format(RemoteTargets);
+				set => RemoteTargets = PartRemoteConnection.Parse(value);
+			}
+
 			public Unit(int x, int y, int type, int index, int rotation, bool flipped)
 				: this(x, y, type, index, rotation, flipped, 0f, 0f, 0f, 1f, 1f, 1)
 			{
@@ -51,7 +64,7 @@ namespace Bpsim.Parts
 			{
 			}
 
-			public Unit(int x, int y, int type, int index, int rotation, bool flipped, float offsetX, float offsetY, float rotationDegrees, float scaleX, float scaleY, int layer, int frameShape = 0)
+			public Unit(int x, int y, int type, int index, int rotation, bool flipped, float offsetX, float offsetY, float rotationDegrees, float scaleX, float scaleY, int layer, int frameShape = 0, int drawLayer = 0)
 			{
 				X = x;
 				Y = y;
@@ -60,6 +73,9 @@ namespace Bpsim.Parts
 				Rotation = rotation;
 				Flipped = flipped;
 				FrameShape = global::Bpsim.Parts.FrameShape.Clamp(frameShape);
+				DrawLayer = Math.Max(-PartFreeTransform.MaxDrawLayer, Math.Min(PartFreeTransform.MaxDrawLayer, drawLayer));
+				RemoteLink = false;
+				RemoteTargets = default;
 				OffsetX = offsetX;
 				OffsetY = offsetY;
 				RotationDegrees = rotationDegrees;
@@ -70,27 +86,35 @@ namespace Bpsim.Parts
 
 			public Unit WithPosition(int x, int y)
 			{
-				return new Unit(x, y, Type, Index, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, FrameShape);
+				Unit result = this;
+				for (int index = 0; index < RemoteTargets.Length; index++)
+				{
+					int3 cell = RemoteTargets[index];
+					result.RemoteTargets[index] = new int3(cell.x + (x - X), cell.y + (y - Y), cell.z);
+				}
+				result.X = x;
+				result.Y = y;
+				return result;
 			}
 
 			public Unit WithPartType(int type, int index)
 			{
-				return new Unit(X, Y, type, index, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, FrameShape);
+				return new Unit(X, Y, type, index, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, FrameShape, DrawLayer) { RemoteLink = RemoteLink, RemoteTargets = RemoteTargets };
 			}
 
 			public Unit WithRotation(int rotation, bool flipped)
 			{
-				return new Unit(X, Y, Type, Index, rotation, flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, FrameShape);
+				return new Unit(X, Y, Type, Index, rotation, flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, Layer, FrameShape, DrawLayer) { RemoteLink = RemoteLink, RemoteTargets = RemoteTargets };
 			}
 
 			public Unit WithFreeTransform(float offsetX, float offsetY, float rotationDegrees, float scaleX, float scaleY)
 			{
-				return new Unit(X, Y, Type, Index, Rotation, Flipped, offsetX, offsetY, rotationDegrees, scaleX, scaleY, Layer, FrameShape);
+				return new Unit(X, Y, Type, Index, Rotation, Flipped, offsetX, offsetY, rotationDegrees, scaleX, scaleY, Layer, FrameShape, DrawLayer) { RemoteLink = RemoteLink, RemoteTargets = RemoteTargets };
 			}
 
 			public Unit WithLayer(int layer)
 			{
-				return new Unit(X, Y, Type, Index, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, layer, FrameShape);
+				return new Unit(X, Y, Type, Index, Rotation, Flipped, OffsetX, OffsetY, RotationDegrees, ScaleX, ScaleY, layer, FrameShape, DrawLayer) { RemoteLink = RemoteLink, RemoteTargets = RemoteTargets };
 			}
 
 			/// <summary>旧存档/手工编辑的 JSON 没有新字段时缩放是 0，读取时统一归一到 1。</summary>
@@ -101,7 +125,7 @@ namespace Bpsim.Parts
 				float offsetX = float.IsNaN(OffsetX) || float.IsInfinity(OffsetX) ? 0f : OffsetX;
 				float offsetY = float.IsNaN(OffsetY) || float.IsInfinity(OffsetY) ? 0f : OffsetY;
 				float rotationDegrees = float.IsNaN(RotationDegrees) || float.IsInfinity(RotationDegrees) ? 0f : RotationDegrees;
-				return new Unit(X, Y, Type, Index, Rotation, Flipped, offsetX, offsetY, rotationDegrees, scaleX, scaleY, Layer, FrameShape);
+				return new Unit(X, Y, Type, Index, Rotation, Flipped, offsetX, offsetY, rotationDegrees, scaleX, scaleY, Layer, FrameShape, DrawLayer) { RemoteLink = RemoteLink, RemoteTargets = RemoteTargets };
 			}
 		}
 
@@ -257,7 +281,8 @@ namespace Bpsim.Parts
 			switch (fields.Length)
 			{
 			case 14:
-				return SchematicsFormat.BpirCsv;
+			case 15:
+				return LooksLikeBpsimWideCsv(fields) ? SchematicsFormat.Csv : SchematicsFormat.BpirCsv;
 			case 13:
 				// 第 13 列是整数 → bpsim 的 frameShape；是空/成员串 → BPIR 的 members。
 				return LooksLikeBpsimWideCsv(fields) ? SchematicsFormat.Csv : SchematicsFormat.BpirCsv;

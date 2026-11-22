@@ -427,7 +427,8 @@ namespace Bpsim.Parts.Gameplay
 				m_lastReason = "no template behind (layer " + layer + ")";
 				return 0;
 			}
-			int created = 0;
+			var copies = new List<Entity>(templates.Count);
+			bool containsPlate = false;
 			Entity previous = Entity.Null;
 			float3 previousPosition = default(float3);
 			quaternion previousRotation = quaternion.identity;
@@ -461,17 +462,21 @@ namespace Bpsim.Parts.Gameplay
 				{
 					continue;
 				}
-				Entity copy = PartGameplayUtil.SpawnPart(info, x, y, tRotation, tFlipped, ref simulator, layer);
+				bool isPlate = em.HasComponent<HingePlate>(template);
+				PartFreeTransform freeTransform = isPlate ? em.GetComponentData<PartFreeTransform>(template) : default;
+				Entity copy = PartGameplayUtil.SpawnPart(info, x, y, tRotation, tFlipped, ref simulator, layer, freeTransform);
 				if (copy == Entity.Null)
 				{
 					continue;
 				}
-				created++;
+				copies.Add(copy);
+				containsPlate |= isPlate;
 				// 复制体只和「相邻一格」的上一个复制体焊接；与生成器之间隔着 CopyDistance 格空格，
 				// 原版同样不建立连接。
 				float3 copyPosition = new float3(x, y, -0.09f);
 				quaternion copyRotation = PartGameplayUtil.GridRotation(tRotation, BasePart.IsEightWay(info));
-				if (previous != Entity.Null && math.abs(x - (int)math.round(previousPosition.x)) + math.abs(y - (int)math.round(previousPosition.y)) == 1)
+				if (previous != Entity.Null && !isPlate && !em.HasComponent<HingePlate>(previous)
+					&& math.abs(x - (int)math.round(previousPosition.x)) + math.abs(y - (int)math.round(previousPosition.y)) == 1)
 				{
 					PartGameplayUtil.CreateFixedJoint(previous, previousPosition, previousRotation, copy, copyPosition, copyRotation, 1200f);
 				}
@@ -479,8 +484,13 @@ namespace Bpsim.Parts.Gameplay
 				previousPosition = copyPosition;
 				previousRotation = copyRotation;
 			}
-			m_lastReason = created > 0 ? ("copied " + created + " at layer " + layer) : "blocked";
-			return created;
+			if (containsPlate)
+			{
+				HingePlateRuntime.ConnectGenerated(em, ref simulator, copies, UserSettings.Instance.SimulationSettings, Time.fixedDeltaTime);
+				TNTDamage.RefreshTopology();
+			}
+			m_lastReason = copies.Count > 0 ? ("copied " + copies.Count + " at layer " + layer) : "blocked";
+			return copies.Count;
 		}
 
 		public override string Describe()

@@ -300,10 +300,15 @@ namespace Bpsim.Parts.Simulation
 		private void ApplyBprcExplosion(in AutoGunProjectile projectile, float3 center)
 		{
 			PartSimulatorUnmanaged simulator = PartManager.Instance.PartSimulator.Unmanaged;
+			int ownerComponent = PartGameplayUtil.ConnectedComponent(projectile.Owner);
 			for (int i = 0; i < simulator.Parts.Length; i++)
 			{
 				Entity part = simulator.Parts[i];
 				if (!PartGameplayUtil.Alive(part) || !EntityManager.HasComponent<PhysicsMass>(part))
+				{
+					continue;
+				}
+				if (ownerComponent >= 0 && PartGameplayUtil.ConnectedComponent(part) == ownerComponent)
 				{
 					continue;
 				}

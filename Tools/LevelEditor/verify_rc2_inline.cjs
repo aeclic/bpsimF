@@ -29,7 +29,13 @@ function bpleDocument() {
     return file ? JSON.parse(fs.readFileSync(path.join(root, file), "utf8")) : null;
 }
 
-const levels = catalog.levels.map(level => ({ id: level.id, title: level.title, saved: false }));
+const gridSize = 2;
+const levels = catalog.levels.map(level => {
+    const missionId = level.background_binding.source_mission.data._id;
+    const [, region, stage] = /^L(\d+)_Mission_(.+)$/.exec(missionId);
+    return { id: level.id.replaceAll("-", ""), title: level.title, saved: false,
+        mission_id: missionId, level_number: `${region}-${stage}`, listed_in_source: Boolean(level.background_binding.source_location) };
+});
 let current = JSON.parse(fs.readFileSync(path.join(pack, catalog.levels[0].path), "utf8"));
 const bple = bpleDocument();
 
@@ -51,11 +57,11 @@ const types = {
 function api(request, response, url) {
     const route = url.pathname;
     if (route === "/api/session") return json(response, {
-        ok: true, document: bple, built_in: [], saved: [], modes: { rc2: true, rc2_error: null },
+        ok: true, document: bple, built_in: [], saved: [], level_grid_size: gridSize, modes: { rc2: true, rc2_error: null },
         rc2: { available: true, levels: levels.length, inline: true },
         capabilities: { water_preview: true, parallax: true, rc2_inline_mode: true },
     });
-    if (route === "/api/rc2/session") return json(response, { ok: true, catalog, levels, document: current, runtime_state: "not_loaded" });
+    if (route === "/api/rc2/session") return json(response, { ok: true, catalog, levels, document: current, level_grid_size: gridSize, runtime_state: "not_loaded" });
     if (route === "/api/rc2/runtime-status") return json(response, { ok: true, runtime_state: "loaded", runtime_document_key: current.id.replaceAll("-", "") });
     if (route.startsWith("/api/rc2/asset/")) {
         const [kind, key] = route.slice("/api/rc2/asset/".length).split("/");
@@ -176,6 +182,61 @@ async function main() {
     const entered = await evaluate(`(()=>{const d=window.bpsimRc2Mode.diagnostics();const r=window.bpsimRc2Mode.renderer;return {mode:d.mode,levels:d.levels,nodes:d.nodes,drawCalls:d.drawCalls,triangles:d.triangles,textures:d.textures,glErrors:d.glErrors,layerVisible:d.layerVisible,docActionsAlive:d.docActionsAlive,url:location.href,marker:window.__rc2InlineMarker,bodyClass:document.body.classList.contains("bpsim-rc2-mode"),toolbarVisible:getComputedStyle(document.querySelector("#bpsim-rc2-layer .bpsim-rc2-bar")).display,treeRows:document.querySelectorAll("#bpsim-rc2-tree .bpsim-rc2-tree-row").length,propRows:document.querySelectorAll("#bpsim-rc2-properties .bpsim-rc2-property").length,levelOptions:document.querySelectorAll("#bpsim-rc2-levels option").length,prefabOptions:document.querySelectorAll("#bpsim-rc2-prefabs option").length,canvasRect:(()=>{const c=document.getElementById("bpsim-rc2-scene").getBoundingClientRect();return {w:Math.round(c.width),h:Math.round(c.height)};})()};})()`);
     step("entered", { ...entered, navigated: entered.marker !== 1 });
     report.entered = entered;
+    const presentation = await evaluate(`(() => {
+        const mode = window.bpsimRc2Mode, renderer = mode.renderer;
+        const select = document.getElementById("bpsim-rc2-levels");
+        const itemToggle = document.getElementById("bpsim-rc2-items");
+        const selectedItem = renderer.markers[0];
+        const picked = selectedItem && renderer.pick(selectedItem.position) === selectedItem.index;
+        const markerCount = renderer.markers.length;
+        itemToggle.click(); renderer.build(0);
+        const markersHidden = renderer.markers.length === 0;
+        itemToggle.click(); renderer.build(0);
+        const initialRc2 = mode.diagnostics().gridStep;
+        const initialBple = window.bpsimEditorDiagnostics().gridStep;
+        window.bpsimSetLevelGridSize(1.5);
+        const ratiosUpdated = mode.diagnostics().gridStep === 1.5 && window.bpsimEditorDiagnostics().gridStep === .1875;
+        window.bpsimSetLevelGridSize(2);
+        document.getElementById("bpsim-rc2-grid").click();
+        const gridVisible = renderer.showGrid;
+        document.getElementById("bpsim-rc2-grid").click();
+        return { markerCount, picked, markersHidden, initialRc2, initialBple, ratiosUpdated, gridVisible,
+            firstNumber: select.selectedOptions[0]?.title, selectedLabel: select.selectedOptions[0]?.textContent,
+            deliveryNumber: [...select.options].find(option => option.title === "L1_Mission_D1")?.textContent };
+    })()`);
+    step("presentation", presentation);
+    assert(presentation.firstNumber === "L2_Mission_1" && /^2-1/.test(presentation.selectedLabel), "current mission number is missing");
+    assert(/^1-D1/.test(presentation.deliveryNumber), "delivery mission suffix was lost");
+    assert(presentation.markerCount > 0 && presentation.picked && presentation.markersHidden, "meshless item markers are not pickable and toggleable");
+    assert(presentation.initialRc2 === 2 && presentation.initialBple === .25 && presentation.ratiosUpdated && presentation.gridVisible,
+        "the editor modes did not share the game grid ratio");
+
+    const depthIsolation = await evaluate(`(async () => {
+        const canvas = document.createElement("canvas"), overlay = document.createElement("canvas");
+        canvas.style.cssText = "position:fixed;left:-1000px;width:40px;height:40px";
+        document.body.append(canvas);
+        try {
+            const renderer = new window.Rc2Renderer(canvas, overlay, {});
+            await renderer.texture(null);
+            const mesh = { vertices: [-1,-1,0,1,-1,0,0,1,0], uv: [0,0,1,0,.5,1], colors: Array(12).fill(1), submeshes: [[0,1,2]] };
+            renderer.json.set("meshes:triangle", mesh);
+            renderer.json.set("materials:rear", { shader: "Textured Vertex Color", queue: 4000, textures: {}, colors: {}, floats: {} });
+            renderer.json.set("materials:front", { shader: "Sprites/Default", queue: -1, textures: {}, colors: {}, floats: {} });
+            const node = (background, name, depth, color) => ({ parent: -1, active: true, background, p: [0,0,depth], q: [0,0,0,1], s: [1,1,1],
+                renderers: [{ prefab: name, enabled: true, color, sorting_layer: 0, sorting_order: 0 }] });
+            renderer.scene = { spawn: [0,0,0], mesh_overrides: {}, prefabs: { rear: { mesh: "triangle", materials: ["rear"] },
+                front: { mesh: "triangle", materials: ["front"] } },
+                nodes: [node(false, "front", 12, [0,1,0,1]), node(true, "rear", 0, [1,0,0,1])] };
+            renderer.animate = false;
+            renderer.render();
+            const { gl } = renderer, sample = new Uint8Array(4);
+            gl.readPixels(20,20,1,1,gl.RGBA,gl.UNSIGNED_BYTE,sample);
+            return { rgba: [...sample], queue: renderer.items[0].queue, errors: renderer.stats.errors };
+        } finally { canvas.remove(); }
+    })()`);
+    step("depth-isolation", depthIsolation);
+    assert(depthIsolation.errors === 0 && depthIsolation.queue === 4000 && depthIsolation.rgba.join() === "0,255,0,255",
+        "background depth occluded the foreground across camera passes");
     // Renderer statistics are self-reported; prove the viewport actually shows pixels by sampling
     // the composited canvas and requiring both non-uniform content and an unobstructed overlay.
     const pixels = await evaluate(`(async()=>{const canvas=document.getElementById("bpsim-rc2-scene");const rect=canvas.getBoundingClientRect();const gl=canvas.getContext("webgl");const bufferW=canvas.width,bufferH=canvas.height;const stats=window.bpsimRc2Mode.renderer&&window.bpsimRc2Mode.renderer.stats;const firstFrame=stats&&stats.drawCalls;await new Promise(r=>setTimeout(r,450));const secondFrame=stats&&stats.drawCalls;let sample=null;if(gl&&bufferW>0&&bufferH>0){const px=new Uint8Array(4);gl.readPixels(Math.floor(bufferW/2),Math.floor(bufferH/2),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);sample=[...px];}const scratch=document.createElement("canvas");scratch.width=Math.max(1,Math.round(rect.width));scratch.height=Math.max(1,Math.round(rect.height));const context=scratch.getContext("2d");let colors=0;if(bufferW>0&&bufferH>0){context.drawImage(canvas,0,0);const data=context.getImageData(0,0,scratch.width,scratch.height).data;const seen=new Set();for(let i=0;i<data.length;i+=4*997)seen.add(data[i]+","+data[i+1]+","+data[i+2]);colors=seen.size;}const loading=document.getElementById("bpsim-rc2-loading");const renderer=window.bpsimRc2Mode.renderer;return {colors,sample,bufferW,bufferH,cssW:Math.round(rect.width),cssH:Math.round(rect.height),gl:!!gl,contextLost:gl?gl.isContextLost():null,items:renderer&&renderer.items?renderer.items.length:null,camera:renderer&&renderer.camera,frameDelta:secondFrame-firstFrame,stats,loadingVisible:!loading.hidden&&getComputedStyle(loading).display!=="none"};})()`);

@@ -21,6 +21,29 @@ using Unity.Physics.Systems;
 
 namespace Bpsim.Physics.Anvil
 {
+	public readonly struct AnvilCollisionTag
+	{
+		public readonly int Group;
+		public readonly byte Layer;
+		public readonly bool IsHalf;
+
+		public AnvilCollisionTag(int group, byte layer, bool isHalf)
+		{
+			Group = group;
+			Layer = layer;
+			IsHalf = isHalf;
+		}
+
+		internal ulong Packed => (uint)Group | ((ulong)Layer << 32) | ((IsHalf ? 1UL : 0UL) << 40);
+
+		public bool Allows(AnvilCollisionTag other)
+		{
+			if (!IsHalf && !other.IsHalf) return true;
+			if (IsHalf != other.IsHalf && Group != 0 && Group == other.Group) return false;
+			return Layer == 0 || other.Layer == 0 || Layer == other.Layer;
+		}
+	}
+
 	public unsafe class AnvilWorld : IDisposable
 	{
 		const int k_MinCapacity = 256;
@@ -32,6 +55,10 @@ namespace Bpsim.Physics.Anvil
 		static b3BodyDef s_BodyDef;
 		static b3ShapeDef s_ShapeDef;
 		static b3WeldJointDef s_WeldJointDef;
+		static b3DistanceJointDef s_DistanceJointDef;
+		static b3RevoluteJointDef s_RevoluteJointDef;
+		static b3PrismaticJointDef s_PrismaticJointDef;
+		static b3SphericalJointDef s_SphericalJointDef;
 		static bool s_DefsCached;
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		delegate float MaterialCombineCallback(float valueA, ulong materialA, float valueB, ulong materialB);
@@ -46,6 +73,10 @@ namespace Bpsim.Physics.Anvil
 			s_BodyDef = AnvilNative.b3DefaultBodyDef();
 			s_ShapeDef = AnvilNative.b3DefaultShapeDef();
 			s_WeldJointDef = AnvilNative.b3DefaultWeldJointDef();
+			s_DistanceJointDef = AnvilNative.b3DefaultDistanceJointDef();
+			s_RevoluteJointDef = AnvilNative.b3DefaultRevoluteJointDef();
+			s_PrismaticJointDef = AnvilNative.b3DefaultPrismaticJointDef();
+			s_SphericalJointDef = AnvilNative.b3DefaultSphericalJointDef();
 			s_WorldDef.frictionCallback = Marshal.GetFunctionPointerForDelegate(s_FrictionMixer);
 			s_WorldDef.restitutionCallback = Marshal.GetFunctionPointerForDelegate(s_RestitutionMixer);
 			s_DefsCached = true;
@@ -81,6 +112,7 @@ namespace Bpsim.Physics.Anvil
 		NativeArray<IntPtr> m_MotionColliders;
 		NativeArray<float> m_MotionScales;
 		NativeArray<byte> m_MotionColliderVersions;
+		NativeArray<ulong> m_MotionCollisionTags;
 		NativeArray<MotionProperties> m_MotionProperties;
 		NativeArray<byte> m_PendingDamping;
 
@@ -89,6 +121,7 @@ namespace Bpsim.Physics.Anvil
 		NativeArray<IntPtr> m_StaticColliders;
 		NativeArray<float> m_StaticScales;
 		NativeArray<byte> m_StaticColliderVersions;
+		NativeArray<ulong> m_StaticCollisionTags;
 		NativeArray<RigidTransform> m_StaticTransforms;
 		List<IntPtr>[] m_StaticMeshHandles = Array.Empty<List<IntPtr>>();
 		int m_BuildingStaticIndex = -1;
@@ -138,11 +171,14 @@ namespace Bpsim.Physics.Anvil
 
 		// 关节：索引对齐 PhysicsWorld.Joints（BodyPair 语义见 PhysicsWorldBuilder）
 		NativeArray<b3JointId> m_JointIds;
+		NativeArray<byte> m_ValidJointSlots;
 		NativeArray<JointSettings> m_JointSettings;
 		NativeArray<Joint> m_JointDescriptors;
+		NativeArray<byte> m_JointEventMasks;
 		NativeArray<float3> m_JointLinearImpulse;
 		NativeArray<float3> m_JointAngularImpulse;
 		int m_JointCount;
+		bool m_JointBodiesChanged;
 		readonly Dictionary<ulong, FrameContact> m_FrameContacts = new Dictionary<ulong, FrameContact>(ContactPairComparer.Instance);
 		bool m_HasSubStepContacts;
 
@@ -171,7 +207,10 @@ namespace Bpsim.Physics.Anvil
 			public b3BodyId BodyA, BodyB;
 			public Entity Entity;
 			public byte Version, EnableCollision, EventMask;
+			public JointType Type;
+			public ConstraintBlock3 Atoms;
 			public Constraint Linear, Angular;
+			public float3 LinearImpulseThreshold, AngularImpulseThreshold;
 			public bool HasLinear, HasAngular;
 			public RigidTransform FrameA, FrameB;
 
@@ -179,9 +218,22 @@ namespace Bpsim.Physics.Anvil
 			public bool NeedsAngularEvents => (EventMask & 2) != 0;
 			public bool Matches(in JointSettings other) => SameBody(BodyA, other.BodyA) && SameBody(BodyB, other.BodyB)
 				&& Entity == other.Entity && Version == other.Version && EnableCollision == other.EnableCollision
+				&& Type == other.Type && SameAtoms(Atoms, other.Atoms)
 				&& FrameA.Equals(other.FrameA) && FrameB.Equals(other.FrameB)
 				&& HasLinear == other.HasLinear && HasAngular == other.HasAngular
-				&& (!HasLinear || Linear.Equals(other.Linear)) && (!HasAngular || Angular.Equals(other.Angular));
+				&& (!HasLinear || Linear.Equals(other.Linear)) && (!HasAngular || Angular.Equals(other.Angular))
+				&& LinearImpulseThreshold.Equals(other.LinearImpulseThreshold)
+				&& AngularImpulseThreshold.Equals(other.AngularImpulseThreshold);
+
+			static bool SameAtoms(ConstraintBlock3 first, ConstraintBlock3 second)
+			{
+				FixedList512Bytes<Constraint> a = first.GetConstraints();
+				FixedList512Bytes<Constraint> b = second.GetConstraints();
+				if (a.Length != b.Length) return false;
+				for (int i = 0; i < a.Length; i++)
+					if (!a[i].Equals(b[i])) return false;
+				return true;
+			}
 		}
 
 		struct FrameContact
@@ -200,8 +252,12 @@ namespace Bpsim.Physics.Anvil
 		public float ContactDampingRatio = 10f;
 		public bool EnableSleep = true;
 		public bool EnableContinuous = true;
+		public bool WarmStartingEnabled { get; private set; } = true;
 
 		public bool IsCreated => m_Created;
+		public static int NativeBridgeVersion => AnvilNative.BridgeVersion;
+		public static bool SupportsCollisionTags => IntPtr.Size == 8 && NativeBridgeVersion >= 4;
+		public bool UsedIntegratedSubsteps { get; private set; }
 		public b3WorldId WorldId => m_WorldId;
 
 		/// <summary>当前是否持有 body；模拟间动态体清零时用于判定是否需要整体重建。</summary>
@@ -233,6 +289,8 @@ namespace Bpsim.Physics.Anvil
 				throw new InvalidOperationException("Anvil: b3CreateWorld failed (box3d.dll missing or ABI mismatch).");
 
 			m_Created = true;
+			if (!WarmStartingEnabled) AnvilNative.b3World_EnableWarmStarting(m_WorldId, 0);
+			if (SupportsCollisionTags) AnvilNative.anvil_EnableCollisionTags(m_WorldId);
 		}
 
 		public void Destroy()
@@ -263,6 +321,7 @@ namespace Bpsim.Physics.Anvil
 			DisposeArray(ref m_MotionColliders);
 			DisposeArray(ref m_MotionScales);
 			DisposeArray(ref m_MotionColliderVersions);
+			DisposeArray(ref m_MotionCollisionTags);
 			DisposeArray(ref m_MotionProperties);
 			DisposeArray(ref m_PendingDamping);
 			DisposeArray(ref m_StaticBodies);
@@ -270,6 +329,7 @@ namespace Bpsim.Physics.Anvil
 			DisposeArray(ref m_StaticColliders);
 			DisposeArray(ref m_StaticScales);
 			DisposeArray(ref m_StaticColliderVersions);
+			DisposeArray(ref m_StaticCollisionTags);
 			DisposeArray(ref m_StaticTransforms);
 			DisposeArray(ref m_ScratchTransforms);
 			DisposeArray(ref m_ScratchLinear);
@@ -303,6 +363,13 @@ namespace Bpsim.Physics.Anvil
 			if (m_Created) AnvilNative.b3World_SetWorkerCount(m_WorldId, WorkerCount);
 		}
 
+		public void SetWarmStarting(bool enabled)
+		{
+			if (WarmStartingEnabled == enabled) return;
+			if (m_Created) AnvilNative.b3World_EnableWarmStarting(m_WorldId, enabled ? (byte)1 : (byte)0);
+			WarmStartingEnabled = enabled;
+		}
+
 		// ── 容量 ────────────────────────────────────────────────────────────────
 
 		void EnsureMotionCapacity(int needed)
@@ -314,6 +381,7 @@ namespace Bpsim.Physics.Anvil
 			Grow(ref m_MotionColliders, capacity);
 			Grow(ref m_MotionScales, capacity);
 			Grow(ref m_MotionColliderVersions, capacity);
+			Grow(ref m_MotionCollisionTags, capacity);
 			Grow(ref m_MotionProperties, capacity);
 			Grow(ref m_PendingDamping, capacity);
 			Grow(ref m_ScratchTransforms, capacity);
@@ -339,6 +407,7 @@ namespace Bpsim.Physics.Anvil
 			Grow(ref m_StaticColliders, capacity);
 			Grow(ref m_StaticScales, capacity);
 			Grow(ref m_StaticColliderVersions, capacity);
+			Grow(ref m_StaticCollisionTags, capacity);
 			Grow(ref m_StaticTransforms, capacity);
 			Array.Resize(ref m_StaticMeshHandles, capacity);
 		}
@@ -375,9 +444,10 @@ namespace Bpsim.Physics.Anvil
 		/// 把当前 PhysicsWorld 的刚体集合与运动状态送进 box3d。返回被复用的动态体数量。
 		/// 必须在 box3d step 之前调用（即 BuildPhysicsWorld 之后）。
 		/// </summary>
-		public int SyncToNative(ref PhysicsWorld world)
+		public int SyncToNative(ref PhysicsWorld world, Func<Entity, AnvilCollisionTag> getCollisionTag = null)
 		{
 			if (!m_Created) Create();
+			if (!SupportsCollisionTags) getCollisionTag = null;
 
 			int numDynamic = world.NumDynamicBodies;
 			int numStatic = world.NumStaticBodies;
@@ -407,6 +477,7 @@ namespace Bpsim.Physics.Anvil
 			IntPtr* motionColliders = (IntPtr*)m_MotionColliders.GetUnsafePtr();
 			float* motionScales = (float*)m_MotionScales.GetUnsafePtr();
 			byte* motionColliderVersions = (byte*)m_MotionColliderVersions.GetUnsafePtr();
+			ulong* motionCollisionTags = (ulong*)m_MotionCollisionTags.GetUnsafePtr();
 			MotionProperties* properties = (MotionProperties*)m_MotionProperties.GetUnsafePtr();
 			byte* pendingDamping = (byte*)m_PendingDamping.GetUnsafePtr();
 			b3WorldTransform* scratchTransforms = (b3WorldTransform*)m_ScratchTransforms.GetUnsafePtr();
@@ -421,10 +492,16 @@ namespace Bpsim.Physics.Anvil
 				IntPtr colliderPtr = body.Collider.IsCreated ? (IntPtr)body.Collider.GetUnsafePtr() : IntPtr.Zero;
 				byte colliderVersion = colliderPtr == IntPtr.Zero ? (byte)0 : ((ColliderHeader*)colliderPtr)->Version;
 				MotionProperties current = new MotionProperties(motionDatas[i], motionVelocities[i]);
+				ulong collisionTag = getCollisionTag?.Invoke(body.Entity).Packed ?? 0UL;
 
 				if (!motionBodies[i].IsNull && motionEntities[i] == body.Entity && motionColliders[i] == colliderPtr
 					&& motionScales[i] == body.Scale && motionColliderVersions[i] == colliderVersion)
 				{
+					if (motionCollisionTags[i] != collisionTag)
+					{
+						AnvilNative.anvil_SetBodyCollisionTag(m_WorldId, motionBodies[i], collisionTag, 1);
+						motionCollisionTags[i] = collisionTag;
+					}
 					bool massChanged = !current.HasSameMass(properties[i]);
 					if (current.IsKinematic != properties[i].IsKinematic)
 						AnvilNative.b3Body_SetType(motionBodies[i], (int)(current.IsKinematic ? b3BodyType.b3_kinematicBody : b3BodyType.b3_dynamicBody));
@@ -466,12 +543,14 @@ namespace Bpsim.Physics.Anvil
 				}
 
 				b3BodyId id = CreateDynamicBody(body, motionDatas[i], motionVelocities[i]);
+				if (collisionTag != 0) AnvilNative.anvil_SetBodyCollisionTag(m_WorldId, id, collisionTag, 0);
 				topologyChanged = true;
 				motionBodies[i] = id;
 				motionEntities[i] = body.Entity;
 				motionColliders[i] = colliderPtr;
 				motionScales[i] = body.Scale;
 				motionColliderVersions[i] = colliderVersion;
+				motionCollisionTags[i] = collisionTag;
 				properties[i] = current;
 				pendingDamping[i] = 0;
 
@@ -499,6 +578,7 @@ namespace Bpsim.Physics.Anvil
 			IntPtr* staticColliders = (IntPtr*)m_StaticColliders.GetUnsafePtr();
 			float* staticScales = (float*)m_StaticScales.GetUnsafePtr();
 			byte* staticColliderVersions = (byte*)m_StaticColliderVersions.GetUnsafePtr();
+			ulong* staticCollisionTags = (ulong*)m_StaticCollisionTags.GetUnsafePtr();
 			RigidTransform* staticTransforms = (RigidTransform*)m_StaticTransforms.GetUnsafePtr();
 
 			for (int i = 0; i < numStatic; i++)
@@ -506,9 +586,15 @@ namespace Bpsim.Physics.Anvil
 				RigidBody body = staticBodies[i];
 				IntPtr colliderPtr = body.Collider.IsCreated ? (IntPtr)body.Collider.GetUnsafePtr() : IntPtr.Zero;
 				byte colliderVersion = colliderPtr == IntPtr.Zero ? (byte)0 : ((ColliderHeader*)colliderPtr)->Version;
+				ulong collisionTag = getCollisionTag?.Invoke(body.Entity).Packed ?? 0UL;
 				if (!staticBodyIds[i].IsNull && staticEntities[i] == body.Entity && staticColliders[i] == colliderPtr
 					&& staticScales[i] == body.Scale && staticColliderVersions[i] == colliderVersion)
 				{
+					if (staticCollisionTags[i] != collisionTag)
+					{
+						AnvilNative.anvil_SetBodyCollisionTag(m_WorldId, staticBodyIds[i], collisionTag, 1);
+						staticCollisionTags[i] = collisionTag;
+					}
 					if (!staticTransforms[i].Equals(body.WorldFromBody))
 					{
 						AnvilNative.b3Body_SetTransform(staticBodyIds[i], ToVec3(body.WorldFromBody.pos), ToQuat(body.WorldFromBody.rot));
@@ -526,12 +612,14 @@ namespace Bpsim.Physics.Anvil
 				}
 
 				b3BodyId id = CreateStaticBody(body, i);
+				if (collisionTag != 0) AnvilNative.anvil_SetBodyCollisionTag(m_WorldId, id, collisionTag, 0);
 				topologyChanged = true;
 				staticBodyIds[i] = id;
 				staticEntities[i] = body.Entity;
 				staticColliders[i] = colliderPtr;
 				staticScales[i] = body.Scale;
 				staticColliderVersions[i] = colliderVersion;
+				staticCollisionTags[i] = collisionTag;
 				staticTransforms[i] = body.WorldFromBody;
 			}
 
@@ -566,6 +654,7 @@ namespace Bpsim.Physics.Anvil
 			m_StaticCount = numStatic;
 			if (topologyChanged)
 			{
+				m_JointBodiesChanged = true;
 				// Native IDs are pool handles, not PhysicsWorld array ordinals (F108).
 				m_NativeBodyIndices.Clear();
 				for (int i = 0; i < numDynamic; i++)
@@ -1002,43 +1091,70 @@ namespace Bpsim.Physics.Anvil
 			// buffer once here instead of repeating NativeArray safety checks per joint/substep.
 			b3JointId* jointIds = m_JointCount > 0 ? (b3JointId*)m_JointIds.GetUnsafePtr() : null;
 			JointSettings* jointSettings = m_JointCount > 0 ? (JointSettings*)m_JointSettings.GetUnsafePtr() : null;
+			byte* eventMasks = m_JointCount > 0 ? (byte*)m_JointEventMasks.GetUnsafePtr() : null;
 			float3* linearImpulses = m_JointCount > 0 ? (float3*)m_JointLinearImpulse.GetUnsafePtr() : null;
 			float3* angularImpulses = m_JointCount > 0 ? (float3*)m_JointAngularImpulse.GetUnsafePtr() : null;
 			b3Profile profile = default;
+			UsedIntegratedSubsteps = false;
+			if (NativeBridgeVersion == 3 && m_HasSubStepContacts)
+			{
+				int contactCount = AnvilNative.anvil_TryStepIntegrated(m_WorldId, timeStep, SubStepCount, jointIds, eventMasks, m_JointCount,
+					(b3Vec3*)linearImpulses, (b3Vec3*)angularImpulses, &profile);
+				if (contactCount >= 0)
+				{
+					UsedIntegratedSubsteps = true;
+					if (contactCount > 0) CollectSubStepContacts(contactCount);
+					return profile;
+				}
+			}
 			float h = timeStep / SubStepCount;
+			bool batched = NativeBridgeVersion >= 1;
 			for (int subStep = 0; subStep < SubStepCount; subStep++)
 			{
 				b3Profile subProfile;
-				AnvilNative.anvil_StepProfile(m_WorldId, h, 1, &subProfile);
+				if (batched)
+				{
+					int contactCount = AnvilNative.anvil_StepAndAccumulate(m_WorldId, h, jointIds, eventMasks, m_JointCount,
+						(b3Vec3*)linearImpulses, (b3Vec3*)angularImpulses, &subProfile);
+					if (m_HasSubStepContacts && contactCount > 0) CollectSubStepContacts(contactCount);
+				}
+				else
+				{
+					AnvilNative.anvil_StepProfile(m_WorldId, h, 1, &subProfile);
+					AccumulateJointImpulses(h, jointIds, jointSettings, linearImpulses, angularImpulses);
+					if (m_HasSubStepContacts) CollectSubStepContacts(AnvilNative.b3World_GetCounters(m_WorldId).contactCount);
+				}
 				float* total = (float*)&profile;
 				float* sample = (float*)&subProfile;
 				for (int i = 0; i < sizeof(b3Profile) / sizeof(float); i++) total[i] += sample[i];
-				for (int i = 0; i < m_JointCount; i++)
-				{
-					b3JointId id = jointIds[i];
-					if (id.IsNull) continue;
-					ref JointSettings settings = ref jointSettings[i];
-					// Native getters return reaction force = impulse / h. Sum impulses,
-					// not peak substep forces, so solver substeps cannot change break strength.
-					if (settings.NeedsLinearEvents)
-					{
-						b3Vec3 force = AnvilNative.b3Joint_GetConstraintForce(id);
-						linearImpulses[i] += new float3(force.x, force.y, force.z) * h;
-					}
-					if (settings.NeedsAngularEvents)
-					{
-						b3Vec3 torque = AnvilNative.b3Joint_GetConstraintTorque(id);
-						angularImpulses[i] += new float3(torque.x, torque.y, torque.z) * h;
-					}
-				}
-				if (m_HasSubStepContacts) CollectSubStepContacts();
 			}
 			return profile;
 		}
 
-		void CollectSubStepContacts()
+		void AccumulateJointImpulses(float h, b3JointId* jointIds, JointSettings* jointSettings,
+			float3* linearImpulses, float3* angularImpulses)
 		{
-			EnsureContactCapacity(math.max(64, AnvilNative.b3World_GetCounters(m_WorldId).contactCount));
+			for (int i = 0; i < m_JointCount; i++)
+			{
+				b3JointId id = jointIds[i];
+				if (id.IsNull) continue;
+				ref JointSettings settings = ref jointSettings[i];
+				if (settings.NeedsLinearEvents)
+				{
+					b3Vec3 force = AnvilNative.b3Joint_GetConstraintForce(id);
+					linearImpulses[i] += new float3(force.x, force.y, force.z) * h;
+				}
+				if (settings.NeedsAngularEvents)
+				{
+					b3Vec3 torque = AnvilNative.b3Joint_GetConstraintTorque(id);
+					angularImpulses[i] += new float3(torque.x, torque.y, torque.z) * h;
+				}
+			}
+		}
+
+		void CollectSubStepContacts(int contactCount)
+		{
+			EnsureContactCapacity(math.max(64, contactCount));
 			b3AnvilContact* contacts = (b3AnvilContact*)m_ScratchContacts.GetUnsafePtr();
 			int count = AnvilNative.anvil_CollectAllContacts(m_WorldId, contacts, m_ScratchContacts.Length);
 			for (int i = 0; i < count; i++)
@@ -1246,8 +1362,10 @@ namespace Bpsim.Physics.Anvil
 			if (m_JointIds.IsCreated && m_JointIds.Length >= needed) return;
 			int capacity = math.max(k_MinCapacity, math.ceilpow2(math.max(1, needed)));
 			Grow(ref m_JointIds, capacity);
+			if (NativeBridgeVersion >= 4) Grow(ref m_ValidJointSlots, capacity);
 			Grow(ref m_JointSettings, capacity);
 			Grow(ref m_JointDescriptors, capacity);
+			Grow(ref m_JointEventMasks, capacity);
 			Grow(ref m_JointLinearImpulse, capacity);
 			Grow(ref m_JointAngularImpulse, capacity);
 		}
@@ -1263,19 +1381,16 @@ namespace Bpsim.Physics.Anvil
 				}
 			}
 			DisposeArray(ref m_JointIds);
+			DisposeArray(ref m_ValidJointSlots);
 			DisposeArray(ref m_JointSettings);
 			DisposeArray(ref m_JointDescriptors);
+			DisposeArray(ref m_JointEventMasks);
 			DisposeArray(ref m_JointLinearImpulse);
 			DisposeArray(ref m_JointAngularImpulse);
 			m_JointCount = 0;
 		}
 
-		/// <summary>
-		/// 把 PhysicsWorld.Joints（全是 fixed/weld：bpsim 只生成 PhysicsJoint.CreateFixed）
-		/// 同步成 box3d 的 b3_weldJoint。索引对齐 Joints 数组，BodyPair 里 >= NumDynamicBodies
-		/// 的索引按 PhysicsWorldBuilder 的约定是静态体（index - NumDynamicBodies）。
-		/// </summary>
-		public int SyncJointsToNative(ref PhysicsWorld world, float timeStep)
+		public int SyncJointsToNative(ref PhysicsWorld world, float timeStep, EntityManager? entityManager = null)
 		{
 			if (!m_Created) Create();
 
@@ -1290,13 +1405,22 @@ namespace Bpsim.Physics.Anvil
 			b3JointId* jointIds = (b3JointId*)m_JointIds.GetUnsafePtr();
 			JointSettings* settings = (JointSettings*)m_JointSettings.GetUnsafePtr();
 			Joint* descriptors = (Joint*)m_JointDescriptors.GetUnsafePtr();
+			byte* eventMasks = (byte*)m_JointEventMasks.GetUnsafePtr();
 			b3BodyId* motionBodies = m_MotionBodies.IsCreated ? (b3BodyId*)m_MotionBodies.GetUnsafePtr() : null;
 			b3BodyId* staticBodies = m_StaticBodies.IsCreated ? (b3BodyId*)m_StaticBodies.GetUnsafePtr() : null;
 			int motionCapacity = m_MotionBodies.Length, staticCapacity = m_StaticBodies.Length;
+			byte* valid = m_ValidJointSlots.IsCreated ? (byte*)m_ValidJointSlots.GetUnsafePtr() : null;
+			if (valid != null && numJoints > 0)
+			{
+				AnvilNative.anvil_ValidateJoints(m_WorldId, jointIds, numJoints, valid);
+				if (!m_JointBodiesChanged && numJoints == m_JointCount && AreAllJointSlotsValid(valid, numJoints)
+					&& UnsafeUtility.MemCmp(joints, descriptors, (long)numJoints * sizeof(Joint)) == 0)
+					return numJoints;
+			}
 
 			for (int i = 0; i < numJoints; i++)
 			{
-				Joint joint = joints[i];
+				ref readonly Joint joint = ref joints[i];
 				int indexA = joint.BodyPair.BodyIndexA;
 				int indexB = joint.BodyPair.BodyIndexB;
 
@@ -1309,6 +1433,12 @@ namespace Bpsim.Physics.Anvil
 
 				b3BodyId bodyA = BodyIdForIndex(indexA, numDynamic, numStatic, motionBodies, staticBodies, motionCapacity, staticCapacity);
 				b3BodyId bodyB = BodyIdForIndex(indexB, numDynamic, numStatic, motionBodies, staticBodies, motionCapacity, staticCapacity);
+				bool jointValid = valid != null ? valid[i] != 0 : !jointIds[i].IsNull && AnvilNative.b3Joint_IsValid(jointIds[i]) != 0;
+				// Box3D destroys attached joints when either body is destroyed.
+				if (jointValid && SameBody(settings[i].BodyA, bodyA) && SameBody(settings[i].BodyB, bodyB)
+					&& UnsafeUtility.MemCmp(joints + i, descriptors + i, sizeof(Joint)) == 0)
+					continue;
+
 				if (bodyA.IsNull || bodyB.IsNull
 					|| AnvilNative.b3Body_IsValid(bodyA) == 0
 					|| AnvilNative.b3Body_IsValid(bodyB) == 0)
@@ -1317,25 +1447,15 @@ namespace Bpsim.Physics.Anvil
 					continue;
 				}
 
-				// Joint/ConstraintBlock3 contain only inline value data, not self-relative
-				// collider blobs. Exact source bytes include frames, atoms, thresholds,
-				// collision, version and entity. Keep all native validity/generation checks.
-				if (!jointIds[i].IsNull && AnvilNative.b3Joint_IsValid(jointIds[i]) != 0
-					&& SameBody(settings[i].BodyA, bodyA) && SameBody(settings[i].BodyB, bodyB)
-					&& UnsafeUtility.MemCmp(joints + i, descriptors + i, sizeof(Joint)) == 0)
-					continue;
-
-				JointSettings current = ReadJointSettings(joint, bodyA, bodyB);
-				if (!jointIds[i].IsNull
-					&& AnvilNative.b3Joint_IsValid(jointIds[i]) != 0
-					&& settings[i].Matches(current))
+				JointType jointType = ResolveJointType(joint, entityManager);
+				JointSettings current = ReadJointSettings(joint, bodyA, bodyB, jointType);
+				if (jointValid && settings[i].Matches(current))
 				{
 					UnsafeUtility.MemCpy(descriptors + i, joints + i, sizeof(Joint));
 					continue;
 				}
 
-				if (!jointIds[i].IsNull && AnvilNative.b3Joint_IsValid(jointIds[i]) != 0
-					&& settings[i].EnableCollision != current.EnableCollision)
+				if (jointValid && settings[i].EnableCollision != current.EnableCollision)
 				{
 					// Recreating a weld alone does not refilter unmoved shape proxies.
 					// The setter queues new pairs on enable and removes old contacts on disable.
@@ -1343,48 +1463,11 @@ namespace Bpsim.Physics.Anvil
 				}
 				DestroyJointAt(i);
 
-				b3WeldJointDef def = s_WeldJointDef;
-				def.baseDef.bodyIdA = bodyA;
-				def.baseDef.bodyIdB = bodyB;
-				// 方向约定（两个引擎一致，直接赋值）：
-				//   Unity.Physics 的 AFromJoint = "A from joint"，即把 joint 空间的点映射到 body A 空间，
-				//     也就是 joint frame 在 body A 局部空间里的位姿；
-				//   box3d 的 localFrameA 在 weld_joint.c 里这样用：
-				//     frameA.q = bodyA.q * localFrameA.q; frameA.p = rotate(bodyA.q, localFrameA.p - centerA)
-				//   同样是「joint frame 在 body A 局部空间里的位姿」。
-				// 两者语义相同 → 直接赋值；取逆会让锚点镜像到 body 另一侧，部件会被拽穿地面。
-				def.baseDef.localFrameA = ToTransform(joint.AFromJoint);
-				def.baseDef.localFrameB = ToTransform(joint.BFromJoint);
-				// Native scalar/magnitude force thresholds are not Unity's per-component
-				// impulse thresholds. Evaluate full-frame impulses in CollectJointEvents instead.
-				def.baseDef.forceThreshold = float.MaxValue;
-				def.baseDef.torqueThreshold = float.MaxValue;
-				def.baseDef.collideConnected = (byte)(joint.EnableCollision != 0 ? 1 : 0);
-				// Weld hertz=0 means fallback, not "most rigid". Use authored springs directly;
-				// a missing/zero-frequency atom falls back to zero softness (disabled), not 60 Hz.
-				def.baseDef.constraintHertz = 0f;
-				def.linearHertz = current.HasLinear ? current.Linear.SpringFrequency : 0f;
-				def.angularHertz = current.HasAngular ? current.Angular.SpringFrequency : 0f;
-				def.linearDampingRatio = current.HasLinear ? current.Linear.SpringDamping : 0f;
-				def.angularDampingRatio = current.HasAngular ? current.Angular.SpringDamping : 0f;
-				if (current.HasLinear && current.HasAngular
-					&& current.Linear.SpringFrequency == Constraint.DefaultSpringFrequency
-					&& current.Angular.SpringFrequency == Constraint.DefaultSpringFrequency
-					&& current.Linear.SpringDamping == Constraint.DefaultSpringDamping
-					&& current.Angular.SpringDamping == Constraint.DefaultSpringDamping)
-				{
-					// Unity's enormous default constants encode its per-iteration rigid constraint,
-					// not a physical 74 kHz spring. Native positive hertz keeps bias enabled even in
-					// the relaxation pass, which pumps energy into off-centre rigid assemblies.
-					def.baseDef.constraintHertz = s_WeldJointDef.baseDef.constraintHertz;
-					def.baseDef.constraintDampingRatio = s_WeldJointDef.baseDef.constraintDampingRatio;
-					def.linearHertz = def.angularHertz = 0f;
-				}
-
-				b3JointId id = AnvilNative.b3CreateWeldJoint(m_WorldId, ref def);
-				if (id.IsNull) throw new InvalidOperationException("Anvil: weld creation failed for " + joint.Entity);
+				b3JointId id = CreateNativeJoint(current, bodyA, bodyB);
+				if (id.IsNull) throw new InvalidOperationException("Anvil: " + current.Type + " joint creation failed for " + joint.Entity);
 				jointIds[i] = id;
 				settings[i] = current;
+				eventMasks[i] = current.EventMask;
 				UnsafeUtility.MemCpy(descriptors + i, joints + i, sizeof(Joint));
 			}
 
@@ -1395,42 +1478,281 @@ namespace Bpsim.Physics.Anvil
 			}
 
 			m_JointCount = numJoints;
+			m_JointBodiesChanged = false;
 			return numJoints;
 		}
 
-		static JointSettings ReadJointSettings(in Joint joint, b3BodyId bodyA, b3BodyId bodyB)
+		static bool AreAllJointSlotsValid(byte* valid, int count)
+		{
+			int slot = 0;
+			for (; slot <= count - sizeof(ulong); slot += sizeof(ulong))
+				if (*(ulong*)(valid + slot) != 0x0101010101010101UL) return false;
+			for (; slot < count; slot++)
+				if (valid[slot] == 0) return false;
+			return true;
+		}
+
+		static JointType ResolveJointType(in Joint joint, EntityManager? entityManager)
+		{
+			if (entityManager.HasValue)
+			{
+				EntityManager manager = entityManager.Value;
+				if (manager.Exists(joint.Entity) && manager.HasComponent<PhysicsJoint>(joint.Entity))
+				{
+					JointType type = manager.GetComponentData<PhysicsJoint>(joint.Entity).JointType;
+					if (type != JointType.Custom) return type;
+				}
+			}
+			return InferJointType(joint.Constraints.GetConstraints());
+		}
+
+		static JointType InferJointType(FixedList512Bytes<Constraint> atoms)
+		{
+			if (atoms.Length == 1)
+			{
+				Constraint atom = atoms[0];
+				if (IsAtom(atom, ConstraintType.Linear, new bool3(true), false)
+					&& atom.Min >= 0f && atom.Max > 0f)
+					return JointType.LimitedDistance;
+			}
+
+			if (atoms.Length == 2)
+			{
+				if (HasAtom(atoms, ConstraintType.Linear, new bool3(true), true)
+					&& HasAtom(atoms, ConstraintType.Angular, new bool3(true), true))
+					return JointType.Fixed;
+				if (HasAtom(atoms, ConstraintType.Linear, new bool3(true), true)
+					&& HasAtom(atoms, ConstraintType.Angular, new bool3(false, true, true), true))
+					return JointType.Hinge;
+			}
+
+			if (atoms.Length == 3)
+			{
+				if (HasAtom(atoms, ConstraintType.Linear, new bool3(true), true)
+					&& HasAtom(atoms, ConstraintType.Angular, new bool3(true, false, false), false)
+					&& HasAtom(atoms, ConstraintType.Angular, new bool3(false, true, true), true))
+					return JointType.LimitedHinge;
+				if (HasAtom(atoms, ConstraintType.Angular, new bool3(true), true)
+					&& HasAtom(atoms, ConstraintType.Linear, new bool3(true, false, false), false)
+					&& HasAtom(atoms, ConstraintType.Linear, new bool3(false, true, true), true))
+					return JointType.Prismatic;
+			}
+
+			return JointType.Custom;
+		}
+
+		static bool HasAtom(FixedList512Bytes<Constraint> atoms, ConstraintType type, bool3 axes, bool zeroRange)
+		{
+			for (int i = 0; i < atoms.Length; i++)
+				if (IsAtom(atoms[i], type, axes, zeroRange)) return true;
+			return false;
+		}
+
+		static bool IsAtom(Constraint atom, ConstraintType type, bool3 axes, bool zeroRange) =>
+			atom.Type == type && atom.ConstrainedAxes.Equals(axes)
+			&& (!zeroRange || (atom.Min == 0f && atom.Max == 0f));
+
+		static Constraint FindAtom(in JointSettings settings, ConstraintType type, bool3 axes)
+		{
+			FixedList512Bytes<Constraint> atoms = settings.Atoms.GetConstraints();
+			for (int i = 0; i < atoms.Length; i++)
+				if (atoms[i].Type == type && atoms[i].ConstrainedAxes.Equals(axes)) return atoms[i];
+			throw new InvalidOperationException("Anvil: validated joint atom disappeared for " + settings.Entity);
+		}
+
+		static JointSettings ReadJointSettings(in Joint joint, b3BodyId bodyA, b3BodyId bodyB, JointType type)
 		{
 			var settings = new JointSettings
 			{
 				BodyA = bodyA, BodyB = bodyB, Entity = joint.Entity, Version = joint.Version,
-				EnableCollision = joint.EnableCollision,
+				EnableCollision = joint.EnableCollision, Type = type, Atoms = joint.Constraints,
+				LinearImpulseThreshold = new float3(float.PositiveInfinity),
+				AngularImpulseThreshold = new float3(float.PositiveInfinity),
 				FrameA = new RigidTransform(new quaternion(joint.AFromJoint.Rotation), joint.AFromJoint.Translation),
 				FrameB = new RigidTransform(new quaternion(joint.BFromJoint.Rotation), joint.BFromJoint.Translation)
 			};
-			var atoms = joint.Constraints.GetConstraints();
+			FixedList512Bytes<Constraint> atoms = joint.Constraints.GetConstraints();
 			for (int i = 0; i < atoms.Length; i++)
 			{
-				Constraint c = atoms[i];
-				if (!math.all(c.ConstrainedAxes) || c.Min != 0f || c.Max != 0f
-					|| !math.isfinite(c.SpringFrequency) || c.SpringFrequency < 0f
-					|| !math.isfinite(c.SpringDamping) || c.SpringDamping < 0f)
-					throw new NotSupportedException("Anvil: only fixed/fully locked joint atoms are supported: " + joint.Entity);
-				if (c.Type == ConstraintType.Linear && !settings.HasLinear)
+				Constraint atom = atoms[i];
+				if ((atom.Type != ConstraintType.Linear && atom.Type != ConstraintType.Angular)
+					|| !math.isfinite(atom.Min) || !math.isfinite(atom.Max) || atom.Min > atom.Max
+					|| !math.isfinite(atom.SpringFrequency) || atom.SpringFrequency < 0f
+					|| !math.isfinite(atom.SpringDamping) || atom.SpringDamping < 0f)
+					throw new NotSupportedException("Anvil: unsupported " + type + " joint atom on " + joint.Entity);
+
+				if (atom.Type == ConstraintType.Linear)
 				{
-					settings.Linear = c;
+					if (!settings.HasLinear) settings.Linear = atom;
 					settings.HasLinear = true;
+					bool3 finite = atom.ConstrainedAxes & math.isfinite(atom.MaxImpulse);
+					if (math.any(finite))
+					{
+						settings.LinearImpulseThreshold = math.select(settings.LinearImpulseThreshold,
+							math.min(settings.LinearImpulseThreshold, atom.MaxImpulse), finite);
+						settings.EventMask |= 1;
+					}
 				}
-				else if (c.Type == ConstraintType.Angular && !settings.HasAngular)
+				else
 				{
-					settings.Angular = c;
+					if (!settings.HasAngular) settings.Angular = atom;
 					settings.HasAngular = true;
+					bool3 finite = atom.ConstrainedAxes & math.isfinite(atom.MaxImpulse);
+					if (math.any(finite))
+					{
+						settings.AngularImpulseThreshold = math.select(settings.AngularImpulseThreshold,
+							math.min(settings.AngularImpulseThreshold, atom.MaxImpulse), finite);
+						settings.EventMask |= 2;
+					}
 				}
-				else throw new NotSupportedException("Anvil: unsupported joint atom instead of silently welding it: " + joint.Entity);
 			}
-			// Derive once per sync, including edits made without a joint-version increment.
-			if (settings.HasLinear && math.any(math.isfinite(settings.Linear.MaxImpulse))) settings.EventMask |= 1;
-			if (settings.HasAngular && math.any(math.isfinite(settings.Angular.MaxImpulse))) settings.EventMask |= 2;
+
+			if (!IsSupportedJointLayout(type, atoms))
+				throw new NotSupportedException("Anvil: unsupported " + type + " joint layout on " + joint.Entity);
 			return settings;
+		}
+
+		static bool IsSupportedJointLayout(JointType type, FixedList512Bytes<Constraint> atoms)
+		{
+			switch (type)
+			{
+				case JointType.Fixed:
+					return atoms.Length == 2
+						&& HasAtom(atoms, ConstraintType.Linear, new bool3(true), true)
+						&& HasAtom(atoms, ConstraintType.Angular, new bool3(true), true);
+				case JointType.BallAndSocket:
+					return atoms.Length == 1 && HasAtom(atoms, ConstraintType.Linear, new bool3(true), true);
+				case JointType.Hinge:
+					return atoms.Length == 2
+						&& HasAtom(atoms, ConstraintType.Linear, new bool3(true), true)
+						&& HasAtom(atoms, ConstraintType.Angular, new bool3(false, true, true), true);
+				case JointType.LimitedDistance:
+					return atoms.Length == 1 && HasAtom(atoms, ConstraintType.Linear, new bool3(true), false)
+						&& atoms[0].Min >= 0f;
+				case JointType.LimitedHinge:
+					return atoms.Length == 3
+						&& HasAtom(atoms, ConstraintType.Linear, new bool3(true), true)
+						&& HasAtom(atoms, ConstraintType.Angular, new bool3(true, false, false), false)
+						&& HasAtom(atoms, ConstraintType.Angular, new bool3(false, true, true), true);
+				case JointType.Prismatic:
+					return atoms.Length == 3
+						&& HasAtom(atoms, ConstraintType.Angular, new bool3(true), true)
+						&& HasAtom(atoms, ConstraintType.Linear, new bool3(true, false, false), false)
+						&& HasAtom(atoms, ConstraintType.Linear, new bool3(false, true, true), true);
+				default:
+					return false;
+			}
+		}
+
+		static void ConfigureJointBase(ref b3JointDef def, in JointSettings settings,
+			b3BodyId bodyA, b3BodyId bodyB, bool revoluteFrames)
+		{
+			def.bodyIdA = bodyA;
+			def.bodyIdB = bodyB;
+			def.localFrameA = revoluteFrames ? ToRevoluteTransform(settings.FrameA) : ToTransform(settings.FrameA);
+			def.localFrameB = revoluteFrames ? ToRevoluteTransform(settings.FrameB) : ToTransform(settings.FrameB);
+			def.forceThreshold = float.MaxValue;
+			def.torqueThreshold = float.MaxValue;
+			def.collideConnected = settings.EnableCollision;
+		}
+
+		static void ApplyJointTuning(ref b3JointDef def, Constraint atom)
+		{
+			if (atom.SpringFrequency == Constraint.DefaultSpringFrequency
+				&& atom.SpringDamping == Constraint.DefaultSpringDamping) return;
+			def.constraintHertz = atom.SpringFrequency;
+			def.constraintDampingRatio = atom.SpringDamping;
+		}
+
+		b3JointId CreateNativeJoint(in JointSettings settings, b3BodyId bodyA, b3BodyId bodyB)
+		{
+			switch (settings.Type)
+			{
+				case JointType.Fixed:
+				{
+					b3WeldJointDef def = s_WeldJointDef;
+					ConfigureJointBase(ref def.baseDef, settings, bodyA, bodyB, false);
+					def.baseDef.constraintHertz = 0f;
+					def.linearHertz = settings.HasLinear ? settings.Linear.SpringFrequency : 0f;
+					def.angularHertz = settings.HasAngular ? settings.Angular.SpringFrequency : 0f;
+					def.linearDampingRatio = settings.HasLinear ? settings.Linear.SpringDamping : 0f;
+					def.angularDampingRatio = settings.HasAngular ? settings.Angular.SpringDamping : 0f;
+					if (settings.HasLinear && settings.HasAngular
+						&& settings.Linear.SpringFrequency == Constraint.DefaultSpringFrequency
+						&& settings.Angular.SpringFrequency == Constraint.DefaultSpringFrequency
+						&& settings.Linear.SpringDamping == Constraint.DefaultSpringDamping
+						&& settings.Angular.SpringDamping == Constraint.DefaultSpringDamping)
+					{
+						def.baseDef.constraintHertz = s_WeldJointDef.baseDef.constraintHertz;
+						def.baseDef.constraintDampingRatio = s_WeldJointDef.baseDef.constraintDampingRatio;
+						def.linearHertz = def.angularHertz = 0f;
+					}
+					return AnvilNative.b3CreateWeldJoint(m_WorldId, ref def);
+				}
+				case JointType.BallAndSocket:
+				{
+					b3SphericalJointDef def = s_SphericalJointDef;
+					ConfigureJointBase(ref def.baseDef, settings, bodyA, bodyB, false);
+					ApplyJointTuning(ref def.baseDef, FindAtom(settings, ConstraintType.Linear, new bool3(true)));
+					def.enableSpring = 0;
+					def.enableConeLimit = 0;
+					def.enableTwistLimit = 0;
+					def.enableMotor = 0;
+					return AnvilNative.b3CreateSphericalJoint(m_WorldId, ref def);
+				}
+				case JointType.LimitedDistance:
+				{
+					Constraint range = FindAtom(settings, ConstraintType.Linear, new bool3(true));
+					b3DistanceJointDef def = s_DistanceJointDef;
+					ConfigureJointBase(ref def.baseDef, settings, bodyA, bodyB, false);
+					ApplyJointTuning(ref def.baseDef, range);
+					def.length = range.Min;
+					def.enableSpring = 1;
+					def.hertz = 0f;
+					def.dampingRatio = 0f;
+					def.enableLimit = 1;
+					def.minLength = range.Min;
+					def.maxLength = range.Max;
+					return AnvilNative.b3CreateDistanceJoint(m_WorldId, ref def);
+				}
+				case JointType.Hinge:
+				case JointType.LimitedHinge:
+				{
+					b3RevoluteJointDef def = s_RevoluteJointDef;
+					ConfigureJointBase(ref def.baseDef, settings, bodyA, bodyB, true);
+					def.enableSpring = 0;
+					if (settings.Type == JointType.LimitedHinge)
+					{
+						Constraint angle = FindAtom(settings, ConstraintType.Angular, new bool3(true, false, false));
+						ApplyJointTuning(ref def.baseDef, angle);
+						def.enableLimit = 1;
+						def.lowerAngle = -angle.Max;
+						def.upperAngle = -angle.Min;
+					}
+					return AnvilNative.b3CreateRevoluteJoint(m_WorldId, ref def);
+				}
+				case JointType.Prismatic:
+				{
+					Constraint range = FindAtom(settings, ConstraintType.Linear, new bool3(true, false, false));
+					b3PrismaticJointDef def = s_PrismaticJointDef;
+					ConfigureJointBase(ref def.baseDef, settings, bodyA, bodyB, false);
+					ApplyJointTuning(ref def.baseDef, range);
+					def.enableSpring = 0;
+					def.enableLimit = 1;
+					def.lowerTranslation = range.Min;
+					def.upperTranslation = range.Max;
+					return AnvilNative.b3CreatePrismaticJoint(m_WorldId, ref def);
+				}
+				default:
+					throw new NotSupportedException("Anvil: unsupported PhysicsJoint type " + settings.Type + " on " + settings.Entity);
+			}
+		}
+
+		static b3Transform ToRevoluteTransform(RigidTransform transform)
+		{
+			quaternion localAxisCorrection = quaternion.AxisAngle(new float3(0f, 1f, 0f), math.PI * 0.5f);
+			transform.rot = math.mul(transform.rot, localAxisCorrection);
+			return ToTransform(transform);
 		}
 
 		void DestroyJointAt(int i)
@@ -1444,6 +1766,7 @@ namespace Bpsim.Physics.Anvil
 			m_JointIds[i] = default;
 			m_JointSettings[i] = default;
 			m_JointDescriptors[i] = default;
+			m_JointEventMasks[i] = 0;
 			m_JointLinearImpulse[i] = float3.zero;
 			m_JointAngularImpulse[i] = float3.zero;
 		}
@@ -1477,7 +1800,7 @@ namespace Bpsim.Physics.Anvil
 			{
 				if (jointIds[i].IsNull) continue;
 				ref JointSettings settings = ref jointSettings[i];
-				bool exceeded = settings.NeedsLinearEvents && math.any(math.abs(linearImpulses[i]) > settings.Linear.MaxImpulse);
+					bool exceeded = settings.NeedsLinearEvents && math.any(math.abs(linearImpulses[i]) > settings.LinearImpulseThreshold);
 				if (!exceeded && settings.NeedsAngularEvents)
 				{
 					float3 angularImpulse = angularImpulses[i];
@@ -1497,7 +1820,7 @@ namespace Bpsim.Physics.Anvil
 						}
 						angularImpulse = math.rotate(math.inverse(math.mul(bodyRotation, settings.FrameB.rot)), angularImpulse);
 					}
-					exceeded = math.any(math.abs(angularImpulse) > settings.Angular.MaxImpulse);
+					exceeded = math.any(math.abs(angularImpulse) > settings.AngularImpulseThreshold);
 				}
 				if (exceeded) output.Add(settings.Entity);
 			}
@@ -1609,6 +1932,12 @@ namespace Bpsim.Physics.Anvil
 		};
 
 		/// <summary>MTransform（Joint.AFromJoint / BFromJoint）→ b3Transform。</summary>
+		public static b3Transform ToTransform(RigidTransform transform) => new b3Transform
+		{
+			p = ToVec3(transform.pos),
+			q = ToQuat(transform.rot)
+		};
+
 		public static b3Transform ToTransform(Unity.Physics.Math.MTransform transform) => new b3Transform
 		{
 			p = ToVec3(transform.Translation),

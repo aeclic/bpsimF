@@ -9,6 +9,12 @@ using UnityEngine;
 
 namespace Bpsim.Parts
 {
+	internal struct PartAttachment : IBufferElementData
+	{
+		public Entity Child;
+		public int Direction;
+	}
+
 	public struct PartSceneUnmanaged : IDisposable
 	{
 		private bool m_dirty;
@@ -384,6 +390,11 @@ namespace Bpsim.Parts
 
 		public bool PlacePartAt(in PartCreationRequest request, bool overlay)
 		{
+			return PlacePartAt(in request, overlay, deferAttachments: false);
+		}
+
+		internal bool PlacePartAt(in PartCreationRequest request, bool overlay, bool deferAttachments)
+		{
 			if (!CanEdit)
 			{
 				return false;
@@ -456,7 +467,7 @@ namespace Bpsim.Parts
 				UpdateContainer(part);
 				SetPartGridAt(coordX, coordY, part, layer);
 				SetLargePartGridAt(coordX, coordY, 1, part2, layer);
-				UpdateNeighbours(coordX, coordY, layer);
+				if (!deferAttachments) UpdateNeighbours(coordX, coordY, layer);
 				if (request.AutoAlign)
 				{
 					TryAutoAlignPart(part2, coordX, coordY, layer);
@@ -790,25 +801,41 @@ namespace Bpsim.Parts
 			{
 				return;
 			}
-			int attachmentCount = BasePart.GetAttachmentCount(EntityManager.GetComponentData<PartTypeValue>(part.Part).BaseValue);
-			if (attachmentCount == 0)
+			UpdateAttachments(part.Part, EntityManager.GetComponentData<PartTypeValue>(part.Part).BaseValue);
+		}
+
+		internal void ReserveImport(int capacity)
+		{
+			if (m_parts.Capacity < capacity) m_parts.Capacity = capacity;
+			if (m_partMap.Capacity < capacity) m_partMap.Capacity = capacity;
+		}
+
+		internal void RefreshImportedAttachments()
+		{
+			foreach (Entity part in m_parts)
+			{
+				PartTypeInfo type = EntityManager.GetComponentData<PartTypeValue>(part).BaseValue;
+				if (!BasePart.IsContainerResolved(type)) UpdateAttachments(part, type);
+			}
+		}
+
+		private void UpdateAttachments(Entity part, PartTypeInfo type)
+		{
+			int attachmentCount = BasePart.GetAttachmentCount(type);
+			if (attachmentCount == 0 || !EntityManager.HasBuffer<PartAttachment>(part))
 			{
 				return;
 			}
-			NativeArray<Entity> attachments = new NativeArray<Entity>(attachmentCount, Allocator.Temp);
-			foreach (Entity item in EntityManager.GetBuffer<LinkedEntityGroup>(part.Part).Reinterpret<Entity>())
+			FixedList128Bytes<Entity> attachments = default;
+			attachments.Length = attachmentCount;
+			foreach (PartAttachment attachment in EntityManager.GetBuffer<PartAttachment>(part))
 			{
-				EntityManager.GetName(item, out var name);
-				int num = (int)BasePart.FindAttachment(in name);
-				if (num != -1)
-				{
-					attachments[num] = item;
-				}
+				attachments[attachment.Direction] = attachment.Child;
 			}
-			AlignAttachments(part.Part, in attachments);
+			AlignAttachments(part, in attachments);
 		}
 
-		private void AlignAttachments(Entity part, in NativeArray<Entity> attachments)
+		private void AlignAttachments(Entity part, in FixedList128Bytes<Entity> attachments)
 		{
 			PartTransform componentData = EntityManager.GetComponentData<PartTransform>(part);
 			PartContainerValue componentData2 = EntityManager.GetComponentData<PartContainerValue>(part);

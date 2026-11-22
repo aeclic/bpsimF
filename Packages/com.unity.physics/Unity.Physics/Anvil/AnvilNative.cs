@@ -316,6 +316,74 @@ namespace Bpsim.Physics.Anvil
 		public float angularDampingRatio;             // 124
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	public struct b3DistanceJointDef
+	{
+		public b3JointDef baseDef;
+		public float length;
+		public byte enableSpring;
+		public float lowerSpringForce;
+		public float upperSpringForce;
+		public float hertz;
+		public float dampingRatio;
+		public byte enableLimit;
+		public float minLength;
+		public float maxLength;
+		public byte enableMotor;
+		public float maxMotorForce;
+		public float motorSpeed;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct b3RevoluteJointDef
+	{
+		public b3JointDef baseDef;
+		public float targetAngle;
+		public byte enableSpring;
+		public float hertz;
+		public float dampingRatio;
+		public byte enableLimit;
+		public float lowerAngle;
+		public float upperAngle;
+		public byte enableMotor;
+		public float maxMotorTorque;
+		public float motorSpeed;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct b3PrismaticJointDef
+	{
+		public b3JointDef baseDef;
+		public byte enableSpring;
+		public float hertz;
+		public float dampingRatio;
+		public float targetTranslation;
+		public byte enableLimit;
+		public float lowerTranslation;
+		public float upperTranslation;
+		public byte enableMotor;
+		public float maxMotorForce;
+		public float motorSpeed;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct b3SphericalJointDef
+	{
+		public b3JointDef baseDef;
+		public byte enableSpring;
+		public float hertz;
+		public float dampingRatio;
+		public b3Quat targetRotation;
+		public byte enableConeLimit;
+		public float coneAngle;
+		public byte enableTwistLimit;
+		public float lowerTwistAngle;
+		public float upperTwistAngle;
+		public byte enableMotor;
+		public float maxMotorTorque;
+		public b3Vec3 motorVelocity;
+	}
+
 	/// <summary>b3JointEvent { b3JointId jointId; void* userData; }</summary>
 	[StructLayout(LayoutKind.Sequential)]
 	public struct b3JointEvent
@@ -438,6 +506,10 @@ namespace Bpsim.Physics.Anvil
 		[DllImport(Library)] public static extern b3BodyDef b3DefaultBodyDef();
 		[DllImport(Library)] public static extern b3ShapeDef b3DefaultShapeDef();
 		[DllImport(Library)] public static extern b3WeldJointDef b3DefaultWeldJointDef();
+		[DllImport(Library)] public static extern b3DistanceJointDef b3DefaultDistanceJointDef();
+		[DllImport(Library)] public static extern b3RevoluteJointDef b3DefaultRevoluteJointDef();
+		[DllImport(Library)] public static extern b3PrismaticJointDef b3DefaultPrismaticJointDef();
+		[DllImport(Library)] public static extern b3SphericalJointDef b3DefaultSphericalJointDef();
 
 		[DllImport(Library)] public static extern b3WorldId b3CreateWorld(ref b3WorldDef def);
 		[DllImport(Library)] public static extern void b3DestroyWorld(b3WorldId worldId);
@@ -450,6 +522,7 @@ namespace Bpsim.Physics.Anvil
 		[DllImport(Library)] public static extern void b3World_SetGravity(b3WorldId worldId, b3Vec3 gravity);
 		[DllImport(Library)] public static extern b3Vec3 b3World_GetGravity(b3WorldId worldId);
 		[DllImport(Library)] public static extern void b3World_SetWorkerCount(b3WorldId worldId, int workerCount);
+		[DllImport(Library)] internal static extern void b3World_EnableWarmStarting(b3WorldId worldId, byte enabled);
 		[DllImport(Library)] public static extern int b3World_GetWorkerCount(b3WorldId worldId);
 		[DllImport(Library)] public static extern int b3World_GetAwakeBodyCount(b3WorldId worldId);
 		[DllImport(Library)] public static extern void b3World_SetMaximumLinearSpeed(b3WorldId worldId, float speed);
@@ -520,6 +593,10 @@ namespace Bpsim.Physics.Anvil
 		#region 关节
 
 		[DllImport(Library)] public static extern b3JointId b3CreateWeldJoint(b3WorldId worldId, ref b3WeldJointDef def);
+		[DllImport(Library)] public static extern b3JointId b3CreateDistanceJoint(b3WorldId worldId, ref b3DistanceJointDef def);
+		[DllImport(Library)] public static extern b3JointId b3CreateRevoluteJoint(b3WorldId worldId, ref b3RevoluteJointDef def);
+		[DllImport(Library)] public static extern b3JointId b3CreatePrismaticJoint(b3WorldId worldId, ref b3PrismaticJointDef def);
+		[DllImport(Library)] public static extern b3JointId b3CreateSphericalJoint(b3WorldId worldId, ref b3SphericalJointDef def);
 		[DllImport(Library)] public static extern void b3DestroyJoint(b3JointId jointId, byte wakeAttached);
 		[DllImport(Library)] public static extern byte b3Joint_IsValid(b3JointId jointId);
 		[DllImport(Library)] public static extern void b3Joint_SetForceThreshold(b3JointId jointId, float threshold);
@@ -538,6 +615,23 @@ namespace Bpsim.Physics.Anvil
 		#endregion
 
 		#region 批量桥接（anvil_bridge.c）
+		internal static readonly int BridgeVersion = GetBridgeVersion();
+
+		static int GetBridgeVersion()
+		{
+			try { return anvil_BridgeVersion(); }
+			catch (EntryPointNotFoundException) { return 0; }
+			catch (DllNotFoundException) { return 0; }
+		}
+
+		[DllImport(Library)] static extern int anvil_BridgeVersion();
+		[DllImport(Library)] internal static extern unsafe void anvil_ValidateJoints(b3WorldId worldId, b3JointId* joints, int count, byte* valid);
+		[DllImport(Library)] internal static extern void anvil_EnableCollisionTags(b3WorldId worldId);
+		[DllImport(Library)] internal static extern void anvil_SetBodyCollisionTag(b3WorldId worldId, b3BodyId bodyId, ulong tag, byte refilter);
+		[DllImport(Library)] internal static extern unsafe int anvil_StepAndAccumulate(b3WorldId worldId, float subStep,
+			b3JointId* joints, byte* eventMasks, int count, b3Vec3* linearImpulses, b3Vec3* angularImpulses, b3Profile* profile);
+		[DllImport(Library)] internal static extern unsafe int anvil_TryStepIntegrated(b3WorldId worldId, float timeStep, int subStepCount,
+			b3JointId* joints, byte* eventMasks, int count, b3Vec3* linearImpulses, b3Vec3* angularImpulses, b3Profile* profile);
 
 		[DllImport(Library)] public static extern unsafe void anvil_ReadBatch(b3BodyId* bodies, int count, b3WorldTransform* transforms, b3Vec3* linearVelocities, b3Vec3* angularVelocities);
 		[DllImport(Library)] public static extern unsafe void anvil_WriteBatch(b3BodyId* bodies, int count, b3WorldTransform* transforms, b3Vec3* linearVelocities, b3Vec3* angularVelocities);

@@ -194,6 +194,8 @@ namespace Bpsim.Parts.Gameplay
 			{
 				// 所有灯都关着时，不需要跑引擎计数、外星灯几何、接触扫描或刚体缓存。
 				// 这些循环每步都会遍历 1648 个部件，之前即使灯全灭也会把模拟拖到 ~2 FPS。
+				// 虚化灯的 entityType 为 -1，不计入 active，但仍需逐步检测并更新框体。
+				UpdateControlLights(dt, true);
 				foreach (Source source in m_sources.Values)
 				{
 					source.PreviousPosition = source.Position;

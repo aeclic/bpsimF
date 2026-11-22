@@ -1,12 +1,13 @@
 {
   "dependencies": {
-	"com.xxhq.htmltougui": "https://github.com/jixinhaoqi/HtmlToUGUI.git",
-    "com.valgore.anvil": "file:com.valgore.anvil",
+    "com.coplaydev.unity-mcp": "10.3.0",
     "com.unity.collections": "2.1.0-pre.11",
     "com.unity.entities": "1.0.0-pre.44",
     "com.unity.entities.graphics": "1.0.0-pre.44",
     "com.unity.inputsystem": "1.7.0",
     "com.unity.mathematics": "1.2.6",
+    "com.valgore.anvil": "file:com.valgore.anvil",
+    "com.xxhq.htmltougui": "https://github.com/jixinhaoqi/HtmlToUGUI.git",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
@@ -38,5 +39,14 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  }
+  },
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.coplaydev"
+      ]
+    }
+  ]
 }

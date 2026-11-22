@@ -1,0 +1,19 @@
+diff --git a/src/revolute_joint.c b/src/revolute_joint.c
+--- a/src/revolute_joint.c
++++ b/src/revolute_joint.c
+@@ -449,6 +449,15 @@
+ 	if ( joint->enableLimit && fixedRotation == false )
+ 	{
+ 		float angle = b3GetTwistAngle( relQ );
++		float center = 0.5f * ( joint->lowerAngle + joint->upperAngle );
++		if ( angle > center + B3_PI )
++		{
++			angle -= 2.0f * B3_PI;
++		}
++		else if ( angle < center - B3_PI )
++		{
++			angle += 2.0f * B3_PI;
++		}
+ 
+ 		// todo does an updated twist axis help?
+ 

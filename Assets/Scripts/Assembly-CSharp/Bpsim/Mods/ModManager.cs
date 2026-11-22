@@ -380,7 +380,9 @@ namespace Bpsim.Mods
 		/// 选中的可以是单个 Mod 包、外面多套一层的包目录，或一个装着多个 Mod 的集合目录。
 		/// 返回本次加载到的包；一个都找不到时抛 <see cref="InvalidDataException"/>。
 		/// </summary>
-		public List<ModPackage> InstallFolder(string folderPath)
+		public List<ModPackage> InstallFolder(string folderPath) => InstallFolder(folderPath, copy: false);
+
+		internal List<ModPackage> InstallFolder(string folderPath, bool copy)
 		{
 			List<ModPackage> probed = ModPackageStore.FindPackagesIn(folderPath);
 			if (probed.Count == 0)
@@ -393,7 +395,12 @@ namespace Bpsim.Mods
 			bool added = false;
 			foreach (ModPackage probe in probed)
 			{
-				if (m_config.AddAdditionalDir(probe.Directory))
+				if (copy)
+				{
+					ModPackageStore.InstallPackage(probe, overwrite: false);
+					added = true;
+				}
+				else if (m_config.AddAdditionalDir(probe.Directory))
 				{
 					added = true;
 				}

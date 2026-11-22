@@ -68,6 +68,9 @@ namespace Bpsim.Parts
 			public bool Overlay;
 
 			[ReadOnly]
+			public bool FreshScene;
+
+			[ReadOnly]
 			public NativeArray<Schematics.Unit> Schematics;
 
 			[ReadOnly]
@@ -76,6 +79,8 @@ namespace Bpsim.Parts
 			public void Execute()
 			{
 				int sceneID = PartScene.Value.SceneID;
+				if (FreshScene) PartScene.Value.ReserveImport(Schematics.Length);
+				System.Collections.Generic.List<(Entity, int)> remoteSources = null;
 				for (int i = 0; i < Schematics.Length; i++)
 				{
 					Schematics.Unit unit = Schematics[i];
@@ -83,10 +88,19 @@ namespace Bpsim.Parts
 					if (PrefabCollection.TryGetValue(key, out var item))
 					{
 						PartCreationRequest request = new PartCreationRequest(item, sceneID, unit);
-						PartScene.Value.PlacePartAt(in request, Overlay);
+						if (PartScene.Value.PlacePartAt(in request, Overlay, deferAttachments: FreshScene) && unit.RemoteLink)
+						{
+							remoteSources ??= new System.Collections.Generic.List<(Entity, int)>();
+							NativeList<Entity> parts = PartScene.Value.Parts;
+							remoteSources.Add((parts[parts.Length - 1], i));
+						}
 					}
 				}
 				PartScene.Value.Update();
+				if (FreshScene) PartScene.Value.RefreshImportedAttachments();
+				if (remoteSources == null) return;
+				foreach (var (source, index) in remoteSources)
+					PartRemoteConnection.TrySet(in PartScene.Value, source, true, Schematics[index].RemoteTargets);
 			}
 		}
 
@@ -147,19 +161,37 @@ namespace Bpsim.Parts
 			[ReadOnly]
 			public ComponentLookup<FrameShape> ShapeLookup;
 
+			[ReadOnly]
+			internal BufferLookup<PartRemoteConnection> RemoteLookup;
+
+			internal bool RestrictRemoteTargets;
+
 			[WriteOnly]
 			public NativeArray<Schematics.Unit> Schematics;
 
 			public void Execute()
 			{
+				NativeParallelHashSet<Entity> selected = default;
 				for (int i = 0; i < Parts.Length; i++)
 				{
 					PartTypeInfo value = PartTypeValueLookup[Parts[i]].Value;
 					PartTransform partTransform = PartTransformLookup[Parts[i]];
 					PartFreeTransform freeTransform = FreeTransformLookup.TryGetComponent(Parts[i], out var free) ? PartFreeTransform.Sanitize(free) : PartFreeTransform.Identity;
 					int layer = LayerLookup.TryGetComponent(Parts[i], out var buildLayer) ? PartBuildLayer.Clamp(buildLayer.Value) : PartBuildLayer.MinLayer;
-					Schematics[i] = new Schematics.Unit(partTransform.X, partTransform.Y, (int)value.PartType, value.PartIndex, partTransform.Rotation, partTransform.Flipped, freeTransform.Offset.x, freeTransform.Offset.y, freeTransform.RotationDegrees, freeTransform.Scale.x, freeTransform.Scale.y, layer, ShapeLookup.TryGetComponent(Parts[i], out var shape) ? shape.Value : 0);
+					Schematics.Unit unit = new Schematics.Unit(partTransform.X, partTransform.Y, (int)value.PartType, value.PartIndex, partTransform.Rotation, partTransform.Flipped, freeTransform.Offset.x, freeTransform.Offset.y, freeTransform.RotationDegrees, freeTransform.Scale.x, freeTransform.Scale.y, layer, ShapeLookup.TryGetComponent(Parts[i], out var shape) ? shape.Value : 0, freeTransform.DrawLayer);
+					if (RemoteLookup.TryGetBuffer(Parts[i], out var links))
+					{
+						if (RestrictRemoteTargets && !selected.IsCreated)
+						{
+							selected = new NativeParallelHashSet<Entity>(Parts.Length, Allocator.Temp);
+							foreach (Entity part in Parts) selected.Add(part);
+						}
+						unit.RemoteLink = true;
+						unit.RemoteTargets = PartRemoteConnection.Capture(links, PartTransformLookup, LayerLookup, selected);
+					}
+					Schematics[i] = unit;
 				}
+				if (selected.IsCreated) selected.Dispose();
 			}
 		}
 
@@ -207,12 +239,13 @@ namespace Bpsim.Parts
 		}
 
 		[RequiresSyncPoint]
-		public static PlacePartsJob PlaceParts(PartScene partScene, bool overlay, NativeArray<Schematics.Unit> schematics)
+		public static PlacePartsJob PlaceParts(PartScene partScene, bool overlay, NativeArray<Schematics.Unit> schematics, bool freshScene = false)
 		{
 			return new PlacePartsJob
 			{
 				PartScene = partScene.UnmanagedRef,
 				Overlay = overlay,
+				FreshScene = freshScene,
 				Schematics = schematics,
 				PrefabCollection = PartManager.Instance.EntitySpawner.Collection
 			};
@@ -228,7 +261,7 @@ namespace Bpsim.Parts
 			};
 		}
 
-		public static SavePartsJob SaveParts(NativeList<Entity> parts, NativeArray<Schematics.Unit> schematics)
+		public static SavePartsJob SaveParts(NativeList<Entity> parts, NativeArray<Schematics.Unit> schematics, bool restrictRemoteTargets = false)
 		{
 			return new SavePartsJob
 			{
@@ -238,6 +271,8 @@ namespace Bpsim.Parts
 				FreeTransformLookup = PartManager.Instance.System.GetComponentLookup<PartFreeTransform>(),
 				LayerLookup = PartManager.Instance.System.GetComponentLookup<PartBuildLayer>(),
 				ShapeLookup = PartManager.Instance.System.GetComponentLookup<FrameShape>(),
+				RemoteLookup = PartManager.Instance.System.GetBufferLookup<PartRemoteConnection>(isReadOnly: true),
+				RestrictRemoteTargets = restrictRemoteTargets,
 				Schematics = schematics
 			};
 		}

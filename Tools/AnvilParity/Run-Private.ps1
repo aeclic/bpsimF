@@ -1,7 +1,8 @@
 param(
     [ValidatePattern('^[a-zA-Z0-9_-]+$')][string]$Label = 'current',
     [ValidateSet('Parity', 'Performance', 'Sampling', 'Metadata')][string]$Suite = 'Parity',
-    [int]$TimeoutSeconds = 240
+    [int]$TimeoutSeconds = 240,
+    [string]$NativeDll
 )
 $ErrorActionPreference = 'Stop'
 $workspace = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -9,7 +10,8 @@ $project = Join-Path $workspace '_codex_work/anvil-parity/project'
 $running = Get-CimInstance Win32_Process -Filter "Name='Unity.exe'" |
     Where-Object { $_.CommandLine -and $_.CommandLine.Contains($project) }
 if ($running) { throw 'The private parity editor is already running; inspect it before starting another run' }
-& python -X utf8 (Join-Path $PSScriptRoot 'prepare_project.py')
+$nativeArgument = if ($NativeDll) { @('--native-dll', (Resolve-Path -LiteralPath $NativeDll).Path) } else { @() }
+& python -X utf8 (Join-Path $PSScriptRoot 'prepare_project.py') @nativeArgument
 if ($LASTEXITCODE -ne 0) { throw 'Private physics compilation failed' }
 $unity = (Get-Content -LiteralPath (Join-Path $workspace 'Tools/dsh-slots/config.json') -Raw | ConvertFrom-Json).unity
 $log = Join-Path $project ('Logs/' + $Label + '-editor.log')

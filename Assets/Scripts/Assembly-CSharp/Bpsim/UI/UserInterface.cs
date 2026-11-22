@@ -89,11 +89,15 @@ namespace Bpsim.UI
 
 			private void SaveScene()
 			{
+#if UNITY_ANDROID && !UNITY_EDITOR
+				OpenSceneLoader(SceneLoaderMode.Write);
+#else
 				SceneLoader sceneLoader = UnityEngine.Object.Instantiate(m_sceneLoaderPrefab);
 				// 保存入口也打开同一个合并面板：顶部固定显示加载控件，
 				// 下方场景卡片的「保存」按钮再切换到写入模式并打开文件选择器。
 				sceneLoader.Mode = SceneLoaderMode.Read;
 				sceneLoader.transform.SetParent(m_root.SubCanvas.transform, worldPositionStays: false);
+#endif
 			}
 
 			/// <summary>打开统一的场景文件读写对话框。</summary>

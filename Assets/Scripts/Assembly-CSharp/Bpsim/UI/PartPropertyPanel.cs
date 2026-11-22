@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Bpsim.Factions;
+using Bpsim.Mods;
 using Bpsim.Parts;
 using Bpsim.Parts.Skin;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -21,6 +23,11 @@ namespace Bpsim.UI
 		private RectTransform m_content;
 		private Text m_info, m_material, m_attitude, m_status, m_physics;
 		private Button m_dockButton, m_flipButton, m_shapeButton, m_skinButton;
+		private Button m_remoteButton;
+		private InputField m_remoteTargets;
+		private RectTransform m_drawLayerRow;
+		private RectTransform m_wheelScaleRow;
+		private FixedList64Bytes<int3> m_shownRemoteTargets;
 		private GameObject m_switchTo, m_switchBack;
 		private RectTransform m_scrollRoot, m_footer;
 		private readonly List<PropertySection> m_sections = new List<PropertySection>();
@@ -54,6 +61,8 @@ namespace Bpsim.UI
 		public void Initialize(PartScene scene, Entity part)
 		{
 			CloseSkin(); m_scene = scene; m_part = part;
+			m_shownRemoteTargets = default;
+			m_remoteTargets.SetTextWithoutNotify(string.Empty);
 			foreach (var row in m_rows) row.Recorded = false;
 			m_status.text = "";
 			RefreshValues();
@@ -141,7 +150,7 @@ namespace Bpsim.UI
 			Section("ExtraParameters", "其他参数", 1); m_rotationSection = m_section;
 			Number("OffsetX", "X 偏移", -10, 10, false, () => Free().Offset.x, v => SetFree(0, v));
 			Number("OffsetY", "Y 偏移", -10, 10, false, () => Free().Offset.y, v => SetFree(1, v));
-			Number("Layer", "图层", 1, 16, true, () => m_scene.Unmanaged.GetPartLayer(m_part), v => m_scene.Unmanaged.TrySetPartLayer(m_part, (int)v));
+			Number("Layer", "建造层", 1, 16, true, () => m_scene.Unmanaged.GetPartLayer(m_part), v => m_scene.Unmanaged.TrySetPartLayer(m_part, (int)v));
 			m_flipButton = ActionRow("Flip", "镜像：关", () =>
 			{
 				var t = TransformData(); t.Flipped = !t.Flipped; Manager.SetComponentData(m_part, t); UpdateNeighbours();
@@ -150,6 +159,19 @@ namespace Bpsim.UI
 			m_optionalTop = m_height;
 			m_shapeButton = ActionRow("FrameShape", "形状", () => FrameShapeSystem.SetShape(Manager, m_part, (Manager.GetComponentData<FrameShape>(m_part).Value + 1) % FrameShape.Count));
 			m_skinButton = ActionRow("Skin", "编辑蒙皮…", () => { m_skinPart = m_part; SkinPanelHost.Instance.Open(m_part); });
+			m_drawLayerRow = Number("DrawLayer", "绘制层", -50, 50, true, () => Free().DrawLayer, v => SetFree(5, v));
+			m_wheelScaleRow = Number("WheelScale", "轮子大小", PartFreeTransform.MinScale, 6f, false, () => Free().Scale.x,
+				v => m_scene.Unmanaged.TryScalePartFree(m_part, new float2(v)));
+			m_remoteButton = ActionRow("RemoteConnection", "远程连接：关", () =>
+				PartRemoteConnection.TrySet(m_scene.Unmanaged, m_part, !Manager.HasBuffer<PartRemoteConnection>(m_part), default));
+			var targetField = Rect("RemoteTargets", m_section.Rect);
+			m_remoteTargets = targetField.gameObject.AddComponent<InputField>();
+			m_remoteTargets.targetGraphic = Image(targetField, Field);
+			m_remoteTargets.textComponent = Label(targetField, "", 20);
+			m_remoteTargets.placeholder = Label(targetField, "目标：X:Y:层 | X:Y:层", 20, new Color(1, 1, 1, .5f));
+			m_remoteTargets.characterLimit = 160;
+			m_remoteTargets.onEndEdit.AddListener(SetRemoteTargets);
+			m_editors.Add(m_remoteTargets);
 			Section("Physics", "部件物理信息", 1);
 			var physicsPlate = Rect("Values", m_section.Rect); Top(physicsPlate, 0, m_height, 0, 180); Image(physicsPlate, Field);
 			m_physics = Label(physicsPlate, "", 24); Stretch((RectTransform)m_physics.transform, 10, 10, 10, 10);
@@ -227,7 +249,7 @@ namespace Bpsim.UI
 			}
 			foreach (var row in m_rows)
 			{
-				if (row.Input.isFocused) continue;
+				if (row.Input.isFocused || !row.Input.gameObject.activeInHierarchy) continue;
 				float value = row.Read();
 				row.Input.SetTextWithoutNotify(value.ToString("0.###", CultureInfo.InvariantCulture));
 				if (row.Slider != null) row.Slider.SetValueWithoutNotify(value);
@@ -241,6 +263,35 @@ namespace Bpsim.UI
 			float y = m_optionalTop;
 			if (shape) { Top((RectTransform)m_shapeButton.transform, 0, y, 0, 60); y += 80; }
 			if (m_skinButton.gameObject.activeSelf) { Top((RectTransform)m_skinButton.transform, 0, y, 0, 60); y += 80; }
+			bool compatibility = ModParts.BpirCompatibilityToolsEnabled;
+			bool wheel = compatibility && type.BaseValue == BasePart.OffRoadWheel;
+			bool remote = compatibility && Manager.HasBuffer<PartRemoteConnection>(m_part);
+			m_drawLayerRow.gameObject.SetActive(compatibility);
+			m_wheelScaleRow.gameObject.SetActive(wheel);
+			m_remoteButton.gameObject.SetActive(compatibility);
+			m_remoteTargets.gameObject.SetActive(remote);
+			if (compatibility)
+			{
+				Top(m_drawLayerRow, 0, y, 0, 22); y += 30;
+				if (wheel) { Top(m_wheelScaleRow, 0, y, 0, 22); y += 30; }
+				Top((RectTransform)m_remoteButton.transform, 0, y, 0, 60); y += 80;
+				m_remoteButton.GetComponentInChildren<Text>().text = remote ? "远程连接：开" : "远程连接：关";
+			}
+			if (remote)
+			{
+				Top((RectTransform)m_remoteTargets.transform, 0, y, 0, 50); y += 70;
+				if (!m_remoteTargets.isFocused)
+				{
+					FixedList64Bytes<int3> targets = ReadRemoteTargets();
+					if (!targets.Equals(m_shownRemoteTargets)) m_remoteTargets.SetTextWithoutNotify(PartRemoteConnection.Format(targets));
+					m_shownRemoteTargets = targets;
+				}
+			}
+			else if (m_shownRemoteTargets.Length != 0)
+			{
+				m_shownRemoteTargets = default;
+				m_remoteTargets.SetTextWithoutNotify(string.Empty);
+			}
 			if (m_rotationSection.Height != y - 20) { m_rotationSection.Height = y - 20; Reflow(); }
 			if (Manager.HasComponent<PartExtensionComponent>(m_part))
 			{
@@ -257,8 +308,19 @@ namespace Bpsim.UI
 		private bool SetFree(int field, float value)
 		{
 			var free = Free();
-			switch (field) { case 0: free.Offset.x = value; break; case 1: free.Offset.y = value; break; case 2: free.RotationDegrees = value; break; case 3: free.Scale.x = value; break; case 4: free.Scale.y = value; break; }
+			switch (field) { case 0: free.Offset.x = value; break; case 1: free.Offset.y = value; break; case 2: free.RotationDegrees = value; break; case 3: free.Scale.x = value; break; case 4: free.Scale.y = value; break; case 5: free.DrawLayer = (int)value; break; }
 			return m_scene.Unmanaged.TrySetPartFree(m_part, free);
+		}
+		private FixedList64Bytes<int3> ReadRemoteTargets() => PartRemoteConnection.Capture(Manager.GetBuffer<PartRemoteConnection>(m_part, isReadOnly: true),
+			m_scene.System.GetComponentLookup<PartTransform>(isReadOnly: true), m_scene.System.GetComponentLookup<PartBuildLayer>(isReadOnly: true));
+		private void SetRemoteTargets(string text)
+		{
+			if (!CanEdit || !ModParts.BpirCompatibilityToolsEnabled || !Manager.HasBuffer<PartRemoteConnection>(m_part)) return;
+			FixedList64Bytes<int3> targets = PartRemoteConnection.Parse(text);
+			if (!targets.Equals(ReadRemoteTargets()) && (string.IsNullOrWhiteSpace(text) || targets.Length == text.Split('|').Length))
+				Edit(() => PartRemoteConnection.TrySet(m_scene.Unmanaged, m_part, true, targets, requireTargets: true));
+			m_shownRemoteTargets = ReadRemoteTargets();
+			m_remoteTargets.SetTextWithoutNotify(PartRemoteConnection.Format(m_shownRemoteTargets));
 		}
 		private bool SetRotation(int value)
 		{
@@ -317,7 +379,7 @@ namespace Bpsim.UI
 			var button = Button(m_section.Rect, name, text, () => Edit(() => { action(); return true; }));
 			Top((RectTransform)button.transform, 0, m_height, 0, 60); m_height += 80; m_section.Height = m_height - 20; m_editors.Add(button); return button;
 		}
-		private void Number(string key, string label, float min, float max, bool integer, Func<float> read, Func<float, bool> write, bool bare = false)
+		private RectTransform Number(string key, string label, float min, float max, bool integer, Func<float> read, Func<float, bool> write, bool bare = false)
 		{
 			var rect = Rect(key, m_section.Rect); Top(rect, 0, m_height, 0, bare ? 60 : 22); m_height += bare ? 80 : 24;
 			m_section.Height = m_height - (bare ? 20 : 2);
@@ -368,6 +430,7 @@ namespace Bpsim.UI
 				RefreshValues();
 			});
 			m_editors.Add(input); if (slider != null) m_editors.Add(slider);
+			return rect;
 		}
 
 		private static RectTransform Rect(string name, Transform parent)

@@ -247,6 +247,23 @@ namespace Bpsim.Parts.Simulation
 			return true;
 		}
 
+		public bool HasAvailableFuel(Entity consumer)
+		{
+			if (!EntityManager.Exists(consumer) || !EntityManager.HasComponent<FuelGroupIndex>(consumer)) return false;
+			int group = EntityManager.GetComponentData<FuelGroupIndex>(consumer).Value;
+			if (group < 0 || group >= m_groupCount || !m_groupStart.IsCreated || !m_members.IsCreated) return false;
+			for (int i = m_groupStart[group]; i < m_groupStart[group + 1]; i++)
+			{
+				Entity member = m_members[i];
+				if (EntityManager.Exists(member) && EntityManager.HasComponent<FuelContainer>(member)
+					&& EntityManager.GetComponentData<FuelContainer>(member).Amount > 0f)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// 立即重建燃料拓扑。阀门 / 燃料箱在点击的同一帧改变了连通性时，
 		/// 紧接着的 <c>HasFuelSource()</c> 不该读到上一步的旧分组，所以由 behavior 主动催一次。

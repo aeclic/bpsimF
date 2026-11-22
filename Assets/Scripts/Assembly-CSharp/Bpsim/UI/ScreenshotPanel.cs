@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -51,11 +52,16 @@ namespace Bpsim.UI
 
 		private async UniTask BrowseAsync()
 		{
-			string text = await FileAPI.OpenFile(Application.dataPath);
-			if (!string.IsNullOrEmpty(text))
+#if UNITY_ANDROID && !UNITY_EDITOR
+			if (!(m_image.texture is Texture2D)) Apply();
+			await ExportScreenshot();
+#else
+			using FileSelection selected = await FileAPI.OpenFile(Application.dataPath);
+			if (selected != null)
 			{
-				m_path.text = text;
+				m_path.text = selected.Path;
 			}
+#endif
 		}
 
 		private void Apply()
@@ -75,8 +81,24 @@ namespace Bpsim.UI
 
 		private void Save()
 		{
+#if UNITY_ANDROID && !UNITY_EDITOR
+			if (string.IsNullOrWhiteSpace(m_path.text))
+			{
+				ExportScreenshot().Forget();
+				return;
+			}
+#endif
 			File.WriteAllBytes(m_path.text, ((Texture2D)m_image.texture).EncodeToPNG());
 		}
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+		private async UniTask ExportScreenshot()
+		{
+			if (!(m_image.texture is Texture2D texture)) return;
+			try { await FileAPI.ExportFile("Bpsim-Screenshot.png", "image/png", path => File.WriteAllBytes(path, texture.EncodeToPNG())); }
+			catch (Exception ex) { Debug.LogException(ex); }
+		}
+#endif
 
 		private void Cancel()
 		{
@@ -85,7 +107,7 @@ namespace Bpsim.UI
 
 		private new void Close()
 		{
-			Object.Destroy(base.gameObject);
+			UnityEngine.Object.Destroy(base.gameObject);
 		}
 	}
 }

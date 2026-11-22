@@ -10,6 +10,7 @@ BACKENDS = {"UnityPhysics", "HavokPhysics", "AnvilPhysics"}
 CORE_CASES = {
     "sparse-upload", "rotated-spin", "offset-com", "gravity", "mass-change",
     "welded-chain", "body-replacement", "threshold-linear-below", "threshold-linear-above",
+    "joint-mapping",
     "threshold-diagonal-below", "threshold-zero-unloaded", "threshold-zero-loaded",
     "threshold-angular-above", "threshold-angular-below",
     "small-impulses", "scaled-compound", "scaled-joint", "body-identity", "moved-static",
@@ -18,11 +19,13 @@ EXTENDED_CASES = {
     "damping-0.3", "damping-4", "damping-60", "body-type-change", "partial-infinite-inertia",
     "high-speed", "nested-compound", "convex-blob", "cylinder", "static-mesh", "closest-compound-hit",
     "mass-ratio-100", "mass-ratio-100-high-signal", "off-centre-chain", "no-collision-response", "assembly-drop",
+    *(f"signed-hinge-{sign}-{edge}" for sign in ("negative", "positive") for edge in ("lower", "upper", "wrap")),
     *("restitution-" + name for name in ("GeometricMean", "Minimum", "Maximum", "ArithmeticMean")),
     *("threshold-grid-" + side + "-dt" + dt + "-sub" + str(sub)
       for side in ("below", "above") for dt in ("0.01", "0.02", "0.04") for sub in (1, 2, 4)),
 }
-NATIVE_CASES = {"contact-sum-sub1", "contact-sum-sub2", "contact-sum-sub4", "sleep-wake"}
+NATIVE_CASES = {"sleep-wake", "swept-dynamic-pair", "swept-static-contact", "slow-weld-path", "collision-tags", "dynamic-teleport",
+                *(f"contact-{kind}-sub{sub}" for kind in ("sum", "box") for sub in (1, 2, 4))}
 REFERENCE_LIMITS = {
     ("HavokPhysics", "small-impulses", "accumulated-velocity-error"),
     ("HavokPhysics", "mass-ratio-100", "momentum-relative-error"),
@@ -58,14 +61,14 @@ def verify(report, require_pass=True, extended=True, baseline=False):
     data = index(report)
     for backend in BACKENDS:
         actual = {key[1] for key in data if key[0] == backend}
-        required = CORE_CASES | (EXTENDED_CASES if extended else set())
+        required = CORE_CASES | EXTENDED_CASES if extended else CORE_CASES - {"joint-mapping"}
         if extended and backend == "AnvilPhysics":
             required |= NATIVE_CASES
         if not required <= actual:
             issues.append(f"{backend}: missing scenarios {sorted(required - actual)}")
         if extended:
             count = sum(key[0] == backend for key in data)
-            expected_count = 105 if backend == "AnvilPhysics" else 98
+            expected_count = 139 if backend == "AnvilPhysics" else 114
             if count != expected_count:
                 issues.append(f"{backend}: expected {expected_count} distinct measurements, found {count}")
     for key, item in data.items():
@@ -97,6 +100,7 @@ def main():
     parser.add_argument("first")
     parser.add_argument("second")
     parser.add_argument("--baseline")
+    parser.add_argument("--native-dll", type=Path)
     args = parser.parse_args()
     a, b = load(args.first), load(args.second)
     first, issues = verify(a)
@@ -109,7 +113,8 @@ def main():
     root = Path(__file__).resolve().parents[2]
     digest = hashlib.sha256()
     for relative in FINGERPRINT_FILES:
-        digest.update((root / relative).read_bytes())
+        source = args.native_dll if relative == "Assets/Plugins/x86_64/box3d.dll" and args.native_dll else root / relative
+        digest.update(source.read_bytes())
     if a["fingerprint"] != digest.hexdigest():
         issues.append("Reports are stale: fingerprint does not match current source and native DLLs")
     if first.keys() != second.keys():

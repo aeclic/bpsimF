@@ -24,13 +24,13 @@ namespace Bpsim.Parts
 	/// * 第 4 列是 <c>m_gridRotation</c>：0..3 = 0/90/180/270 度，4..7 = 45/135/225/315 度
 	///   （只有八向部件会用 4..7）。八向部件原样交给 <c>BasePart.RotateTo</c>；
 	///   非八向部件会把多出来的 45 度折进 <c>@rotZ</c>（连续角），否则会被 <c>rotation % 4</c> 吃掉；
-	///   例外是一批「rotation 是模式码」的部件（铰接板布局、电线拓扑、电荷极性……），
-	///   它们的 4..7 不是角度，要先按 BPIR 自己的取模规则归一化，见 <see cref="UsesRotationAsModeCode" />；
+	///   例外是有专用旋转规则的部件（铰接板布局、电线拓扑、电荷极性……），
+	///   它们按 BPIR 的规则保留模式或约束角度，见 <see cref="UsesRotationAsModeCode" />；
 	/// * 第 13 列是 BPIR 的建造层 1..6，直接进 <see cref="Schematics.Unit.Layer" />——
 	///   这是「图层之间的连接关系」的唯一来源（层 2..N 只与同层邻居和正下方层 1 件焊接）；
 	/// * 第 12 列 members 是 <c>key=value;key=value</c> 串，其中
-	///   <c>@offX/@offY/@rotZ/@stretchX/@stretchY/@shape</c> 有 bpsim 载体，
-	///   其余（<c>@layer</c>、<c>@wheelScale</c>、<c>@dockMerge</c>、<c>组件:成员</c>）没有，
+	///   位移、外形、绘制层、越野轮大小和远程连接均有映射，
+	///   其余（<c>@dockMerge</c>、<c>组件:成员</c>）没有，
 	///   全部计入 <see cref="LastWarnings" />，不静默丢。
 	/// </summary>
 	internal class SchematicsBpirCsvLoader : ISchematicsLoader
@@ -45,9 +45,9 @@ namespace Bpsim.Parts
 		public const int MaxCoordinate = 1000000;
 
 		/// <summary>BPIR 的 <c>@layer</c> 取值范围（深度偏移，clamp 后 × 0.01 世界单位）。</summary>
-		public const int MinDepthLayer = -50;
+		public const int MinDepthLayer = -PartFreeTransform.MaxDrawLayer;
 
-		public const int MaxDepthLayer = 50;
+		public const int MaxDepthLayer = PartFreeTransform.MaxDrawLayer;
 
 		public static SchematicsBpirCsvLoader Default { get; } = new SchematicsBpirCsvLoader();
 
@@ -83,15 +83,11 @@ namespace Bpsim.Parts
 			LastMemberRows = 0;
 			Schematics schematics = new Schematics();
 			int lineNumber = 0;
-			while (reader.Peek() >= 0)
+			string text;
+			while ((text = reader.ReadLine()) != null)
 			{
-				string text = reader.ReadLine();
 				lineNumber++;
-				if (string.IsNullOrWhiteSpace(text))
-				{
-					continue;
-				}
-				string line = text.Trim();
+				ReadOnlySpan<char> line = text.AsSpan().Trim();
 				if (line.Length == 0 || line[0] == '#')
 				{
 					continue;
@@ -174,17 +170,28 @@ namespace Bpsim.Parts
 			{
 				Append(builder).Append("@rotZ=").Append(Format(unit.RotationDegrees, provider));
 			}
-			if (unit.ScaleX != 1f)
+			bool wheel = new PartTypeInfo((PartType)unit.Type, unit.Index) == BasePart.OffRoadWheel && unit.ScaleX == unit.ScaleY;
+			if (wheel && unit.ScaleX != 1f)
+			{
+				Append(builder).Append("@wheelScale=").Append(Format(unit.ScaleX, provider));
+			}
+			if (!wheel && unit.ScaleX != 1f)
 			{
 				Append(builder).Append("@stretchX=").Append(Format(unit.ScaleX, provider));
 			}
-			if (unit.ScaleY != 1f)
+			if (!wheel && unit.ScaleY != 1f)
 			{
 				Append(builder).Append("@stretchY=").Append(Format(unit.ScaleY, provider));
 			}
 			if (unit.FrameShape != 0)
 			{
 				Append(builder).Append("@shape=").Append(unit.FrameShape);
+			}
+			if (unit.DrawLayer != 0) Append(builder).Append("@layer=").Append(unit.DrawLayer);
+			if (unit.RemoteLink)
+			{
+				Append(builder).Append("@remoteLink=1");
+				if (unit.RemoteTargets.Length != 0) Append(builder).Append("@remoteCells=").Append(unit.RemoteCells);
 			}
 			return builder.ToString();
 		}
@@ -198,25 +205,36 @@ namespace Bpsim.Parts
 			return builder;
 		}
 
-		private bool TryReadRow(string line, int lineNumber, IFormatProvider provider, out Schematics.Unit unit)
+		private bool TryReadRow(ReadOnlySpan<char> line, int lineNumber, IFormatProvider provider, out Schematics.Unit unit)
 		{
 			unit = default(Schematics.Unit);
-			string[] fields = line.Split(',');
-			if (fields.Length < MinColumnCount)
+			Span<int> separators = stackalloc int[ColumnCount - 1];
+			int separatorCount = 0;
+			int lastSeparator = -1;
+			for (int cursor = line.IndexOf(','); cursor >= 0;)
 			{
-				Warn($"第 {lineNumber} 行：只有 {fields.Length} 列，BPIR 存档至少要 {MinColumnCount} 列，已跳过");
+				if (separatorCount < separators.Length) separators[separatorCount] = cursor;
+				separatorCount++;
+				lastSeparator = cursor;
+				int next = line.Slice(cursor + 1).IndexOf(',');
+				cursor = next < 0 ? -1 : cursor + next + 1;
+			}
+			int columnCount = separatorCount + 1;
+			if (columnCount < MinColumnCount)
+			{
+				Warn($"第 {lineNumber} 行：只有 {columnCount} 列，BPIR 存档至少要 {MinColumnCount} 列，已跳过");
 				return false;
 			}
-			if (!TryInt(fields[0], provider, out int type) || !TryInt(fields[1], provider, out int index) ||
-				!TryInt(fields[2], provider, out int x) || !TryInt(fields[3], provider, out int y) ||
-				!TryInt(fields[4], provider, out int rotation))
+			if (!TryInt(Field(line, separators, columnCount, 0), provider, out int type) || !TryInt(Field(line, separators, columnCount, 1), provider, out int index) ||
+				!TryInt(Field(line, separators, columnCount, 2), provider, out int x) || !TryInt(Field(line, separators, columnCount, 3), provider, out int y) ||
+				!TryInt(Field(line, separators, columnCount, 4), provider, out int rotation))
 			{
-				Warn($"第 {lineNumber} 行：type/index/x/y/rotation 不是整数，已跳过：{line}");
+				Warn($"第 {lineNumber} 行：type/index/x/y/rotation 不是整数，已跳过：{line.ToString()}");
 				return false;
 			}
-			if (!TryInt(fields[5], provider, out int flippedValue))
+			if (!TryInt(Field(line, separators, columnCount, 5), provider, out int flippedValue))
 			{
-				Warn($"第 {lineNumber} 行：翻转值不是整数，已跳过：{line}");
+				Warn($"第 {lineNumber} 行：翻转值不是整数，已跳过：{line.ToString()}");
 				return false;
 			}
 			if (flippedValue != 0 && flippedValue != 1)
@@ -238,26 +256,23 @@ namespace Bpsim.Parts
 				Warn($"第 {lineNumber} 行：坐标 ({x}, {y}) 超出 ±{MaxCoordinate}，视为损坏数据，已跳过");
 				return false;
 			}
-			rotation = NormalizeRotation(rotation, lineNumber);
 			bool flipped = flippedValue != 0;
-			float sizeMultiplier = TryFloat(fields, 9, provider, out float size) && size > 0f ? size : 1f;
+			bool narrowWithMembers = columnCount > 6 && Field(line, separators, columnCount, 6).IndexOf('=') >= 0;
+			float sizeMultiplier = !narrowWithMembers && columnCount > 9 && float.TryParse(Field(line, separators, columnCount, 9), NumberStyles.Float, provider, out float size) && size > 0f && !float.IsInfinity(size) ? size : 1f;
 			float offsetX = 0f;
 			float offsetY = 0f;
 			float rotationDegrees = 0f;
 			float stretchX = 1f;
 			float stretchY = 1f;
 			int frameShape = 0;
-			int layer = PartBuildLayer.MinLayer;
-			string members = ReadMembersField(fields, lineNumber, provider, out bool hasLayer, out int parsedLayer);
-			if (hasLayer)
-			{
-				layer = parsedLayer;
-			}
+			ReadOnlySpan<char> members = ReadMembersField(line, separators, columnCount, lastSeparator, lineNumber, provider, out int layer);
 			PartTypeInfo info = new PartTypeInfo((PartType)type, index);
-			if (!string.IsNullOrEmpty(members))
+			Schematics.Unit extras = default;
+			float wheelScale = 0f;
+			if (!members.IsEmpty)
 			{
 				LastMemberRows++;
-				ReadMembers(members, lineNumber, provider, info, ref offsetX, ref offsetY, ref rotationDegrees, ref stretchX, ref stretchY, ref frameShape);
+				ReadMembers(members.ToString(), lineNumber, provider, info, ref offsetX, ref offsetY, ref rotationDegrees, ref stretchX, ref stretchY, ref frameShape, ref wheelScale, ref extras);
 			}
 			// BPIR 里有一批部件的 rotation 是「模式码」而不是角度：铰链布局、布线拓扑、
 			// 电荷极性……它们的 4..7 不代表「再多 45 度」，必须先按 BPIR 自己的取模规则
@@ -268,12 +283,25 @@ namespace Bpsim.Parts
 			}
 			// 其余非八向部件放不下 45 度增量（BasePart.RotateTo 会 rotation %= 4），
 			// 把余下的 45 度折进连续角，视觉朝向才不会丢。
-			else if (rotation >= 4 && !BasePart.IsEightWay(info))
+			else
 			{
-				rotationDegrees += 45f;
-				rotation -= 4;
+				rotation = NormalizeRotation(rotation, lineNumber);
+				if (rotation >= 4 && !BasePart.IsEightWay(info))
+				{
+					rotationDegrees += 45f;
+					rotation -= 4;
+				}
 			}
-			unit = new Schematics.Unit(x, y, type, index, rotation, flipped, offsetX, offsetY, rotationDegrees, stretchX * sizeMultiplier, stretchY * sizeMultiplier, layer, frameShape).Normalized();
+			if (info == BasePart.OffRoadWheel)
+			{
+				sizeMultiplier = wheelScale > 0f ? wheelScale : sizeMultiplier * (float)Math.Sqrt(Math.Max(0.0001, (double)stretchX * stretchY));
+				stretchX = stretchY = 1f;
+			}
+			unit = new Schematics.Unit(x, y, type, index, rotation, flipped, offsetX, offsetY, rotationDegrees, stretchX * sizeMultiplier, stretchY * sizeMultiplier, layer, frameShape, extras.DrawLayer)
+			{
+				RemoteLink = extras.RemoteLink,
+				RemoteTargets = extras.RemoteTargets
+			}.Normalized();
 			return true;
 		}
 
@@ -298,6 +326,10 @@ namespace Bpsim.Parts
 		{
 			switch (info.PartType)
 			{
+			case PartType.PointLight:
+				return info.PartIndex == 6;
+			case PartType.JetEngine:
+				return info.PartIndex == 2 || info.PartIndex == 3 || info.PartIndex == 5;
 			case PartType.Rope:
 				// 4-7 是铰接板（HingePlate），rotation 是 0..5 的布局码。
 				return info.PartIndex >= 4 && info.PartIndex <= 7;
@@ -305,7 +337,8 @@ namespace Bpsim.Parts
 				// 1/3 = 固定电线（7 种布线拓扑）、38/39 = 接口（5 种）、
 				// 42 = 点电荷（正负极）、44 = 磁场发生器（正反向）、
 				// 6-11 = 电阻、15-17 = 电容（BPIR 都只允许 0/90）。
-				return info.PartIndex == 1 || info.PartIndex == 3 ||
+				return info.PartIndex == 0 || info.PartIndex == 1 || info.PartIndex == 2 || info.PartIndex == 3 || info.PartIndex == 5 ||
+					BasePart.CanFlip(info) ||
 					info.PartIndex == 38 || info.PartIndex == 39 ||
 					info.PartIndex == 42 || info.PartIndex == 44 ||
 					(info.PartIndex >= 6 && info.PartIndex <= 11) ||
@@ -316,22 +349,22 @@ namespace Bpsim.Parts
 		}
 
 		/// <summary>
-		/// 把 BPIR 的 rotation 模式码换成 bpsim 侧真正会消费的那个值：铰链板按
-		/// <c>HingePlate.SetRotation</c> 的角度分支取模、布线拓扑码原样保留、
+		/// 把 BPIR 的 rotation 模式码换成 bpsim 侧真正会消费的那个值：保留铰链布局和布线拓扑，
 		/// 电荷与磁场取 bpsim <see cref="Simulation.CircuitSystem" /> 判符号用的余数。
 		/// </summary>
 		internal static int NormalizeModeCode(PartTypeInfo info, int rotation)
 		{
 			switch (info.PartType)
 			{
+			case PartType.PointLight:
+				return (rotation % 5 + 5) % 5;
+			case PartType.JetEngine:
+				return info.PartIndex == 3 ? 0 : rotation & 1;
 			case PartType.Rope:
-			{
-				int layout = ((rotation % 6) + 6) % 6;
-				// 0/1 是「两板并排」并转 90*num，2..5 是「两板下移」并转 90*(num-2)：
-				// 两个分支合起来正好等价于 90*(layout <= 1 ? layout : layout - 2)。
-				return layout <= 1 ? layout : layout - 2;
-			}
+				return (rotation % 6 + 6) % 6;
 			case PartType.ElectricalPart:
+				if (info.PartIndex == 0 || info.PartIndex == 2) return 0;
+				if (info.PartIndex == 5 || BasePart.CanFlip(info)) return rotation & 3;
 				if (info.PartIndex == 1 || info.PartIndex == 3)
 				{
 					// CircuitPart.GetTerminals 与 NormalizeRotation 都是 %7。
@@ -362,55 +395,34 @@ namespace Bpsim.Parts
 			}
 		}
 
-		private string ReadMembersField(string[] fields, int lineNumber, IFormatProvider provider, out bool hasLayer, out int layer)
+		private static ReadOnlySpan<char> Field(ReadOnlySpan<char> line, ReadOnlySpan<int> separators, int columnCount, int index)
 		{
-			hasLayer = false;
-			layer = PartBuildLayer.MinLayer;
-			if (fields.Length == ColumnCount - 1)
-			{
-				// 13 列：只有 members，没有 layer。
-				return fields[12];
-			}
-			if (fields.Length < ColumnCount)
-			{
-				// BPIR 的 INContraptionDataManager.LoadDataFromCsv 是这么分支的：
-				//   列数 >= 8 → members 在第 13 列（index 12）、layer 在第 14 列，
-				//                少一列就两者都没有（8..12 列没有 members）；
-				//   列数 <  8 → members 落在第 7 列（index 6），没有 layer。
-				// 所以只有 7 列的窄存档带 members。
-				return fields.Length == MinColumnCount + 1 ? fields[MinColumnCount] : string.Empty;
-			}
-			if (fields.Length > ColumnCount)
-			{
-				// members 自带的逗号（例如某些 @shape=x,y）会把尾巴顶出 14 列：
-				// 最后一列仍然是 layer，中间全部并回 members。
-				int count = fields.Length - 13;
-				string joined = string.Join(",", fields, 12, count);
-				if (TryInt(fields[fields.Length - 1], provider, out int parsed))
-				{
-					hasLayer = true;
-					layer = parsed;
-				}
-				else
-				{
-					Warn($"第 {lineNumber} 行：列数 {fields.Length} 且最后一列不是图层号，按 14 列读");
-					return fields[12];
-				}
-				return joined;
-			}
-			if (TryInt(fields[13], provider, out int value))
-			{
-				hasLayer = true;
-				layer = value;
-			}
-			else
-			{
-				Warn($"第 {lineNumber} 行：图层列 \"{fields[13]}\" 不是整数，按第 1 层处理");
-			}
-			return fields[12];
+			int start = index == 0 ? 0 : separators[index - 1] + 1;
+			int end = index + 1 == columnCount ? line.Length : separators[index];
+			return line.Slice(start, end - start);
 		}
 
-		private void ReadMembers(string members, int lineNumber, IFormatProvider provider, PartTypeInfo info, ref float offsetX, ref float offsetY, ref float rotationDegrees, ref float stretchX, ref float stretchY, ref int frameShape)
+		private ReadOnlySpan<char> ReadMembersField(ReadOnlySpan<char> line, ReadOnlySpan<int> separators, int columnCount, int lastSeparator, int lineNumber, IFormatProvider provider, out int layer)
+		{
+			layer = PartBuildLayer.MinLayer;
+			if (columnCount == 7 || (columnCount > 7 && Field(line, separators, columnCount, 6).IndexOf('=') >= 0))
+				return line.Slice(separators[5] + 1);
+			if (columnCount < 13) return default;
+			if (columnCount == 13) return Field(line, separators, columnCount, 12);
+			ReadOnlySpan<char> layerField = line.Slice(lastSeparator + 1);
+			if (TryInt(layerField, provider, out int value))
+			{
+				layer = value;
+				int start = separators[11] + 1;
+				return line.Slice(start, lastSeparator - start);
+			}
+			Warn(columnCount > ColumnCount
+				? $"第 {lineNumber} 行：列数 {columnCount} 且最后一列不是图层号，按 14 列读"
+				: $"第 {lineNumber} 行：图层列 \"{layerField.ToString()}\" 不是整数，按第 1 层处理");
+			return Field(line, separators, columnCount, 12);
+		}
+
+		private void ReadMembers(string members, int lineNumber, IFormatProvider provider, PartTypeInfo info, ref float offsetX, ref float offsetY, ref float rotationDegrees, ref float stretchX, ref float stretchY, ref int frameShape, ref float wheelScale, ref Schematics.Unit extras)
 		{
 			string[] entries = members.Split(';');
 			for (int i = 0; i < entries.Length; i++)
@@ -431,15 +443,12 @@ namespace Bpsim.Parts
 				switch (key)
 				{
 				case "@offX":
-					offsetX = Clamp(TryFloat(raw, provider, out float ox, key, lineNumber) ? ox : 0f, -1f, 1f);
+					offsetX = Clamp(TryFloat(raw, provider, out float ox, key, lineNumber) ? ox : 0f, -1e9f, 1e9f);
 					break;
 				case "@offY":
-					offsetY = Clamp(TryFloat(raw, provider, out float oy, key, lineNumber) ? oy : 0f, -1f, 1f);
+					offsetY = Clamp(TryFloat(raw, provider, out float oy, key, lineNumber) ? oy : 0f, -1e9f, 1e9f);
 					break;
 				case "@rotZ":
-					// BPIR 用 Mathf.DeltaAngle(0, v) 归一，@rotZ 是「替换」原生姿态的绝对角而不是叠加，
-					// 但 bpsim 的 PartFreeTransformSystem 是 math.mul(local.Rotation, RotateZ(deg))，
-					// 二维下同为绕 z 轴旋转、左右乘等价，直接搬即可。
 					rotationDegrees = TryFloat(raw, provider, out float rz, key, lineNumber) ? Mathf.DeltaAngle(0f, rz) : 0f;
 					break;
 				case "@stretchX":
@@ -452,12 +461,17 @@ namespace Bpsim.Parts
 					frameShape = ParseFrameShape(raw, lineNumber);
 					break;
 				case "@layer":
-					// BPIR 的 @layer 是与建造层无关的深度偏移（-50..50，×0.01 世界单位），
-					// bpsim 的 Schematics.Unit / PartFreeTransform 都没有对应通道。
-					if (TryFloat(raw, provider, out float depth, key, lineNumber))
-					{
-						AddUnknownMember("@layer(深度偏移 " + Mathf.Clamp(Mathf.RoundToInt(depth), MinDepthLayer, MaxDepthLayer) + ")");
-					}
+					if (TryFloat(raw, provider, out float depth, key, lineNumber)) extras.DrawLayer = Mathf.RoundToInt(Clamp(depth, MinDepthLayer, MaxDepthLayer));
+					break;
+				case "@wheelScale" when info == BasePart.OffRoadWheel:
+					if (TryFloat(raw, provider, out float scale, key, lineNumber)) wheelScale = Math.Max(PartFreeTransform.MinScale, scale);
+					break;
+				case "@remoteLink":
+					extras.RemoteLink = TryFloat(raw, provider, out float enabled, key, lineNumber) && enabled != 0f;
+					break;
+				case "@remoteCells":
+					extras.RemoteCells = raw;
+					if (extras.RemoteTargets.Length == 0) Warn($"第 {lineNumber} 行：远程连接目标无效：{raw}");
 					break;
 				default:
 					AddUnknownMember(key);
@@ -496,22 +510,7 @@ namespace Bpsim.Parts
 			return false;
 		}
 
-		private bool TryFloat(string[] fields, int index, IFormatProvider provider, out float value)
-		{
-			value = 0f;
-			if (index >= fields.Length)
-			{
-				return false;
-			}
-			string raw = fields[index].Trim();
-			if (raw.Length == 0)
-			{
-				return false;
-			}
-			return float.TryParse(raw, NumberStyles.Float, provider, out value) && !float.IsNaN(value) && !float.IsInfinity(value);
-		}
-
-		private static bool TryInt(string raw, IFormatProvider provider, out int value)
+		private static bool TryInt(ReadOnlySpan<char> raw, IFormatProvider provider, out int value)
 		{
 			return int.TryParse(raw.Trim(), NumberStyles.Integer, provider, out value);
 		}

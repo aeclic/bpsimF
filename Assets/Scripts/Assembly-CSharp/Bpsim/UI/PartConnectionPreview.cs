@@ -26,6 +26,8 @@ namespace Bpsim.UI
 
 		private static readonly Color s_bridgeColor = new Color(1f, 0.55f, 0.15f, 0.95f);
 
+		private static readonly Color s_remoteColor = new Color(0.65f, 0.95f, 0.35f, 0.95f);
+
 		private readonly List<LineRenderer> m_pool = new List<LineRenderer>(PoolSize);
 
 		private Material m_material;
@@ -73,6 +75,18 @@ namespace Bpsim.UI
 				PartTransform transform = entityManager.GetComponentData<PartTransform>(entity);
 				byte layer = PartBuildLayerUtility.GetLayer(entityManager, entity);
 				float2 center = Center(entityManager, unmanaged, entity, in transform);
+				if (entityManager.HasBuffer<PartRemoteConnection>(entity))
+				{
+					foreach (PartRemoteConnection link in entityManager.GetBuffer<PartRemoteConnection>(entity, isReadOnly: true))
+					{
+						Entity target = link.Target;
+						if (!entityManager.HasComponent<PartTransform>(target)) continue;
+						PartTransform targetTransform = entityManager.GetComponentData<PartTransform>(target);
+						float2 targetCenter = Center(entityManager, unmanaged, target, in targetTransform);
+						DrawSegment(new float3(center, LineZ), new float3(targetCenter, LineZ), s_remoteColor, width);
+					}
+					continue;
+				}
 				for (int d = 0; d < 4; d++)
 				{
 					int nx = transform.X + (d == 0 ? 1 : (d == 1 ? -1 : 0));
@@ -107,7 +121,7 @@ namespace Bpsim.UI
 
 		private void DrawPair(EntityManager entityManager, PartSceneUnmanaged unmanaged, Entity entity, float2 center, Entity other, BitDirection direction, Color color, float width, bool dedupe, bool bridge, in PartAspect.Lookup aspectLookup)
 		{
-			if (other == Entity.Null || other == entity || !entityManager.Exists(other) || !entityManager.HasComponent<PartTransform>(other))
+			if (other == Entity.Null || other == entity || !entityManager.Exists(other) || !entityManager.HasComponent<PartTransform>(other) || entityManager.HasBuffer<PartRemoteConnection>(other))
 			{
 				return;
 			}

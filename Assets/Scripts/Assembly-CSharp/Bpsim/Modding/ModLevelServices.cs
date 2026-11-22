@@ -130,6 +130,7 @@ namespace Bpsim.Modding
 		public string Key;
 		public string BaseScene;
 		public string Title;
+		public string DisplayNumber;
 		public string[] Prefabs = Array.Empty<string>();
 		public string[] References = Array.Empty<string>();
 		public byte[] LevelBytes;
@@ -202,6 +203,7 @@ namespace Bpsim.Modding
 				Key = entry.modDefinition != null ? entry.modDefinition.Key : entry.scene,
 				BaseScene = entry.modDefinition != null ? entry.modDefinition.BaseScene : entry.scene,
 				Title = entry.title,
+				DisplayNumber = entry.modDefinition?.DisplayNumber,
 				Prefabs = (string[])(entry.prefabs ?? Array.Empty<string>()).Clone(),
 				References = (string[])(entry.references ?? Array.Empty<string>()).Clone(),
 				LevelBytes = includeData ? LevelCatalog.ReadLevelBytes(entry) : null,
@@ -337,7 +339,7 @@ namespace Bpsim.Modding
 			ModLevelLoaded loaded = new ModLevelLoaded
 			{
 				Owner = entry.modOwner, Definition = entry.modDefinition, Root = result.Root,
-				Anchor = result.Anchor, TerrainScale = LevelDocumentParser.TerrainScale,
+				Anchor = result.Anchor, TerrainScale = result.TerrainScale,
 				VisualDepthOffset = LevelImporter.DepthOffset
 			};
 			foreach (Action<ModLevelLoaded> handler in Loaded.GetInvocationList())

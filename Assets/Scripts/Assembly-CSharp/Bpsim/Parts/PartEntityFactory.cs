@@ -51,7 +51,7 @@ namespace Bpsim.Parts
 			{
 				CreateChild(context, gameObject.transform.GetChild(i).gameObject, entity, entity, prefab);
 			}
-			BuildCompoundCollider(context, entity);
+			if (!context.EntityManager.HasComponent<HingePlate>(entity)) BuildCompoundCollider(context, entity);
 			EnsureSandbagCollider(context, entity);
 			context.EntityManager.AddComponentData(entity, Gameplay.BpleLightBodyBounds.Create(gameObject));
 			foreach (Transform node in gameObject.GetComponentsInChildren<Transform>(true))
@@ -186,7 +186,32 @@ namespace Bpsim.Parts
 			});
 			context.EntityManager.GetBuffer<LinkedEntityGroup>(rootEntity).Add(entity);
 			CreateChildMarker(context, gameObject.name, entity);
-			CreateComponents(context, gameObject.GetComponents<Component>(), entity);
+			PartTypeInfo rootType = context.EntityManager.GetComponentData<PartTypeValue>(rootEntity).BaseValue;
+			bool hingeHalf = parentEntity == rootEntity && rootType.BelongsTo(BasePart.HingePlates)
+				&& (gameObject.name == "Plate1" || gameObject.name == "Plate2");
+			CreateComponents(context, gameObject.GetComponents<Component>(), entity, hingeHalf);
+			if (hingeHalf)
+			{
+				EntityManager manager = context.EntityManager;
+				if (!manager.HasComponent<HingePlate>(rootEntity)) manager.AddComponent<HingePlate>(rootEntity);
+				HingePlate plate = manager.GetComponentData<HingePlate>(rootEntity);
+				if (gameObject.name == "Plate1") plate.Left = entity;
+				else plate.Right = entity;
+				manager.SetComponentData(rootEntity, plate);
+			}
+			int attachmentCount = BasePart.GetAttachmentCount(rootType);
+			if (attachmentCount != 0)
+			{
+				FixedString64Bytes name = default;
+				name.CopyFromTruncated(gameObject.name);
+				int direction = (int)BasePart.FindAttachment(in name);
+				if ((uint)direction < (uint)attachmentCount)
+				{
+					DynamicBuffer<PartAttachment> attachments = context.EntityManager.HasBuffer<PartAttachment>(rootEntity)
+						? context.EntityManager.GetBuffer<PartAttachment>(rootEntity) : context.EntityManager.AddBuffer<PartAttachment>(rootEntity);
+					attachments.Add(new PartAttachment { Child = entity, Direction = direction });
+				}
+			}
 			if (parentEntity == rootEntity && context.EntityManager.HasComponent<CircuitPart>(rootEntity))
 			{
 				int circuitIndex = context.EntityManager.GetComponentData<CircuitPart>(rootEntity).Index;
@@ -209,7 +234,8 @@ namespace Bpsim.Parts
 				});
 			if (parentEntity == rootEntity)
 			{
-				PartType kind = context.EntityManager.GetComponentData<PartTypeValue>(rootEntity).BaseType;
+				PartType kind = rootType.PartType;
+				OrientationArtwork.Bake(context.EntityManager, rootEntity, entity, rootType, gameObject.name);
 				bool balloon = SuspensionRuntime.IsBalloon(kind);
 				bool bag = Sandbag.IsSandbag(kind);
 				if ((balloon && (gameObject.name == "BalloonVisualization" || gameObject.name == "Balloon2Visualization" || gameObject.name == "Balloon3Visualization"))
@@ -244,6 +270,9 @@ namespace Bpsim.Parts
 		{
 			switch (name)
 			{
+			case "FlameSprite":
+				context.EntityManager.AddComponent<JetExhaustVisual>(entity);
+				break;
 			case "WheelPivot":
 				context.EntityManager.AddComponentData(entity, new WheelPivot
 				{
@@ -337,15 +366,15 @@ namespace Bpsim.Parts
 			}
 		}
 
-		public static void CreateComponents(Context context, Component[] components, Entity entity)
+		public static void CreateComponents(Context context, Component[] components, Entity entity, bool hingeHalf = false)
 		{
 			foreach (Component component in components)
 			{
-				CreateComponent(context, component, entity);
+				CreateComponent(context, component, entity, hingeHalf);
 			}
 		}
 
-		public static void CreateComponent(Context context, Component component, Entity entity)
+		public static void CreateComponent(Context context, Component component, Entity entity, bool hingeHalf = false)
 		{
 			if (!(component is Transform component2))
 			{
@@ -362,7 +391,7 @@ namespace Bpsim.Parts
 						}
 						else
 						{
-							CreateColllider(context, component5, entity);
+							CreateColllider(context, component5, entity, hingeHalf);
 						}
 					}
 					else
@@ -454,12 +483,12 @@ namespace Bpsim.Parts
 			}
 		}
 
-		public static void CreateColllider(Context context, UnityEngine.Collider component, Entity entity)
+		public static void CreateColllider(Context context, UnityEngine.Collider component, Entity entity, bool hingeHalf = false)
 		{
 			// Tread and support leaves must retain their separate authored materials.
 			context.EntityManager.AddComponentData(entity, new PhysicsCollider
 			{
-				Value = PartPhysics.CreateCollider(component)
+				Value = PartPhysics.CreateCollider(component, hingeHalf)
 			});
 		}
 

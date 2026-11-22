@@ -452,20 +452,25 @@ namespace Bpsim.QA
 			surface = CustomBackgroundSystem.EvaluateSurface(s, 2f, camera, anchor);
 			Check(!surface.Visible, "关闭开关时 Visible=false");
 
-			// 相机移动不再拖动背景：背景锚在网格平面上，X/Y 只由偏移量决定。
+			// 相对背景连续跟随相机，网格区块吸附不能改写背景中心。
 			s.Enabled = true;
 			s.UseAbsolute = false;
 			s.Rotation = 0f;
 			s.OffsetX = 0f;
 			s.OffsetY = 0f;
-			camera.transform.position = new Vector3(11f, -4f, -10f);
+			camera.transform.position = new Vector3(49.9f, -0.1f, -10f);
 			surface = CustomBackgroundSystem.EvaluateSurface(s, 2f, camera, anchor);
-			Check(Near(surface.Position.x, 0f) && Near(surface.Position.y, 0f), "相机移动不影响背景 X/Y（锚在网格平面），实际 (" + F(surface.Position.x) + "," + F(surface.Position.y) + ")");
+			Check(Near(surface.Position.x, 49.9f) && Near(surface.Position.y, -0.1f), "相对背景使用连续相机 XY，实际 (" + F(surface.Position.x) + "," + F(surface.Position.y) + ")");
+			Vector3 beforeBoundary = surface.Position;
+			camera.transform.position = new Vector3(50.1f, 0.1f, -10f);
+			surface = CustomBackgroundSystem.EvaluateSurface(s, 2f, camera, new Vector3(50f, 0f, anchor.z));
+			Check(Near(surface.Position.x - beforeBoundary.x, 0.2f) && Near(surface.Position.y - beforeBoundary.y, 0.2f),
+				"跨越 50 单位网格区块时背景连续移动相机的实际 0.2 单位，实际 delta (" + F(surface.Position.x - beforeBoundary.x) + "," + F(surface.Position.y - beforeBoundary.y) + ")");
 
-			// 偏移 0.5 个视野宽度 → 右移 0.5 * viewW = 0.5 * 40 = 20（锚点 x = 0）。
+			// 偏移 0.5 个视野宽度 → 右移 0.5 * viewW = 0.5 * 40 = 20。
 			s.OffsetX = 0.5f;
 			surface = CustomBackgroundSystem.EvaluateSurface(s, 2f, camera, anchor);
-			Check(Near(surface.Position.x, 20f), "X 偏移 0.5 视野宽 → 右移 20，实际 " + F(surface.Position.x));
+			Check(Near(surface.Position.x, 70.1f), "X 偏移 0.5 视野宽 → 相机锚点右移 20，实际 " + F(surface.Position.x));
 
 			// 旋转只由用户角度决定，不再跟着相机朝向。
 			s.OffsetX = 0f;
