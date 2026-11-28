@@ -148,6 +148,10 @@ InitTestScene*.unity*
 /Assets/StreamingAssets/Mods/*
 !/Assets/StreamingAssets/Mods/bpir-frame-shapes/
 !/Assets/StreamingAssets/Mods/bpir-frame-shapes.meta
+!/Assets/StreamingAssets/Mods/revolute-separator/
+!/Assets/StreamingAssets/Mods/revolute-separator.meta
+!/Assets/StreamingAssets/Mods/iron-bracket-wheel/
+!/Assets/StreamingAssets/Mods/iron-bracket-wheel.meta
 
 # Editor files
 /.vscode/
@@ -163,6 +167,17 @@ InitTestScene*.unity*
 # 仅供截图/取色用的临时 MonoBehaviour；属于本地调试脚手架，不是游戏资源。
 /Assets/DshTemp/
 /Assets/DshTemp.meta
+# Tools/UnityMcp/prove_methods.py 每次运行都重建/删除的 scratch 场景与脚本。
+/Assets/DshBridgeProbe/
+/Assets/DshBridgeProbe.meta
+/Assets/Probe2/
+/Assets/Probe2.meta
+# 探针留下的空材质目录：ProbeMat 未被任何场景/预制体引用（guid 全库零命中）。
+/Assets/Materials/
+/Assets/Materials.meta
+
+# AI 图像生成的中间产出（每个部件十几张候选图），本地素材，不进仓库。
+/output/
 # 认领写冲突时留下的待合并描述文件（本地状态，不是资源）。
 *.dshpending
 *.dshpending.meta

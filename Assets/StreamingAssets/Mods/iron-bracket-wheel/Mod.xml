@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod>
+  <Name>铁支架轮</Name>
+  <Author>bpsim project</Author>
+  <Version>1.0.0</Version>
+  <Description>使用 Kicker#0 铁质支架作为旋转轮体，保留 MotorWheel#0 主体与动力开关，并允许四向连接。</Description>
+  <MultiplayerCompatible>false</MultiplayerCompatible>
+  <MinGameVersion>0.0.12</MinGameVersion>
+  <ID>44a40ffd-7597-4665-b1ba-2ee4496c343d</ID>
+  <EntryPoint type="IronBracketWheel.Entry" />
+  <Assemblies>
+    <Assembly path="IronBracketWheel.dll" />
+  </Assemblies>
+</Mod>

@@ -105,6 +105,14 @@ namespace Bpsim.Parts.Simulation
 			[ReadOnly]
 			public ComponentLookup<PartIsolatedCollider> IsolatedColliderLookup;
 
+			[ReadOnly]
+			public ComponentLookup<MotorWheelRotorMember> RotorMemberLookup;
+
+			[ReadOnly]
+			public ComponentLookup<MotorWheelRotorVehicleMember> RotorVehicleMemberLookup;
+
+			public bool SelfCollision;
+
 			public void Execute()
 			{
 				if (Dirty.Value)
@@ -115,7 +123,8 @@ namespace Bpsim.Parts.Simulation
 					PartSimulation.UpdateConnectedComponents(Simulator, PartConnectedComponentLookup, PartExtensionComponentLookup, componentIndexes, componentCount);
 					// 关节被拉断后连通块会重新切分，碰撞过滤必须跟着更新：同一连通块内部
 					// 不需要碰撞（见 PartCollisionFilter），断了以后碎片之间要重新互撞。
-					PartCollisionFilter.ApplyInJob(Simulator.Value.Parts, componentIndexes, ref PhysicsColliderLookup, ref IsolatedColliderLookup);
+					PartCollisionFilter.ApplyInJob(Simulator.Value.Parts, componentIndexes,
+						ref PhysicsColliderLookup, ref IsolatedColliderLookup, ref RotorMemberLookup, ref RotorVehicleMemberLookup, SelfCollision);
 					componentIndexes.Dispose();
 					disjointSet.Dispose();
 				}
@@ -225,6 +234,10 @@ namespace Bpsim.Parts.Simulation
 
 		private ComponentLookup<PartIsolatedCollider> __Bpsim_Parts_Simulation_PartIsolatedCollider_RO_ComponentLookup;
 
+		private ComponentLookup<MotorWheelRotorMember> __Bpsim_Parts_MotorWheelRotorMember_RO_ComponentLookup;
+
+		private ComponentLookup<MotorWheelRotorVehicleMember> __Bpsim_Parts_MotorWheelRotorVehicleMember_RO_ComponentLookup;
+
 		private EntityQuery __query_125383276_0;
 
 		private EntityQuery __query_125383276_1;
@@ -256,6 +269,8 @@ namespace Bpsim.Parts.Simulation
 				__Unity_Physics_PhysicsConstrainedBodyPair_RO_ComponentLookup.Update(ref base.CheckedStateRef);
 				__Unity_Physics_PhysicsCollider_RW_ComponentLookup.Update(ref base.CheckedStateRef);
 				__Bpsim_Parts_Simulation_PartIsolatedCollider_RO_ComponentLookup.Update(ref base.CheckedStateRef);
+				__Bpsim_Parts_MotorWheelRotorMember_RO_ComponentLookup.Update(ref base.CheckedStateRef);
+				__Bpsim_Parts_MotorWheelRotorVehicleMember_RO_ComponentLookup.Update(ref base.CheckedStateRef);
 				dependency = IJobExtensions.Schedule(new UpdateComponentsJob
 				{
 					Dirty = dirty,
@@ -264,7 +279,10 @@ namespace Bpsim.Parts.Simulation
 					PartConnectedComponentLookup = __Bpsim_Parts_PartConnectedComponent_RW_ComponentLookup,
 					PartExtensionComponentLookup = __Bpsim_Parts_PartExtensionComponent_RO_ComponentLookup,
 					PhysicsColliderLookup = __Unity_Physics_PhysicsCollider_RW_ComponentLookup,
-					IsolatedColliderLookup = __Bpsim_Parts_Simulation_PartIsolatedCollider_RO_ComponentLookup
+					IsolatedColliderLookup = __Bpsim_Parts_Simulation_PartIsolatedCollider_RO_ComponentLookup,
+					RotorMemberLookup = __Bpsim_Parts_MotorWheelRotorMember_RO_ComponentLookup,
+					RotorVehicleMemberLookup = __Bpsim_Parts_MotorWheelRotorVehicleMember_RO_ComponentLookup,
+					SelfCollision = UserSettings.Instance.SimulationSettings.PartSelfCollision
 				}, dependency);
 				// Editor port: `dirty` is a TempJob allocation and must be released or every frame
 				// trips JobTempAlloc's 4-frame lifespan check.
@@ -384,6 +402,8 @@ namespace Bpsim.Parts.Simulation
 			// field + Update() dereferences an unregistered type index and throws every frame.
 			__Unity_Physics_PhysicsCollider_RW_ComponentLookup = state.GetComponentLookup<PhysicsCollider>();
 			__Bpsim_Parts_Simulation_PartIsolatedCollider_RO_ComponentLookup = state.GetComponentLookup<PartIsolatedCollider>(isReadOnly: true);
+			__Bpsim_Parts_MotorWheelRotorMember_RO_ComponentLookup = state.GetComponentLookup<MotorWheelRotorMember>(isReadOnly: true);
+			__Bpsim_Parts_MotorWheelRotorVehicleMember_RO_ComponentLookup = state.GetComponentLookup<MotorWheelRotorVehicleMember>(isReadOnly: true);
 		}
 
 		protected override void OnCreateForCompiler()

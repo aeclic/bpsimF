@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest import mock
 
+from adapter import AdapterError
 from bridge import Bridge, BridgeError, discover_bridge_url
+from fakes import make_bridge
 from profiler import MAX_SAMPLES, MAX_TAIL_BYTES, read_profiler_log, select_samples, validate_profiler_params
 
 
@@ -32,11 +35,11 @@ class ProfilerTests(unittest.TestCase):
         return path
 
     def client(self, busy=False):
-        client = Bridge(self.project)
-        info = {"ok": True, "project": str(self.project), "compiling": busy,
-                "playing": False, "changing": False, "busy": False}
-        client.http_json = Mock(side_effect=lambda path, body=None, timeout=8:
-                                dict(info) if path == "/ping" else {"ok": True, "result": {"latestSequence": 1}})
+        client = make_bridge(self.project, info={
+            "ok": True, "project": str(self.project), "compiling": busy,
+            "playing": False, "changing": False, "busy": False,
+        }, result={"latestSequence": 1})
+        self.addCleanup(client.close)
         return client
 
     def test_default_read_is_recent_and_offline(self):
@@ -164,7 +167,7 @@ class ProfilerTests(unittest.TestCase):
         client = self.client()
         result = client.profiler(source="live")
         self.assertEqual(result["source"], "live")
-        self.assertEqual(client.http_json.call_args.args[1]["method"], "profiler")
+        self.assertEqual(client.adapter.calls[-1][0], "profiler")
         self.assertIsNone(client.load()["lease"])
         self.assertIsNone(client.load()["pending"])
 
@@ -179,7 +182,7 @@ class ProfilerTests(unittest.TestCase):
         self.write([self.sample(3)])
         for client in [self.client(busy=True), self.client()]:
             if not client.ping()["compiling"]:
-                client.http_json.side_effect = ConnectionError("offline")
+                client.adapter.ping_failure = AdapterError("offline")
             result = client.profiler()
             self.assertEqual(result["source"], "log")
             self.assertEqual(result["result"]["latestSequence"], 3)
@@ -188,66 +191,75 @@ class ProfilerTests(unittest.TestCase):
     def test_explicit_log_source_never_contacts_unity(self):
         client = self.client()
         client.profiler(source="log")
-        client.http_json.assert_not_called()
+        self.assertEqual(client.adapter.calls, [])
 
     def test_explicit_live_does_not_hide_connection_failure(self):
         client = self.client()
-        client.http_json.side_effect = ConnectionError("offline")
+        client.adapter.ping_failure = AdapterError("offline")
         with self.assertRaises(BridgeError):
             client.profiler(source="live")
 
     def test_wrong_project_is_not_queried(self):
         client = self.client()
-        client.http_json.side_effect = None
-        client.http_json.return_value = {"ok": True, "project": str(self.project.parent)}
+        client.adapter.info["project"] = str(self.project.parent)
         with self.assertRaisesRegex(BridgeError, "Wrong Unity project"):
             client.profiler(source="live")
-        self.assertEqual(client.http_json.call_count, 1)
+        self.assertEqual(client.adapter.calls, [])
 
     def test_profiler_is_not_a_write_method(self):
         client = self.client()
         with self.assertRaises(BridgeError):
             client.write("profiler", "not-a-token", {"clear": True})
-        client.http_json.assert_not_called()
+        self.assertEqual(client.adapter.calls, [])
 
     def test_source_and_bridge_query_bounds_are_validated(self):
         client = self.client()
         for kwargs in [{"source": "write"}, {"count": 0}, {"after_sequence": -1}]:
             with self.assertRaises(BridgeError):
                 client.profiler(**kwargs)
-        client.http_json.assert_not_called()
+        self.assertEqual(client.adapter.calls, [])
 
-    def instance(self, **changes):
-        path = self.project / "Temp/DshBridge/instance.json"
+    def pidfile(self, port=8080, pid=None):
+        path = self.project / "Library/MCPForUnity/RunState" / f"mcp_http_{port}.pid"
         path.parent.mkdir(parents=True, exist_ok=True)
-        info = {"bridge": "DshBridge", "project": str(self.project), "port": 8790}
-        info.update(changes)
-        path.write_text(json.dumps(info), encoding="utf-8")
+        path.write_text(str(os.getpid() if pid is None else pid), encoding="utf-8")
         return path
 
     def test_auto_discovery_and_explicit_override(self):
-        self.instance()
-        self.assertEqual(Bridge(self.project).url, "http://127.0.0.1:8790")
+        self.pidfile(port=8080)
+        self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8080/mcp")
         self.assertEqual(Bridge(self.project, "http://127.0.0.1:8999").url, "http://127.0.0.1:8999")
 
+    def test_discovery_falls_back_to_the_default_port(self):
+        self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8080/mcp")
+
     def test_discovery_refreshes_after_editor_port_change(self):
-        self.instance()
+        self.pidfile(port=8090)
         client = self.client()
-        self.instance(port=8792)
+        self.pidfile(port=8091)
         client.ping()
-        self.assertEqual(client.url, "http://127.0.0.1:8792")
+        self.assertEqual(client.url, "http://127.0.0.1:8091/mcp")
 
-    def test_discovery_rejects_wrong_project_and_invalid_ports(self):
-        for changes in [{"project": str(self.project.parent)}, {"project": "."}, {"bridge": "other"},
-                        {"port": True}, {"port": 0}, {"port": 65536}, {"port": "8790"}]:
-            self.instance(**changes)
-            self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8791")
+    def test_discovery_ignores_stale_and_malformed_pid_files(self):
+        for name in ["mcp_http_0.pid", "mcp_http_65536.pid", "mcp_http_abc.pid", "mcp_http_42.pid.txt"]:
+            path = self.project / "Library/MCPForUnity/RunState" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("1234", encoding="utf-8")
+        self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8080/mcp")
 
-    def test_discovery_rejects_partial_or_oversized_json(self):
-        path = self.instance()
-        for content in ['{"partial":', 'x' * 17000, '[]']:
-            path.write_text(content, encoding="utf-8")
-            self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8791")
+    def test_discovery_skips_pid_files_whose_server_exited(self):
+        self.pidfile(port=8095, pid=999999)
+        with mock.patch("unity_mcp._pid_alive", return_value=False):
+            self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8080/mcp")
+        with mock.patch("unity_mcp._pid_alive", return_value=True):
+            self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8095/mcp")
+
+    def test_discovery_prefers_the_newest_pid_file(self):
+        self.pidfile(port=8100)
+        newest = self.pidfile(port=8101)
+        stamp = newest.stat().st_mtime + 60
+        os.utime(newest, (stamp, stamp))
+        self.assertEqual(discover_bridge_url(self.project), "http://127.0.0.1:8101/mcp")
 
     def test_csharp_sources_are_editor_only(self):
         root = Path(__file__).resolve().parents[2]

@@ -2,6 +2,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Physics.Extensions;
 using Unity.Transforms;
 
 namespace Bpsim.Parts.Simulation
@@ -44,6 +45,8 @@ namespace Bpsim.Parts.Simulation
 
 		private EntityQuery m_gearboxQuery;
 
+		private EntityQuery m_rotorMemberQuery;
+
 		private ComponentLookup<LocalTransform> m_localTransformLookup;
 
 		private ComponentLookup<LocalToWorld> m_localToWorldLookup;
@@ -60,6 +63,8 @@ namespace Bpsim.Parts.Simulation
 
 		private BufferLookup<LinkedEntityGroup> m_groupLookup;
 
+		private NativeList<RaycastHit> m_rayHits;
+
 		protected override void OnCreate()
 		{
 			EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp);
@@ -72,6 +77,9 @@ namespace Bpsim.Parts.Simulation
 			builder = builder.WithAllRW<Gearbox>();
 			builder = builder.WithAll<PartConnectedComponent>();
 			m_gearboxQuery = builder.Build(ref base.CheckedStateRef);
+			builder = new EntityQueryBuilder(Allocator.Temp);
+			builder = builder.WithAll<MotorWheelRotorMember, PhysicsVelocity, LocalToWorld>();
+			m_rotorMemberQuery = builder.Build(ref base.CheckedStateRef);
 			m_localTransformLookup = base.CheckedStateRef.GetComponentLookup<LocalTransform>();
 			m_localToWorldLookup = base.CheckedStateRef.GetComponentLookup<LocalToWorld>(isReadOnly: true);
 			m_pivotLookup = base.CheckedStateRef.GetComponentLookup<WheelPivot>(isReadOnly: true);
@@ -80,6 +88,15 @@ namespace Bpsim.Parts.Simulation
 			m_velocityLookup = base.CheckedStateRef.GetComponentLookup<PhysicsVelocity>();
 			m_massLookup = base.CheckedStateRef.GetComponentLookup<PhysicsMass>(isReadOnly: true);
 			m_groupLookup = base.CheckedStateRef.GetBufferLookup<LinkedEntityGroup>(isReadOnly: true);
+			m_rayHits = new NativeList<RaycastHit>(8, Allocator.Persistent);
+		}
+
+		protected override void OnDestroy()
+		{
+			if (m_rayHits.IsCreated)
+			{
+				m_rayHits.Dispose();
+			}
 		}
 
 		protected override void OnUpdate()
@@ -114,6 +131,26 @@ namespace Bpsim.Parts.Simulation
 			for (int i = 0; i < wheels.Length; i++)
 			{
 				Tick(wheels[i], deltaTime, collisionWorld, simulator, reversingComponents);
+			}
+			DriveRotorMembers();
+		}
+
+		private void DriveRotorMembers()
+		{
+			using NativeArray<Entity> members = m_rotorMemberQuery.ToEntityArray(Allocator.Temp);
+			for (int i = 0; i < members.Length; i++)
+			{
+				Entity member = members[i];
+				MotorWheelRotorMember rotor = EntityManager.GetComponentData<MotorWheelRotorMember>(member);
+				if (!EntityManager.Exists(rotor.Wheel) || !EntityManager.HasComponent<Wheel>(rotor.Wheel)) continue;
+				Wheel wheel = EntityManager.GetComponentData<Wheel>(rotor.Wheel);
+				float angularSpeed = -wheel.SpinSpeed / math.max(wheel.Radius, 1e-3f);
+				LocalToWorld world = EntityManager.GetComponentData<LocalToWorld>(member);
+				PhysicsMass mass = m_massLookup[member];
+				PhysicsVelocity velocity = EntityManager.GetComponentData<PhysicsVelocity>(member);
+				if (mass.InverseMass <= 0f) continue;
+				velocity.SetAngularVelocityWorldSpace(mass, world.Rotation, new float3(0f, 0f, angularSpeed));
+				EntityManager.SetComponentData(member, velocity);
 			}
 		}
 
@@ -305,49 +342,42 @@ namespace Bpsim.Parts.Simulation
 					CollidesWith = ~MegaStructure.VehicleCategory
 				} : CollisionFilter.Default
 			};
-			NativeList<RaycastHit> hits = new NativeList<RaycastHit>(8, Allocator.Temp);
-			try
+			m_rayHits.Clear();
+			if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
 			{
 				// Anvil 后端：Unity.Physics 的 broadphase 在 Anvil 模式下不维护，射线直接问 box3d。
 				// input.Filter 的 CollidesWith 位掩码原样透传（巨构模式下整车被剪掉）。
-				if (Bpsim.Physics.Anvil.AnvilStepSystem.Active)
-				{
-					var anvil = Bpsim.Physics.Anvil.AnvilStepSystem.Anvil;
-					if (anvil == null || !anvil.IsCreated ||
-						anvil.CastRayAll(hits, input.Start, input.End - input.Start, input.Filter.CollidesWith) <= 0)
-					{
-						return;
-					}
-				}
-				else
-				{
-					AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref hits);
-					if (!collisionWorld.CastRay(input, ref collector))
-					{
-						return;
-					}
-				}
-				bool found = false;
-				float bestFraction = float.MaxValue;
-				for (int i = 0; i < hits.Length; i++)
-				{
-					RaycastHit candidate = hits[i];
-					if (candidate.Fraction >= bestFraction || BelongsToPart(candidate.Entity, entity))
-					{
-						continue;
-					}
-					bestFraction = candidate.Fraction;
-					hit = candidate;
-					found = true;
-				}
-				if (!found)
+				var anvil = Bpsim.Physics.Anvil.AnvilStepSystem.Anvil;
+				if (anvil == null || !anvil.IsCreated ||
+					anvil.CastRayAll(m_rayHits, input.Start, input.End - input.Start, input.Filter.CollidesWith) <= 0)
 				{
 					return;
 				}
 			}
-			finally
+			else
 			{
-				hits.Dispose();
+				AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref m_rayHits);
+				if (!collisionWorld.CastRay(input, ref collector))
+				{
+					return;
+				}
+			}
+			bool found = false;
+			float bestFraction = float.MaxValue;
+			for (int i = 0; i < m_rayHits.Length; i++)
+			{
+				RaycastHit candidate = m_rayHits[i];
+				if (candidate.Fraction >= bestFraction || BelongsToPart(candidate.Entity, entity))
+				{
+					continue;
+				}
+				bestFraction = candidate.Fraction;
+				hit = candidate;
+				found = true;
+			}
+			if (!found)
+			{
+				return;
 			}
 			wheel.HasContact = true;
 			wheel.Grounded = true;

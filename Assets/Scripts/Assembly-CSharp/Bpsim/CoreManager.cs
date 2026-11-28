@@ -26,7 +26,13 @@ namespace Bpsim
 			{
 				Object.Instantiate(prefab).transform.SetParent(base.transform, worldPositionStays: false);
 			}
-			Application.targetFrameRate = -1;
+			// Unity's mobile default for an unlimited target is 30 FPS, while the
+			// standalone default follows the display refresh rate.  The quality
+			// presets also enable v-sync, which takes precedence over targetFrameRate
+			// on standalone and can make high-refresh displays exceed the intended
+			// cap.  Disable v-sync and use one explicit cap for every player target.
+			QualitySettings.vSyncCount = 0;
+			Application.targetFrameRate = 60;
 		}
 
 		private void BuildResources()

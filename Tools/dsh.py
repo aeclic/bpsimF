@@ -1,24 +1,27 @@
-"""Bridge client for the bpsim-main editor (DshBridge on 127.0.0.1:8791).
+"""Bridge client for the bpsim-main editor, using the legacy method names.
 
-Why the retry loop: every play-mode entry / script recompile does a domain
-reload. DshBridge's static constructor starts a *new* TcpListener each time
-while the previous accept thread can survive as a zombie, so the port ends up
-with two listeners and roughly half of all connections land on the dead one and
-never get an answer. Short per-attempt timeouts plus retries get through.
+The transport is now the project's "MCP for Unity" server (the old Unity-side plugin on port
+8791 is gone). ``legacy_client`` handles discovery and reply shapes, so this module keeps the
+``call``/``retry``/``state`` helpers that the QA scripts import.
+
+Why a retry loop is still worth keeping: entering or leaving Play Mode reloads the domain, and
+the MCP session is dropped across that reload. Short per-attempt deadlines plus retries ride
+over the transition instead of surfacing "session not found" to the caller.
 """
 import json
+import os
 import sys
 import time
-import urllib.request
 
-BASE = "http://127.0.0.1:8791/api"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "UnityMcp"))
+
+import legacy_client
+from bridge import WRITE_METHODS
 
 
 def call(method, params=None, timeout=8):
-    body = json.dumps({"method": method, "params": params or {}}).encode()
-    req = urllib.request.Request(BASE, data=body, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode())
+    run = legacy_client.write if method in WRITE_METHODS else legacy_client.call
+    return run(method, params)
 
 
 def retry(method, params=None, timeout=8, deadline=180, quiet=False):

@@ -14,7 +14,8 @@ from bridge import Bridge
 parser = argparse.ArgumentParser()
 parser.add_argument("--project", default=str(Path(__file__).resolve().parents[2]))
 parser.add_argument("--bridge-url", default=None,
-                    help="Explicit loopback endpoint; otherwise discover this project's DshBridge instance")
+                    help="Explicit loopback MCP endpoint; otherwise discover this project's "
+                         "MCP-for-Unity server")
 args = parser.parse_args()
 bridge = Bridge(args.project, args.bridge_url)
 mcp = FastMCP("bpsim-unity")

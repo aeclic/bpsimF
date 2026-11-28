@@ -302,6 +302,11 @@ namespace Bpsim.QA
 				{
 					yield return Scenario("motorwheel", BuildMotorWheelScene, TriggerFirst(PartType.MotorWheel, 0), VerifyMotorWheel, 1.4f);
 				}
+				if (scenario == "ironbracketwheel")
+				{
+					yield return Scenario("ironbracketwheel", BuildIronBracketWheelScene,
+						TriggerFirst(PartType.MotorWheel, 9000), VerifyIronBracketWheel, 0.8f);
+				}
 				if (scenario == "stickywheel" || scenario == "all")
 				{
 					yield return Scenario("stickywheel", BuildStickyWheelScene, TriggerFirst(PartType.StickyWheel, 0), VerifyStickyWheel, 1.4f);
@@ -848,6 +853,17 @@ namespace Bpsim.QA
 			// MotorWheel 的根球体：center (0,-0.075,0) / radius 0.45，root 在 y=-1，
 			// 所以轮子最低点是 -1.525；地面放在 -1.5 让它一开始就轻微压在地上。
 			CreateGround(-1.5f);
+		}
+
+		private static void BuildIronBracketWheelScene(PartScene scene)
+		{
+			Place(scene, PartType.MotorWheel, 9000, 0, 0, 0);
+			Place(scene, PartType.MetalFrame, 0, 0, 1, 0);
+			Place(scene, PartType.Engine, 0, 0, 2, 0);
+			Place(scene, PartType.MetalFrame, 0, 1, 0, 0);
+			Place(scene, PartType.MetalFrame, 0, -1, 0, 0);
+			Place(scene, PartType.MetalFrame, 0, 0, -1, 0);
+			Place(scene, PartType.MetalFrame, 0, 5, 0, 0);
 		}
 
 		private static void BuildStickyWheelScene(PartScene scene)
@@ -2472,6 +2488,80 @@ namespace Bpsim.QA
 				+ " state=" + state.Replace("\n", " | ");
 		}
 
+		private static string VerifyIronBracketWheel(PartScene scene)
+		{
+			EntityManager entityManager = PartGameplayUtil.Em;
+			Entity wheel = FindPart(PartType.MotorWheel, 9000);
+			Entity vehicle = FindPartAt(PartType.MetalFrame, 0, 0, 1);
+			Entity external = FindPartAt(PartType.MetalFrame, 0, 5, 0);
+			Entity[] sides =
+			{
+				FindPartAt(PartType.MetalFrame, 0, 1, 0),
+				FindPartAt(PartType.MetalFrame, 0, -1, 0),
+				FindPartAt(PartType.MetalFrame, 0, 0, -1)
+			};
+			if (wheel == Entity.Null || vehicle == Entity.Null || external == Entity.Null || sides[0] == Entity.Null || sides[1] == Entity.Null || sides[2] == Entity.Null)
+			{
+				return "FAIL iron bracket wheel fixture missing";
+			}
+
+			Wheel state = entityManager.GetComponentData<Wheel>(wheel);
+			int vehicleComponent = PartGameplayUtil.ConnectedComponent(wheel);
+			bool connected = true;
+			bool rotating = true;
+			bool hinges = true;
+			for (int i = 0; i < sides.Length; i++)
+			{
+				Entity side = sides[i];
+				connected &= PartGameplayUtil.ConnectedComponent(side) == vehicleComponent;
+				rotating &= entityManager.HasComponent<MotorWheelRotorMember>(side)
+					&& math.abs(PartVariantPhysics.AngularSpeed(side)) > 1f;
+				hinges &= HasHingeJoint(wheel, side);
+			}
+
+			bool vehicleIgnored = !CollidersCanCollide(sides[0], vehicle);
+			bool externalCollision = CollidersCanCollide(sides[0], external);
+			bool terrainCollision = CollidersCanCollide(sides[0], CollisionFilter.Default);
+			bool spin = state.SpinSpeed > 1f && math.abs(state.Angle) > 10f;
+			bool pass = spin && connected && rotating && hinges && vehicleIgnored && externalCollision && terrainCollision;
+			return (pass ? "PASS" : "FAIL") + " ironbracketwheel spin=" + state.SpinSpeed.ToString("F2")
+				+ " angle=" + state.Angle.ToString("F1") + " connected=" + connected
+				+ " rotating=" + rotating + " hinges=" + hinges
+				+ " vehicleIgnored=" + vehicleIgnored + " externalCollision=" + externalCollision
+				+ " terrainCollision=" + terrainCollision;
+		}
+
+		private static bool HasHingeJoint(Entity wheel, Entity target)
+		{
+			EntityManager entityManager = PartGameplayUtil.Em;
+			foreach (Entity joint in PartGameplayUtil.Simulator.Joints)
+			{
+				if (!entityManager.Exists(joint) || !entityManager.HasComponent<PhysicsJoint>(joint)
+					|| !entityManager.HasComponent<PhysicsConstrainedBodyPair>(joint)) continue;
+				PhysicsConstrainedBodyPair pair = entityManager.GetComponentData<PhysicsConstrainedBodyPair>(joint);
+				if ((pair.EntityA == wheel && pair.EntityB == target) || (pair.EntityB == wheel && pair.EntityA == target))
+					return entityManager.GetComponentData<PhysicsJoint>(joint).JointType == JointType.Hinge;
+			}
+			return false;
+		}
+
+		private static bool CollidersCanCollide(Entity a, Entity b)
+		{
+			EntityManager entityManager = PartGameplayUtil.Em;
+			if (!entityManager.HasComponent<PhysicsCollider>(a) || !entityManager.HasComponent<PhysicsCollider>(b)) return false;
+			CollisionFilter filterA = entityManager.GetComponentData<PhysicsCollider>(a).Value.Value.GetCollisionFilter();
+			CollisionFilter filterB = entityManager.GetComponentData<PhysicsCollider>(b).Value.Value.GetCollisionFilter();
+			return CollisionFilter.IsCollisionEnabled(filterA, filterB);
+		}
+
+		private static bool CollidersCanCollide(Entity part, CollisionFilter filter)
+		{
+			EntityManager entityManager = PartGameplayUtil.Em;
+			if (!entityManager.HasComponent<PhysicsCollider>(part)) return false;
+			CollisionFilter partFilter = entityManager.GetComponentData<PhysicsCollider>(part).Value.Value.GetCollisionFilter();
+			return CollisionFilter.IsCollisionEnabled(partFilter, filter);
+		}
+
 		private static string VerifyStickyWheel(PartScene scene)
 		{
 			Entity wheel = FindPart(PartType.StickyWheel, 0);
@@ -3262,6 +3352,22 @@ namespace Bpsim.QA
 				{
 					return entity;
 				}
+			}
+			return Entity.Null;
+		}
+
+		private static Entity FindPartAt(PartType type, int index, int x, int y)
+		{
+			PartManager manager = PartManager.Instance;
+			if (manager == null || manager.PartSimulator == null) return Entity.Null;
+			EntityManager entityManager = PartGameplayUtil.Em;
+			foreach (Entity entity in manager.PartSimulator.Unmanaged.Parts)
+			{
+				if (!entityManager.Exists(entity) || !entityManager.HasComponent<PartTypeValue>(entity)
+					|| !entityManager.HasComponent<PartTransform>(entity)) continue;
+				PartTypeValue value = entityManager.GetComponentData<PartTypeValue>(entity);
+				PartTransform transform = entityManager.GetComponentData<PartTransform>(entity);
+				if (value.Type == type && value.Index == index && transform.X == x && transform.Y == y) return entity;
 			}
 			return Entity.Null;
 		}

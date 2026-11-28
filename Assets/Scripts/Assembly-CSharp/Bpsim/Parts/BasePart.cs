@@ -436,6 +436,7 @@ namespace Bpsim.Parts
 
 		public static bool IsTriggerable(PartTypeInfo typeInfo)
 		{
+			if (typeInfo.PartType == PartType.Kicker && typeInfo.PartIndex == 9000) return false;
 			typeInfo = PartVariants.Resolve(typeInfo);
 			switch (typeInfo.PartType)
 			{

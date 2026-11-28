@@ -3,6 +3,7 @@ using Bpsim.Parts.Simulation;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Transforms;
 
 namespace Bpsim.Parts.Gameplay
 {
@@ -14,17 +15,22 @@ namespace Bpsim.Parts.Gameplay
 		private readonly List<Entity> m_originalParts = new List<Entity>();
 		private readonly Dictionary<Entity, Entity> m_links = new Dictionary<Entity, Entity>();
 		private readonly List<Entity> m_stale = new List<Entity>();
+		private readonly Dictionary<Entity, Entity> m_revoluteLinks = new Dictionary<Entity, Entity>();
+		private readonly List<Entity> m_revoluteStale = new List<Entity>();
+		private const int RevoluteVariantIndex = 9000;
 		public bool Fired => m_fired;
 		public int LinkCount => m_links.Count;
 		private bool Elastic => Info.PartIndex == 2 || Info.PartIndex == 4;
+		private bool IsRevoluteVariant => Info.PartIndex == RevoluteVariantIndex;
 		public override void Init()
 		{
 			Enabled = false;
-			m_enclosed = Em.HasComponent<PartContainerValue>(Part) && PartGameplayUtil.Alive(Em.GetComponentData<PartContainerValue>(Part).Value);
+			m_enclosed = IsEnclosed();
+			if (IsRevoluteVariant) EnsureRevoluteLinks();
 		}
 		public override void Trigger()
 		{
-			if (Info.PartIndex == 3 || m_enclosed || (m_fired && Info.PartIndex == 0)) return;
+			if (IsRevoluteVariant || Info.PartIndex == 3 || m_enclosed || (m_fired && Info.PartIndex == 0)) return;
 			if (!m_fired)
 			{
 				m_fired = true;
@@ -61,6 +67,13 @@ namespace Bpsim.Parts.Gameplay
 		}
 		public override void Tick(float dt)
 		{
+			if (IsRevoluteVariant)
+			{
+				m_enclosed = IsEnclosed();
+				if (m_enclosed) EnsureRevoluteLinks();
+				else RemoveRevoluteLinks();
+				return;
+			}
 			if (!Enabled || m_enclosed) return;
 			m_stale.Clear();
 			foreach (var link in m_links)
@@ -138,6 +151,88 @@ namespace Bpsim.Parts.Gameplay
 			}
 			return linear && angular;
 		}
+		private bool IsEnclosed()
+		{
+			if (!Em.HasComponent<PartContainerValue>(Part)) return false;
+			Entity container = Em.GetComponentData<PartContainerValue>(Part).Value;
+			return PartGameplayUtil.Alive(container) && BasePart.IsContainer(PartGameplayUtil.TypeInfo(container));
+		}
+		private void EnsureRevoluteLinks()
+		{
+			if (!IsRevoluteVariant || !m_enclosed || !PartGameplayUtil.TryGetGrid(Part, out int gridX, out int gridY, out _, out _)) return;
+			byte layer = PartBuildLayerUtility.GetLayer(Em, Part);
+			m_revoluteStale.Clear();
+			foreach (KeyValuePair<Entity, Entity> link in m_revoluteLinks)
+			{
+				if (!PartGameplayUtil.Alive(link.Key) || !Em.Exists(link.Value)) m_revoluteStale.Add(link.Key);
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				int2 offset = i switch
+				{
+					0 => new int2(1, 0),
+					1 => new int2(0, 1),
+					2 => new int2(-1, 0),
+					_ => new int2(0, -1)
+				};
+				if (!PartGameplayUtil.Simulator.PartMap.TryGet(gridX + offset.x, gridY + offset.y, layer, out PartGridInfo grid)) continue;
+				Entity target = grid.HasPart ? grid.Part : grid.PartContainer;
+				if (!CanRevoluteLink(target) || m_revoluteLinks.ContainsKey(target)) continue;
+				Entity joint = CreateRevoluteJoint(target, new float3(gridX + offset.x, gridY + offset.y, PartGameplayUtil.Position(Part).z));
+				if (joint != Entity.Null) m_revoluteLinks.Add(target, joint);
+			}
+			foreach (Entity target in m_revoluteStale)
+			{
+				if (m_revoluteLinks.TryGetValue(target, out Entity joint)) TNTDamage.BreakJoint(joint);
+				m_revoluteLinks.Remove(target);
+			}
+			if (m_revoluteStale.Count > 0) TNTDamage.RefreshTopology();
+		}
+		private bool CanRevoluteLink(Entity target)
+		{
+			return target != Entity.Null && target != Part && PartGameplayUtil.Alive(target)
+				&& Em.HasComponent<PhysicsMass>(target) && Em.HasComponent<LocalTransform>(target)
+				&& Em.HasComponent<PhysicsWorldIndex>(target);
+		}
+		private Entity CreateRevoluteJoint(Entity target, float3 anchorWorld)
+		{
+			EntityManager em = Em;
+			float3 sourcePosition = PartGameplayUtil.Position(Part);
+			float3 targetPosition = PartGameplayUtil.Position(target);
+			quaternion sourceRotation = PartGameplayUtil.Rotation(Part);
+			quaternion targetRotation = PartGameplayUtil.Rotation(target);
+			RigidTransform sourceTransform = new RigidTransform(sourceRotation, sourcePosition);
+			RigidTransform targetTransform = new RigidTransform(targetRotation, targetPosition);
+			RigidTransform targetFromSource = math.mul(math.inverse(targetTransform), sourceTransform);
+			BodyFrame frameA = new BodyFrame
+			{
+				Position = math.transform(math.inverse(sourceTransform), anchorWorld),
+				Axis = new float3(0f, 0f, 1f),
+				PerpendicularAxis = new float3(1f, 0f, 0f)
+			};
+			BodyFrame frameB = new BodyFrame
+			{
+				Position = math.transform(targetFromSource, frameA.Position),
+				Axis = math.rotate(targetFromSource.rot, frameA.Axis),
+				PerpendicularAxis = math.rotate(targetFromSource.rot, frameA.PerpendicularAxis)
+			};
+			Entity joint = em.CreateEntity();
+			em.SetName(joint, "RevoluteSeparatorJoint");
+			em.AddSharedComponent(joint, new PhysicsWorldIndex(0u));
+			em.AddComponentData(joint, PhysicsJoint.CreateHinge(frameA, frameB));
+			em.AddComponentData(joint, new PhysicsConstrainedBodyPair(Part, target, false));
+			em.AddComponentData(joint, new PartJointInfo { Type = PartJointType.Normal, State = 1 });
+			PartGameplayUtil.Simulator.Joints.Add(joint);
+			TNTDamage.RefreshTopology();
+			return joint;
+		}
+		private void RemoveRevoluteLinks()
+		{
+			if (m_revoluteLinks.Count == 0) return;
+			foreach (Entity joint in m_revoluteLinks.Values) TNTDamage.BreakJoint(joint);
+			m_revoluteLinks.Clear();
+			TNTDamage.RefreshTopology();
+		}
 		private bool HasFixedLink(Entity other)
 		{
 			foreach (Entity joint in PartGameplayUtil.Simulator.Joints)
@@ -167,7 +262,7 @@ namespace Bpsim.Parts.Gameplay
 			PartGameplayUtil.Simulator.Joints.Add(joint);
 			TNTDamage.RefreshTopology();
 		}
-		public override void Dispose() { m_links.Clear(); m_originalParts.Clear(); }
-		public override string Describe() => "kicker skin=" + Info.PartIndex + " fired=" + m_fired + " enabled=" + Enabled + " links=" + m_links.Count;
+		public override void Dispose() { m_links.Clear(); RemoveRevoluteLinks(); m_originalParts.Clear(); }
+		public override string Describe() => "kicker skin=" + Info.PartIndex + " fired=" + m_fired + " enabled=" + Enabled + " links=" + m_links.Count + " revolute=" + m_revoluteLinks.Count;
 	}
 }

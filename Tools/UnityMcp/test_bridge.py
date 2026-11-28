@@ -7,7 +7,9 @@ import time
 import unittest
 from unittest.mock import Mock
 
+from adapter import AdapterError
 from bridge import Bridge, BridgeError
+from fakes import FakeAdapter, make_bridge
 
 
 class BridgeTests(unittest.TestCase):
@@ -19,13 +21,10 @@ class BridgeTests(unittest.TestCase):
         self.project = Path(self.temp.name).resolve()
         self.bridge = self.make_bridge()
 
-    def make_bridge(self):
-        result = Bridge(self.project)
-        info = {"ok": True, "project": str(self.project), "playing": False,
-                "changing": False, "compiling": False, "busy": False, "mainThreadStalled": False}
-        result.http_json = Mock(side_effect=lambda path, body=None, timeout=8:
-                                dict(info) if path == "/ping" else {"ok": True, "result": {"done": True}})
-        return result
+    def make_bridge(self, **kwargs):
+        bridge = make_bridge(self.project, **kwargs)
+        self.addCleanup(bridge.close)
+        return bridge
 
     def acquire(self, bridge=None, ttl_seconds=180):
         bridge = bridge or self.bridge
@@ -37,11 +36,12 @@ class BridgeTests(unittest.TestCase):
 
     def test_read_needs_no_control(self):
         self.assertEqual(self.bridge.read("console", {"count": 2}), {"done": True})
+        self.assertEqual(self.bridge.adapter.calls, [("console", {"count": 2})])
 
     def test_write_requires_control_before_dispatch(self):
         with self.assertRaises(BridgeError):
             self.bridge.write("compile", "wrong")
-        self.bridge.http_json.assert_not_called()
+        self.assertEqual(self.bridge.adapter.calls, [])
 
     def test_success_clears_pending_and_release(self):
         token = self.acquire()
@@ -85,16 +85,19 @@ class BridgeTests(unittest.TestCase):
             self.bridge.acquire("", "purpose")
 
     def test_wrong_project_is_rejected(self):
-        self.bridge.http_json.return_value = {"ok": True, "project": str(self.project.parent)}
-        self.bridge.http_json.side_effect = None
+        self.bridge.adapter.info["project"] = str(self.project.parent)
         with self.assertRaisesRegex(BridgeError, "Wrong Unity project"):
             self.bridge.read("hierarchy")
-        self.assertEqual(self.bridge.http_json.call_count, 1)
+        self.assertEqual(self.bridge.adapter.calls, [])
 
     def test_missing_identity_is_rejected(self):
-        self.bridge.http_json.side_effect = None
-        self.bridge.http_json.return_value = {"ok": True}
+        del self.bridge.adapter.info["project"]
         with self.assertRaises(BridgeError):
+            self.bridge.status()
+
+    def test_unreachable_server_is_reported_clearly(self):
+        self.bridge.adapter.ping_failure = AdapterError("connection refused")
+        with self.assertRaisesRegex(BridgeError, "MCP for Unity server running"):
             self.bridge.status()
 
     def test_only_loopback_allowed(self):
@@ -103,14 +106,24 @@ class BridgeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 Bridge(self.project, url)
 
+    def test_mcp_endpoint_path_is_accepted(self):
+        for url, expected in [("http://127.0.0.1:8080", "http://127.0.0.1:8080"),
+                              ("http://127.0.0.1:8080/", "http://127.0.0.1:8080"),
+                              ("http://127.0.0.1:8080/mcp", "http://127.0.0.1:8080/mcp")]:
+            self.assertEqual(Bridge(self.project, url).url, expected)
+
     def test_path_escapes_and_unclaimed_extensions(self):
         for path in ["../outside.cs", "D:/outside.cs", "Assets/../../outside.cs", "Assets\\outside.cs"]:
             with self.assertRaises(BridgeError):
                 self.bridge.validate("read_file", {"path": path})
         for method, path in [("write_script", "Tools/file.cs"), ("write_script", "Assets/file.dll"),
-                             ("save_scene", ""), ("save_scene", "Assets/file.cs")]:
+                             ("save_scene", "Assets/file.cs"), ("open_scene", "Assets/file.cs")]:
             with self.assertRaises(BridgeError):
                 self.bridge.validate(method, {"path": path})
+
+    def test_save_scene_without_a_path_saves_in_place(self):
+        # No path means "save the active scene", so there is nothing to escape or mis-suffix.
+        self.assertEqual(self.bridge.validate("save_scene", {}), {})
 
     def test_file_and_parent_directory_claims(self):
         assets = self.project / "Assets"
@@ -147,38 +160,36 @@ class BridgeTests(unittest.TestCase):
 
     def test_busy_editor_never_dispatches_write(self):
         token = self.acquire()
-        self.bridge.http_json.side_effect = None
-        self.bridge.http_json.return_value = {"ok": True, "project": str(self.project), "compiling": True}
-        self.bridge.http_json.reset_mock()
+        self.bridge.adapter.info["compiling"] = True
+        self.bridge.adapter.calls.clear()
         with self.assertRaisesRegex(BridgeError, "no write was dispatched"):
             self.bridge.write("compile", token)
-        self.assertEqual(self.bridge.http_json.call_count, 1)
+        self.assertEqual(self.bridge.adapter.calls, [])
         self.assertIsNone(self.bridge.load()["pending"])
 
     def test_ambiguous_failure_not_retried_blocks_release_and_writes(self):
         token = self.acquire()
-        ping = self.bridge.ping()
-        self.bridge.http_json.side_effect = [ping, TimeoutError("simulated lost response")]
+        self.bridge.adapter.dispatch_failure = TimeoutError("simulated lost response")
         with self.assertRaisesRegex(BridgeError, "NOT retried"):
             self.bridge.write("compile", token)
+        self.assertEqual(len(self.bridge.adapter.calls), 1)
         pending = self.bridge.load()["pending"]
         self.assertEqual(pending["method"], "compile")
         with self.assertRaises(BridgeError):
             self.bridge.write("compile", token)
         with self.assertRaises(BridgeError):
             self.bridge.release(token)
-        self.bridge.http_json.side_effect = lambda *args, **kwargs: ping
+        self.bridge.adapter.dispatch_failure = None
         with self.assertRaises(BridgeError):
             self.bridge.acknowledge(token, "not actually confirmed")
         self.bridge.acknowledge(token, "Checked editor and logs; compilation finished", True)
         self.assertIsNone(self.bridge.load()["pending"])
         self.bridge.release(token)
 
-    def test_bridge_error_response_is_also_quarantined(self):
+    def test_adapter_error_is_quarantined_too(self):
         token = self.acquire()
-        ping = self.bridge.ping()
-        self.bridge.http_json.side_effect = [ping, {"ok": False, "error": "editor main thread timeout"}]
-        with self.assertRaises(BridgeError):
+        self.bridge.adapter.dispatch_failure = AdapterError("editor main thread timeout")
+        with self.assertRaisesRegex(BridgeError, "NOT retried"):
             self.bridge.write("compile", token)
         self.assertIsNotNone(self.bridge.load()["pending"])
 
@@ -190,24 +201,26 @@ class BridgeTests(unittest.TestCase):
     def test_cross_process_lease_is_shared(self):
         self.acquire()
         child = """
-from bridge import Bridge, BridgeError
 import sys
-b = Bridge(sys.argv[1])
-b.ping = lambda: {'ok': True}
+sys.path.insert(0, sys.argv[2])
+from bridge import Bridge, BridgeError
+from fakes import make_bridge
+b = make_bridge(sys.argv[1])
 try:
     b.acquire('subprocess', 'competing')
 except BridgeError:
     sys.exit(0)
 sys.exit(1)
 """
-        result = subprocess.run([sys.executable, "-c", child, str(self.project)],
-                                cwd=Path(__file__).parent, capture_output=True, text=True, timeout=10)
+        result = subprocess.run([sys.executable, "-c", child, str(self.project), str(Path(__file__).parent)],
+                                cwd=Path(__file__).parent, capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_cross_process_gate_rejects_concurrent_dispatch(self):
         child = """
-from bridge import Bridge, BridgeError
 import sys
+sys.path.insert(0, sys.argv[2])
+from bridge import Bridge, BridgeError
 b = Bridge(sys.argv[1])
 try:
     with b.gate():
@@ -216,8 +229,8 @@ except BridgeError:
     sys.exit(0)
 """
         with self.bridge.gate():
-            result = subprocess.run([sys.executable, "-c", child, str(self.project)],
-                                    cwd=Path(__file__).parent, capture_output=True, text=True, timeout=10)
+            result = subprocess.run([sys.executable, "-c", child, str(self.project), str(Path(__file__).parent)],
+                                    cwd=Path(__file__).parent, capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stderr)
 
 

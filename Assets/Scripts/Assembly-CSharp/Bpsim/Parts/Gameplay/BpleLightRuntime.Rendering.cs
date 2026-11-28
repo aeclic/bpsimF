@@ -13,6 +13,7 @@ namespace Bpsim.Parts.Gameplay
 		private Material m_entityMaterial, m_nightMaterial;
 		private Mesh m_quad;
 		private MaterialPropertyBlock m_maskProperties;
+		private readonly HashSet<Entity> m_alivePreviews = new HashSet<Entity>();
 		private const int CircleSegments = 150;
 
 		private void Awake()
@@ -58,7 +59,8 @@ namespace Bpsim.Parts.Gameplay
 		{
 			var manager = PartManager.Instance;
 			if (manager.ActiveScene == null) { ClearSources(m_previews); return; }
-			var alive = new HashSet<Entity>();
+			HashSet<Entity> alive = m_alivePreviews;
+			alive.Clear();
 			using (var query = Em.CreateEntityQuery(ComponentType.ReadOnly<BpleLightSourceTag>(), ComponentType.ReadOnly<PartSceneID>()))
 			using (var entities = query.ToEntityArray(Allocator.Temp))
 				foreach (Entity entity in entities)

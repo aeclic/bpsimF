@@ -1,20 +1,26 @@
 
-"""Tiny Unity bridge client (port 8791 for this project)."""
-import json, sys, urllib.request
+"""Tiny Unity bridge client.
 
-BASE = "http://127.0.0.1:8791"
+The transport is the project's "MCP for Unity" server; `legacy_client` finds it and keeps the
+old ``{"ok": ..., "result": ...}`` reply shape, so the call sites below did not have to change.
+"""
+import json, os, sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "UnityMcp")))
+import legacy_client
+from bridge import WRITE_METHODS
 
 
 def call(method, params=None, timeout=120):
-    data = json.dumps({"method": method, "params": params or {}}).encode("utf-8")
-    req = urllib.request.Request(BASE + "/api", data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8"))
+    """Run a legacy method; editing methods take a short control lease automatically."""
+    run = legacy_client.write if method in WRITE_METHODS else legacy_client.call
+    reply = run(method, params)
+    if not reply.get("ok"):
+        raise RuntimeError(reply.get("error") or "unity bridge error")
+    return {"ok": True, "result": reply["result"]}
 
 
 def status():
-    with urllib.request.urlopen(BASE + "/status", timeout=10) as r:
-        return json.loads(r.read().decode("utf-8"))
+    return legacy_client.status()
 
 
 if __name__ == "__main__":

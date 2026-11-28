@@ -164,4 +164,18 @@ namespace Bpsim.Parts
 		/// <summary>true = <c>FakeWheelPivot</c>（只摆动），false = <c>WheelPivot</c>（真转）。</summary>
 		public bool Fake;
 	}
+
+	/// <summary>Marks a rigid part driven by a MotorWheel#9000 rotor hinge.</summary>
+	public struct MotorWheelRotorMember : IComponentData
+	{
+		public Entity Wheel;
+		public bool FrameOnly;
+		public uint RotorCategory;
+	}
+
+	/// <summary>Marks the rigid vehicle body attached to a frame-only MotorWheel#9000 rotor.</summary>
+	public struct MotorWheelRotorVehicleMember : IComponentData
+	{
+		public Entity Wheel;
+	}
 }

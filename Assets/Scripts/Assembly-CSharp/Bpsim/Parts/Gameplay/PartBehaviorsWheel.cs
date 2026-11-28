@@ -1,4 +1,9 @@
+using System.Collections.Generic;
+using Bpsim.Parts.Simulation;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Physics;
+using Unity.Transforms;
 
 namespace Bpsim.Parts.Gameplay
 {
@@ -13,6 +18,10 @@ namespace Bpsim.Parts.Gameplay
 	/// </remarks>
 	public sealed class WheelBehavior : PartBehavior
 	{
+		private const int IronBracketWheelIndex = 9000;
+		private readonly Dictionary<Entity, Entity> m_rotorLinks = new Dictionary<Entity, Entity>();
+		private readonly HashSet<int> m_linkedComponents = new HashSet<int>();
+
 		public override void Init()
 		{
 			// 开局默认关闭，与 BPSS 的 m_enabled 默认 false 一致。
@@ -20,6 +29,130 @@ namespace Bpsim.Parts.Gameplay
 			{
 				Wheel wheel = Em.GetComponentData<Wheel>(Part);
 				Enabled = wheel.Enabled;
+			}
+			if (IsIronBracketWheel) CreateRotorLinks();
+		}
+
+		private bool IsIronBracketWheel => Info.PartType == PartType.MotorWheel && Info.PartIndex == IronBracketWheelIndex;
+
+		private void CreateRotorLinks()
+		{
+			if (!PartGameplayUtil.TryGetGrid(Part, out int gridX, out int gridY, out int rotation, out _)) return;
+			int ownComponent = PartGameplayUtil.ConnectedComponent(Part);
+			byte layer = PartBuildLayerUtility.GetLayer(Em, Part);
+			BitDirection top = BitDirection.Up.Rotate(rotation);
+			for (int i = 0; i < 4; i++)
+			{
+				BitDirection direction = BitDirectionExtensions.FromIndex(i);
+				if (direction == top) continue;
+				(int dx, int dy) = direction.ToVector();
+				if (!PartGameplayUtil.Simulator.PartMap.TryGet(gridX + dx, gridY + dy, layer, out PartGridInfo grid)) continue;
+				TryCreateRotorLink(grid.PartContainer, direction, ownComponent, rotation);
+				TryCreateRotorLink(grid.Part, direction, ownComponent, rotation);
+			}
+			PartCollisionFilter.ApplyIronBracketWheelFilters(Em, PartGameplayUtil.Simulator,
+				UserSettings.Instance.SimulationSettings.PartSelfCollision);
+		}
+
+		private void TryCreateRotorLink(Entity target, BitDirection wheelDirection, int ownComponent, int wheelRotation)
+		{
+			if (!CanConnectRotorTarget(target, wheelDirection, wheelRotation)) return;
+			int component = PartGameplayUtil.ConnectedComponent(target);
+			if (component < 0 || component == ownComponent || !m_linkedComponents.Add(component)) return;
+			bool frameOnly = IsFrameOnlyComponent(component);
+			uint rotorCategory = frameOnly ? 1u << 31 : 0u;
+
+			Entity joint = CreateRotorJoint(target);
+			if (joint == Entity.Null)
+			{
+				m_linkedComponents.Remove(component);
+				return;
+			}
+			m_rotorLinks.Add(target, joint);
+			MarkRotorComponent(component, frameOnly, rotorCategory);
+			if (frameOnly) MarkVehicleComponent(ownComponent);
+		}
+
+		private bool CanConnectRotorTarget(Entity target, BitDirection wheelDirection, int wheelRotation)
+		{
+			if (target == Entity.Null || target == Part || !PartGameplayUtil.Alive(target)
+				|| !Em.HasComponent<PhysicsMass>(target) || !Em.HasComponent<LocalTransform>(target)
+				|| !Em.HasComponent<PhysicsWorldIndex>(target) || !Em.HasComponent<PartTransform>(target)
+				|| !Em.HasComponent<PartExtensionComponent>(target) || !Em.HasComponent<PartExtensionComponent>(Part)) return false;
+			PartExtensionData source = Em.GetComponentData<PartExtensionComponent>(target).Value;
+			PartExtensionData wheel = Em.GetComponentData<PartExtensionComponent>(Part).Value;
+			int targetRotation = Em.GetComponentData<PartTransform>(target).Rotation;
+			return source.IsConnectionSource
+				&& (source.ConnectionDirection.Rotate(targetRotation) & wheelDirection.Reverse()) != 0
+				&& (wheel.ConnectionDirection.Rotate(wheelRotation) & wheelDirection) != 0;
+		}
+
+		private Entity CreateRotorJoint(Entity target)
+		{
+			float3 anchorWorld = PartGameplayUtil.Position(Part);
+			float3 sourcePosition = PartGameplayUtil.Position(Part);
+			float3 targetPosition = PartGameplayUtil.Position(target);
+			quaternion sourceRotation = PartGameplayUtil.Rotation(Part);
+			quaternion targetRotation = PartGameplayUtil.Rotation(target);
+			RigidTransform sourceTransform = new RigidTransform(sourceRotation, sourcePosition);
+			RigidTransform targetTransform = new RigidTransform(targetRotation, targetPosition);
+			RigidTransform targetFromSource = math.mul(math.inverse(targetTransform), sourceTransform);
+			BodyFrame frameA = new BodyFrame
+			{
+				Position = math.transform(math.inverse(sourceTransform), anchorWorld),
+				Axis = new float3(0f, 0f, 1f),
+				PerpendicularAxis = new float3(1f, 0f, 0f)
+			};
+			BodyFrame frameB = new BodyFrame
+			{
+				Position = math.transform(targetFromSource, frameA.Position),
+				Axis = math.rotate(targetFromSource.rot, frameA.Axis),
+				PerpendicularAxis = math.rotate(targetFromSource.rot, frameA.PerpendicularAxis)
+			};
+			Entity joint = Em.CreateEntity();
+			Em.SetName(joint, "IronBracketWheelRotorJoint");
+			Em.AddSharedComponent(joint, new PhysicsWorldIndex(0u));
+			Em.AddComponentData(joint, PhysicsJoint.CreateHinge(frameA, frameB));
+			Em.AddComponentData(joint, new PhysicsConstrainedBodyPair(Part, target, false));
+			Em.AddComponentData(joint, new PartJointInfo { Type = PartJointType.Normal, State = 1 });
+			PartGameplayUtil.Simulator.Joints.Add(joint);
+			TNTDamage.RefreshTopology();
+			return joint;
+		}
+
+		private bool IsFrameOnlyComponent(int component)
+		{
+			foreach (Entity member in PartGameplayUtil.Simulator.Parts)
+			{
+				if (PartGameplayUtil.ConnectedComponent(member) != component || !Em.HasComponent<PartTypeValue>(member)) continue;
+				PartType type = Em.GetComponentData<PartTypeValue>(member).Type;
+				if (type != PartType.MetalFrame && type != PartType.WoodenFrame) return false;
+			}
+			return true;
+		}
+
+		private void MarkRotorComponent(int component, bool frameOnly, uint rotorCategory)
+		{
+			foreach (Entity member in PartGameplayUtil.Simulator.Parts)
+			{
+				if (member == Part || !Em.Exists(member) || PartGameplayUtil.ConnectedComponent(member) != component
+					|| !Em.HasComponent<PhysicsVelocity>(member) || Em.HasComponent<MotorWheelRotorMember>(member)) continue;
+				Em.AddComponentData(member, new MotorWheelRotorMember
+				{
+					Wheel = Part,
+					FrameOnly = frameOnly,
+					RotorCategory = rotorCategory
+				});
+			}
+		}
+
+		private void MarkVehicleComponent(int component)
+		{
+			foreach (Entity member in PartGameplayUtil.Simulator.Parts)
+			{
+				if (PartGameplayUtil.ConnectedComponent(member) != component || !Em.HasComponent<PhysicsCollider>(member)
+					|| Em.HasComponent<MotorWheelRotorVehicleMember>(member)) continue;
+				Em.AddComponentData(member, new MotorWheelRotorVehicleMember { Wheel = Part });
 			}
 		}
 
@@ -36,6 +169,14 @@ namespace Bpsim.Parts.Gameplay
 			wheel.Throttle = 0f;
 			Em.SetComponentData(Part, wheel);
 			Enabled = wheel.Enabled;
+		}
+
+		public override void Dispose()
+		{
+			foreach (Entity joint in m_rotorLinks.Values) TNTDamage.BreakJoint(joint);
+			if (m_rotorLinks.Count > 0) TNTDamage.RefreshTopology();
+			m_rotorLinks.Clear();
+			m_linkedComponents.Clear();
 		}
 
 		public override string Describe()

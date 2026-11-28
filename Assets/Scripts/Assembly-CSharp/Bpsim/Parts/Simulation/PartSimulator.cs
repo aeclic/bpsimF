@@ -404,12 +404,14 @@ namespace Bpsim.Parts.Simulation
 								}
 								if (CanConnectTo(part2, in sourceAspect, entity, in targetAspect, direction))
 								{
+									bool rotorConnection = IsMotorWheelRotorSideConnection(in sourceAspect, in targetAspect);
 									float maxImpulse2 = ConnectionStrengthFactor * (sourceAspect.ExtensionData.ConnectionStrength + targetAspect.ExtensionData.ConnectionStrength);
-									if (CreateJoints)
+									if (CreateJoints && !rotorConnection)
 									{
 										PartSimulatorUnmanaged.AddFixedJoint(CommandBuffer, WorldTransformLookup, part2, entity, maxImpulse2, enableCollision: false);
 									}
-									disjointSet.Union(nativeParallelHashMap[part2], nativeParallelHashMap[entity]);
+									if (!rotorConnection)
+										disjointSet.Union(nativeParallelHashMap[part2], nativeParallelHashMap[entity]);
 								}
 							}
 						}
@@ -586,10 +588,12 @@ namespace Bpsim.Parts.Simulation
 				// compound body cannot represent release, elastic links or team collisions.
 				foreach (Entity part in m_unmanaged.Value.Parts)
 				{
-					PartType type = entityManager.GetComponentData<PartTypeValue>(part).BaseType;
-					if (type != PartType.Kicker && type != PartType.Spring && !SuspensionRuntime.IsSuspension(type)) continue;
+					PartTypeValue typeInfo = entityManager.GetComponentData<PartTypeValue>(part);
+					PartType type = typeInfo.BaseType;
+					bool motorWheelRotor = typeInfo.Type == PartType.MotorWheel && typeInfo.Index == 9000;
+					if (type != PartType.Kicker && type != PartType.Spring && !SuspensionRuntime.IsSuspension(type) && !motorWheelRotor) continue;
 					mega = false;
-					UnityEngine.Debug.Log("[PartSimulation] 分离器/弹簧/气球/沙袋需要独立刚体，本次模拟停用巨构合并（不修改设置）。");
+					UnityEngine.Debug.Log("[PartSimulation] 分离器/弹簧/气球/沙袋/铁支架轮需要独立刚体，本次模拟停用巨构合并（不修改设置）。");
 					break;
 				}
 			}
@@ -739,6 +743,7 @@ namespace Bpsim.Parts.Simulation
 
 		public static bool CanConnectTo(Entity source, in PartAspect sourceAspect, Entity target, in PartAspect targetAspect, BitDirection direction)
 		{
+			if (IsRevoluteSeparator(sourceAspect) || IsRevoluteSeparator(targetAspect)) return false;
 			if (!sourceAspect.ExtensionData.IsConnectionSource)
 			{
 				return false;
@@ -774,6 +779,7 @@ namespace Bpsim.Parts.Simulation
 		/// </summary>
 		public static bool CanConnectAcrossLayers(in PartAspect sourceAspect, in PartAspect targetAspect, BitDirection direction)
 		{
+			if (IsRevoluteSeparator(sourceAspect) || IsRevoluteSeparator(targetAspect)) return false;
 			if (!sourceAspect.ExtensionData.IsConnectionSource)
 			{
 				return false;
@@ -786,6 +792,43 @@ namespace Bpsim.Parts.Simulation
 				&& targetAspect.PartIndex >= 4 && targetAspect.PartIndex != 42
 				? BitDirection.Any : targetAspect.ExtensionData.ConnectionDirection.Rotate(targetAspect.Rotation);
 			return (targetDirection & direction.Reverse()) != 0;
+		}
+
+		private static bool IsRevoluteSeparator(in PartAspect part)
+		{
+			return part.PartType == PartType.Kicker && part.PartIndex == 9000;
+		}
+
+		private static bool IsMotorWheelRotorSideConnection(in PartAspect source, in PartAspect target)
+		{
+			PartAspect wheel;
+			PartAspect neighbour;
+			if (source.PartType == PartType.MotorWheel && source.PartIndex == 9000)
+			{
+				wheel = source;
+				neighbour = target;
+			}
+			else if (target.PartType == PartType.MotorWheel && target.PartIndex == 9000)
+			{
+				wheel = target;
+				neighbour = source;
+			}
+			else
+			{
+				return false;
+			}
+
+			int dx = neighbour.CoordX - wheel.CoordX;
+			int dy = neighbour.CoordY - wheel.CoordY;
+			if (math.abs(dx) + math.abs(dy) != 1)
+			{
+				return false;
+			}
+
+			BitDirection direction = dx > 0 ? BitDirection.Right
+				: dx < 0 ? BitDirection.Left
+				: dy > 0 ? BitDirection.Up : BitDirection.Down;
+			return direction != BitDirection.Up.Rotate(wheel.Rotation);
 		}
 	}
 }

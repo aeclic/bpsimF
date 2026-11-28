@@ -1,4 +1,18 @@
-"""Project-pinned DshBridge client with a cross-process editor control lease."""
+"""Project-pinned editor bridge: legacy DshBridge methods over the Unity MCP server.
+
+The Unity-side plugin that used to answer on a loopback socket is gone; the same
+30 method names now travel through the Coplay "MCP for Unity" server that this
+project's ``com.coplaydev.unity-mcp`` package starts for the editor.  Everything
+this module owns is still here and still authoritative:
+
+* the cross-process control lease (``.runtime/control.json`` + ``control.lock``),
+* the write quarantine used when a dispatch ends ambiguously,
+* path/claim/material/static-invocation validation.
+
+Only the transport below the dispatch point changed: ``UnityMcpAdapter`` maps each
+legacy method onto an MCP tool (or an ``execute_code`` snippet when the typed tool
+would change the legacy semantics).
+"""
 
 from contextlib import contextmanager
 import json
@@ -7,10 +21,11 @@ from pathlib import Path
 import secrets
 import threading
 import time
-import urllib.request
 from urllib.parse import urlsplit
 
+from adapter import AdapterError, UnityMcpAdapter
 from profiler import read_profiler_log, validate_profiler_params
+from unity_mcp import discover_mcp_url
 
 
 READ_METHODS = frozenset({
@@ -24,30 +39,17 @@ WRITE_METHODS = frozenset({
     "new_scene", "save_scene", "open_scene", "invoke_static", "create_material",
 })
 
+#: Paths a loopback bridge URL may carry. ``/mcp`` is the MCP streamable-HTTP endpoint.
+_ALLOWED_PATHS = ("", "/", "/mcp")
+
 
 class BridgeError(RuntimeError):
     pass
 
 
 def discover_bridge_url(project):
-    """Discover only this project's loopback endpoint; ping still verifies identity."""
-    default = "http://127.0.0.1:8791"
-    instance = project / "Temp" / "DshBridge" / "instance.json"
-    if not instance.resolve().is_relative_to(project):
-        return default
-    try:
-        if instance.stat().st_size > 16384:
-            return default
-        info = json.loads(instance.read_text(encoding="utf-8"))
-        identity = info.get("project")
-        port = info.get("port")
-        if (info.get("bridge") != "DshBridge" or not isinstance(identity, str)
-                or not Path(identity).is_absolute() or Path(identity).resolve() != project
-                or type(port) is not int or not 1 <= port <= 65535):
-            return default
-        return f"http://127.0.0.1:{port}"
-    except (OSError, ValueError, TypeError, AttributeError):
-        return default
+    """Discover this project's MCP endpoint; ``ping`` still verifies identity."""
+    return discover_mcp_url(project)
 
 
 class Bridge:
@@ -57,9 +59,9 @@ class Bridge:
         url = discover_bridge_url(self.project) if self.auto_discover else url
         endpoint = urlsplit(url)
         if (endpoint.scheme != "http" or endpoint.hostname != "127.0.0.1"
-                or endpoint.path not in ("", "/") or endpoint.query
+                or endpoint.path not in _ALLOWED_PATHS or endpoint.query
                 or endpoint.fragment or endpoint.username or endpoint.password):
-            raise ValueError("Bridge URL must be http://127.0.0.1:<port> without a path")
+            raise ValueError("Bridge URL must be http://127.0.0.1:<port>[/mcp] without a query")
         self.url = url.rstrip("/")
         # All processes for this project MUST use the same runtime directory.
         self.runtime = Path(runtime) if runtime else self.project / "Tools/UnityMcp/.runtime"
@@ -67,7 +69,11 @@ class Bridge:
         self.state_path = self.runtime / "control.json"
         self.session = secrets.token_hex(16)
         self.thread_lock = threading.Lock()
-        self.http = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        # Constructing the adapter opens no socket; the MCP handshake is lazy.
+        self.adapter = UnityMcpAdapter(self.project, url=self.url)
+
+    def close(self):
+        self.adapter.close()
 
     @contextmanager
     def gate(self):
@@ -142,23 +148,23 @@ class Bridge:
             "pending": state.get("pending"),
         }
 
-    def http_json(self, path, body=None, timeout=8):
-        data = None if body is None else json.dumps(body).encode("utf-8")
-        req = urllib.request.Request(
-            self.url + path, data=data, headers={"Content-Type": "application/json"})
-        with self.http.open(req, timeout=timeout) as response:
-            result = json.loads(response.read().decode("utf-8-sig"))
-        if not isinstance(result, dict):
-            raise BridgeError("Unexpected bridge response")
-        return result
+    def dispatch(self, method, params):
+        """Run one legacy method through the adapter, normalizing its failures."""
+        try:
+            return self.adapter.dispatch(method, params)
+        except AdapterError as exc:
+            raise BridgeError(str(exc)) from exc
 
     def ping(self):
         if self.auto_discover:
             self.url = discover_bridge_url(self.project)
+            self.adapter._url = self.url
         try:
-            info = self.http_json("/ping")
-        except Exception as exc:
-            raise BridgeError(f"Unity bridge unavailable at {self.url}; open this project in Unity: {exc}") from exc
+            info = self.adapter.ping()
+        except AdapterError as exc:
+            raise BridgeError(
+                f"Unity MCP is unavailable at {self.url}; open this project in Unity with the "
+                f"MCP for Unity server running: {exc}") from exc
         actual = info.get("project")
         if not info.get("ok") or not actual:
             raise BridgeError("Bridge did not supply its project identity; refusing to dispatch")
@@ -168,6 +174,7 @@ class Bridge:
 
     def status(self):
         info = self.ping()
+        info["url"] = self.url
         info["editor_busy"] = self.is_busy(info)
         with self.gate():
             info.update(self.public_state(self.load()))
@@ -256,6 +263,10 @@ class Bridge:
                 raise BridgeError(str(exc)) from exc
         if method in {"read_file", "list_dir", "write_script", "save_scene", "open_scene"}:
             value = params.get("path", "Assets" if method == "list_dir" else "")
+            if method == "save_scene" and not value:
+                # Legacy defaulted to Assets/Scenes/Game.unity, which silently forks the active
+                # scene into a second asset. Saving in place is what an empty path should mean.
+                return params
             path = self.project_path(value)
             if method in {"write_script", "save_scene", "open_scene"}:
                 if not value.startswith("Assets/"):
@@ -284,10 +295,7 @@ class Bridge:
             info = self.ping()
             if self.is_busy(info):
                 raise BridgeError("Unity is busy/compiling/stalled; wait and query status before retrying")
-            result = self.http_json("/api", {"method": method, "params": params}, timeout=65)
-            if not result.get("ok"):
-                raise BridgeError(str(result.get("error", result)))
-            return result.get("result")
+            return self.dispatch(method, params)
 
     def profiler(self, count=10, after_sequence=0, session_id="", source="auto"):
         if source not in {"auto", "live", "log"}:
@@ -325,9 +333,7 @@ class Bridge:
             state["pending"] = {"method": method, "agent": lease["agent"], "started_at_unix": time.time()}
             self.store(state)
             try:
-                result = self.http_json("/api", {"method": method, "params": params}, timeout=65)
-                if not result.get("ok"):
-                    raise BridgeError(str(result.get("error", result)))
+                result = self.dispatch(method, params)
             except Exception as exc:
                 state["pending"]["error"] = str(exc)
                 self.store(state)
@@ -336,7 +342,7 @@ class Bridge:
                     f"unity_acknowledge_uncertain before proceeding: {exc}") from exc
             state["pending"] = None
             self.store(state)
-            return result.get("result")
+            return result
 
     def acknowledge(self, token, inspection, confirmed=False):
         if not confirmed or not inspection.strip():

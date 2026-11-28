@@ -41,6 +41,8 @@ namespace Bpsim.Parts.Simulation
 		/// <summary>可用作连通块类别的位数（位 1..30）。</summary>
 		public const int CategoryCount = 30;
 
+		private const uint MotorWheelRotorFrameCategory = 1u << 31;
+
 		/// <summary>按连通块索引算出该部件应使用的碰撞过滤。</summary>
 		public static CollisionFilter FilterFor(int componentIndex)
 		{
@@ -170,6 +172,83 @@ namespace Bpsim.Parts.Simulation
 			return changed;
 		}
 
+		/// <summary>Keep frame-only MotorWheel#9000 rotors clear of their vehicle while retaining external contacts.</summary>
+		public static int ApplyIronBracketWheelFilters(EntityManager entityManager, PartSimulatorUnmanaged simulator, bool selfCollision)
+		{
+			NativeList<Entity> parts = simulator.Parts;
+			int changed = 0;
+			for (int i = 0; i < parts.Length; i++)
+			{
+				Entity entity = parts[i];
+				if (entity == Entity.Null || !entityManager.Exists(entity)
+					|| !entityManager.HasComponent<PhysicsCollider>(entity)
+					|| !entityManager.HasComponent<PartConnectedComponent>(entity)) continue;
+
+				if (entityManager.HasComponent<MotorWheelRotorVehicleMember>(entity))
+				{
+					MotorWheelRotorVehicleMember bodyMember = entityManager.GetComponentData<MotorWheelRotorVehicleMember>(entity);
+					if (entityManager.Exists(bodyMember.Wheel) && entityManager.HasComponent<PartConnectedComponent>(bodyMember.Wheel)
+						&& IsolateForFilter(entityManager, simulator, entity))
+					{
+						int component = entityManager.GetComponentData<PartConnectedComponent>(bodyMember.Wheel).Index;
+						if (component >= 0)
+						{
+							PhysicsCollider collider = entityManager.GetComponentData<PhysicsCollider>(entity);
+						ref Unity.Physics.Collider value = ref collider.Value.Value;
+						CollisionFilter current = value.GetCollisionFilter();
+						uint vehicleCategory = FilterFor(component).BelongsTo;
+						uint vehicleCollidesWith = selfCollision ? uint.MaxValue : ~vehicleCategory;
+						if (current.BelongsTo != vehicleCategory || current.CollidesWith != vehicleCollidesWith || current.GroupIndex != 0)
+						{
+							current.BelongsTo = vehicleCategory;
+							current.CollidesWith = vehicleCollidesWith;
+							current.GroupIndex = 0;
+							value.SetCollisionFilter(current);
+							changed++;
+						}
+						}
+					}
+				}
+
+				if (!entityManager.HasComponent<MotorWheelRotorMember>(entity)) continue;
+				MotorWheelRotorMember rotorMember = entityManager.GetComponentData<MotorWheelRotorMember>(entity);
+				if (!rotorMember.FrameOnly || !entityManager.Exists(rotorMember.Wheel)
+					|| !entityManager.HasComponent<PartConnectedComponent>(rotorMember.Wheel)
+					|| !IsolateForFilter(entityManager, simulator, entity)) continue;
+
+				int vehicleComponent = entityManager.GetComponentData<PartConnectedComponent>(rotorMember.Wheel).Index;
+				if (vehicleComponent < 0) continue;
+				uint vehicleMask = FilterFor(vehicleComponent).BelongsTo;
+				PhysicsCollider rotorCollider = entityManager.GetComponentData<PhysicsCollider>(entity);
+				ref Unity.Physics.Collider rotorValue = ref rotorCollider.Value.Value;
+				CollisionFilter rotorFilter = rotorValue.GetCollisionFilter();
+				uint rotorCategory = rotorMember.RotorCategory == 0u ? MotorWheelRotorFrameCategory : rotorMember.RotorCategory;
+				uint rotorCollidesWith = ~(vehicleMask | rotorCategory);
+				if (rotorFilter.BelongsTo != rotorCategory || rotorFilter.CollidesWith != rotorCollidesWith || rotorFilter.GroupIndex != 0)
+				{
+					rotorFilter.BelongsTo = rotorCategory;
+					rotorFilter.CollidesWith = rotorCollidesWith;
+					rotorFilter.GroupIndex = 0;
+					rotorValue.SetCollisionFilter(rotorFilter);
+					changed++;
+				}
+			}
+			return changed;
+		}
+
+		private static bool IsolateForFilter(EntityManager entityManager, PartSimulatorUnmanaged simulator, Entity entity)
+		{
+			if (entityManager.HasComponent<PartIsolatedCollider>(entity)) return true;
+			PhysicsCollider physicsCollider = entityManager.GetComponentData<PhysicsCollider>(entity);
+			if (!physicsCollider.Value.IsCreated) return false;
+			BlobAssetReference<Collider> isolated = physicsCollider.Value.Value.Clone();
+			if (!isolated.IsCreated) return false;
+			entityManager.SetComponentData(entity, new PhysicsCollider { Value = isolated });
+			entityManager.AddComponent<PartIsolatedCollider>(entity);
+			simulator.TrackScaledCollider(isolated);
+			return true;
+		}
+
 		/// <summary>
 		/// 在 job 里（Burst）按连通块刷新碰撞过滤。关节被拉断后连通块会重新切分，
 		/// 断开的碎片必须恢复互相碰撞，所以这次刷新紧跟在连通块重算之后。
@@ -177,8 +256,13 @@ namespace Bpsim.Parts.Simulation
 		/// ComponentLookup 读回来（读写可见性在 Burst 下不保证）。
 		/// 只处理独占 blob 的部件（<see cref="PartIsolatedCollider"/>），共享 blob 一律不动。
 		/// </summary>
-		public static void ApplyInJob(NativeList<Entity> parts, NativeArray<int> componentIndexes, ref ComponentLookup<PhysicsCollider> colliderLookup, ref ComponentLookup<PartIsolatedCollider> isolatedLookup)
+		public static void ApplyInJob(NativeList<Entity> parts, NativeArray<int> componentIndexes,
+			ref ComponentLookup<PhysicsCollider> colliderLookup, ref ComponentLookup<PartIsolatedCollider> isolatedLookup,
+			ref ComponentLookup<MotorWheelRotorMember> rotorMemberLookup,
+			ref ComponentLookup<MotorWheelRotorVehicleMember> rotorVehicleMemberLookup, bool selfCollision)
 		{
+			using NativeParallelHashMap<Entity, int> partIndexes = new NativeParallelHashMap<Entity, int>(math.max(1, parts.Length), Allocator.Temp);
+			for (int i = 0; i < parts.Length; i++) partIndexes.TryAdd(parts[i], i);
 			for (int i = 0; i < parts.Length; i++)
 			{
 				Entity entity = parts[i];
@@ -195,9 +279,30 @@ namespace Bpsim.Parts.Simulation
 				{
 					continue;
 				}
-				CollisionFilter filter = FilterFor(componentIndexes[i]);
 				ref Unity.Physics.Collider collider = ref physicsCollider.Value.Value;
 				CollisionFilter current = collider.GetCollisionFilter();
+				CollisionFilter filter = FilterFor(componentIndexes[i]);
+				if (rotorVehicleMemberLookup.HasComponent(entity))
+				{
+					MotorWheelRotorVehicleMember body = rotorVehicleMemberLookup[entity];
+					if (partIndexes.TryGetValue(body.Wheel, out int wheelIndex))
+					{
+						uint vehicleCategory = FilterFor(componentIndexes[wheelIndex]).BelongsTo;
+						filter.BelongsTo = vehicleCategory;
+						filter.CollidesWith = selfCollision ? current.CollidesWith : ~vehicleCategory;
+					}
+				}
+				else if (rotorMemberLookup.HasComponent(entity))
+				{
+					MotorWheelRotorMember rotor = rotorMemberLookup[entity];
+					if (rotor.FrameOnly && partIndexes.TryGetValue(rotor.Wheel, out int wheelIndex))
+					{
+						uint vehicleCategory = FilterFor(componentIndexes[wheelIndex]).BelongsTo;
+						uint rotorCategory = rotor.RotorCategory == 0u ? MotorWheelRotorFrameCategory : rotor.RotorCategory;
+						filter.BelongsTo = rotorCategory;
+						filter.CollidesWith = ~(vehicleCategory | rotorCategory);
+					}
+				}
 				if (current.BelongsTo == filter.BelongsTo && current.CollidesWith == filter.CollidesWith)
 				{
 					continue;

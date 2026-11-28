@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod>
+  <Name>三角铰链分离器</Name>
+  <Author>bpsim project</Author>
+  <Version>0.1.0</Version>
+  <Description>分离器的三角桁架变种。装入框内后，会把同层四个邻格的部件以绕邻格中心旋转的 revolute 关节连接起来。</Description>
+  <MultiplayerCompatible>false</MultiplayerCompatible>
+  <MinGameVersion>0.0.12</MinGameVersion>
+  <ID>9a3d2a8e-5d2a-46d7-9d23-3d1a1f6a9000</ID>
+  <EntryPoint type="RevoluteSeparator.Entry" />
+  <Assemblies>
+    <Assembly path="RevoluteSeparator.dll" />
+  </Assemblies>
+</Mod>

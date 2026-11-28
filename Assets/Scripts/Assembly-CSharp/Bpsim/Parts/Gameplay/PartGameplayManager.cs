@@ -23,7 +23,11 @@ namespace Bpsim.Parts.Gameplay
 		private readonly List<Entity> m_spawnedParts = new List<Entity>();
 
 		// Spawning can happen while Tick enumerates m_behaviors. Initialize after that iteration.
-		internal void RegisterSpawnedPart(Entity part) => m_spawnedParts.Add(part);
+		internal void RegisterSpawnedPart(Entity part)
+		{
+			m_spawnedParts.Add(part);
+			MarkerTeams.MarkDirty();
+		}
 
 		private bool m_running;
 
@@ -135,6 +139,7 @@ namespace Bpsim.Parts.Gameplay
 			}
 			m_behaviors.Clear();
 			m_dead.Clear();
+			MarkerTeams.Reset();
 			if (PartManager.Instance != null && PartManager.Instance.PartSimulator != null)
 			{
 				PartGameplayUtil.RestoreAlpha(VoidLightBehavior.AlphaRestore);

@@ -58,10 +58,28 @@ namespace Bpsim.Parts.Gameplay
 		private static readonly HashSet<Entity> Detached = new HashSet<Entity>();
 		private static readonly HashSet<Entity> BrokenJoints = new HashSet<Entity>();
 		private static bool TopologyDirty;
-		internal static void RefreshTopology() => TopologyDirty = true;
-		internal static void BreakJoint(Entity joint) { if (joint != Entity.Null) BrokenJoints.Add(joint); }
-		public static void Retire(Entity part) { Retired.Add(part); Detached.Add(part); }
-		public static void Detach(Entity part) => Detached.Add(part);
+		internal static void RefreshTopology()
+		{
+			TopologyDirty = true;
+			MarkerTeams.MarkDirty();
+		}
+		internal static void BreakJoint(Entity joint)
+		{
+			if (joint == Entity.Null) return;
+			BrokenJoints.Add(joint);
+			MarkerTeams.MarkDirty();
+		}
+		public static void Retire(Entity part)
+		{
+			Retired.Add(part);
+			Detached.Add(part);
+			MarkerTeams.MarkDirty();
+		}
+		public static void Detach(Entity part)
+		{
+			Detached.Add(part);
+			MarkerTeams.MarkDirty();
+		}
 		public static void Clear() { Retired.Clear(); Detached.Clear(); BrokenJoints.Clear(); TopologyDirty = false; }
 
 		public static int BurnJoints(Entity part, float probability)
@@ -140,6 +158,7 @@ namespace Bpsim.Parts.Gameplay
 				PartSimulation.UpdateConnectedComponents(manager.PartSimulator.UnmanagedRef,
 					manager.System.GetComponentLookup<PartConnectedComponent>(), manager.System.GetComponentLookup<PartExtensionComponent>(true), set);
 			if (!UserSettings.Instance.SimulationSettings.PartSelfCollision) PartCollisionFilter.Apply(em, simulator);
+			PartCollisionFilter.ApplyIronBracketWheelFilters(em, simulator, UserSettings.Instance.SimulationSettings.PartSelfCollision);
 			FuelSystem.MarkDirty();
 			if (PartButtonList.Instance != null) PartButtonList.Instance.NeedsUpdate = true;
 			Clear();

@@ -8,8 +8,8 @@
 | 进 Play（含恢复 20k 部件存档） | 16 条 Burst 假警告 + 1 条 `Ignoring invalid [UpdateAfter]` + 19 条 `Destroy may not be called from edit mode!` + 2 条 `NullReferenceException` | 0 |
 | Play 内跑物理（`BpsimPlayQA place` / `fall`） | 上面全部 + 4 条 Havok job 的 Burst 假警告 | 0 |
 | 编译 | 4 条 `warning CS` | 0 error / 0 warning |
-| Windows Player | `ArgumentNullException: burstMethodHandle` + `Script error: OnParticleUpdateJobScheduled` | 只剩后者（见「未修项」） |
-| Android Player | `Unable to load plugin 'HavokNative'` ×40+ + 2 条 NRE | 只剩后者（见「未修项」） |
+| Windows Player | `ArgumentNullException: burstMethodHandle` + `Script error: OnParticleUpdateJobScheduled` | 历史上只剩后者；本次 Player 启动待复测（见下文） |
+| Android Player | `Unable to load plugin 'HavokNative'` ×40+ + 2 条 NRE | 历史上只剩后者；本次 Android 启动待复测（见下文） |
 
 验证口径：`GET http://127.0.0.1:8791/status` 的 `logs` 环形缓冲按 `type` 计数；物理侧另有 `Logs/bpsim-playqa.log`（`backend=HavokPhysics step=HavokPhysics`，7 个 dynamic body 从 t=1.0 的 −8.79 掉到 t=2.0 的 −21.68，说明确实在跑 Havok）。
 
@@ -163,11 +163,11 @@ python Tools/PatchUrpCoreUtils.py --restore
 
 ---
 
-## 未修项（已确认无害/超出范围）
+## 已处理与确认无害项
 
-### `Script error: OnParticleUpdateJobScheduled`
+### `Script error: OnParticleUpdateJobScheduled`（Windows Editor 已验证修复）
 
-Player/Android 启动时（以及编辑器**每次域重载**，写在 `Logs/editor-run.log` 里、但不进 Console 窗口）出现三行：
+Player/Android 启动时以及编辑器程序集检查时可能出现三行：
 
 ```
 Script error: OnParticleUpdateJobScheduled
@@ -177,17 +177,14 @@ The message will be ignored.
 
 已查明：
 
-- 三行都来自 Unity 原生侧（`UnityPlayer.dll` 里 `MonoScriptCache.cpp` 的那组字符串，
-  `OnParticleUpdateJobScheduled` 只是内置消息名表里的一项），不是任何脚本 `Debug.Log` 出来的，
-  所以 `ILogHandler` 过滤器够不到、控制台窗口也不显示它。
-- 全工程唯一声明这个名字的托管代码是 `Assets/Plugins/UniTask.dll` 里的
-  `Cysharp.Threading.Tasks.Triggers.AsyncParticleUpdateJobScheduledTrigger.OnParticleUpdateJobScheduled(ParticleSystemJobData)`
-  （游戏里没有任何场景/预制体引用 UniTask 的 trigger 组件，也没代码 AddComponent 它）。
-- 现象与 Unity 2022.2 的「零参数消息 + 一带参数处理函数」不匹配一致：引擎在装配/消息表注册阶段发现签名不符，
-  打一次就当无事发生，物理与渲染都不受影响。
-- 已做过对照实验：把 `-BurstDirectCallInitializer` 里的调用注释掉重新打包，消息照旧 → 与 Burst 无关。
+- 诊断来自 Unity 原生侧 `MonoScriptCache.cpp`，不是脚本 `Debug.Log`，所以 `ILogHandler` 过滤器够不到它。
+- 唯一相关托管回调位于 `Assets/Plugins/UniTask.dll` 的
+  `Cysharp.Threading.Tasks.Triggers.AsyncParticleUpdateJobScheduledTrigger`。项目场景、预制体和源码没有引用此 trigger。
+- Unity 2022.2 的消息签名与该单参数回调不匹配。已将 DLL 中该私有方法改名为 `onParticleUpdateJobScheduled`，方法签名保持不变。
+- 2026-11-25 的 Windows Unity Editor 2022.2.23f1c1 日志在 DLL 导入后的旧程序集域里仍记录了两次诊断；脚本编译成功并完成完整域重载后，后续诊断数为 0。完整日志共有 4 条该诊断，全部位于最终重载之前。
+- 曾将 `-BurstDirectCallInitializer` 中的调用注释掉重新打包，诊断照旧，与 Burst 无关。
 
-要彻底消掉只能改 UniTask.dll（把那个方法改名）或换 UniTask 版本；代价大于收益，暂不动。
+这项验证只覆盖 Windows Editor 完整域重载。Player/Android 启动尚未复测；改名也意味着依赖 Unity 消息分发的 UniTask 粒子触发器未获验证。
 
 ### 其它已验证「不是问题」的日志
 

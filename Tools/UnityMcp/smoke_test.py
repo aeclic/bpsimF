@@ -35,7 +35,7 @@ async def main():
         first, second = sessions
         tools = await first.list_tools()
         names = {tool.name for tool in tools.tools}
-        assert len(names) == 7, names
+        assert len(names) == 8, names
         resources = await first.list_resources()
         assert any(str(r.uri) == "unity://bpsim/guide" for r in resources.resources)
         resource = await first.read_resource("unity://bpsim/guide")
@@ -63,7 +63,8 @@ async def main():
         assert status_after["control"] is None
         print(json.dumps({
             "ok": True, "tools": sorted(names), "resource": "unity://bpsim/guide",
-            "unity": status["unity"], "project": status["project"],
+            "unity": status.get("projectId"), "transport": status.get("transport"),
+            "server": status.get("server"), "project": status["project"],
             "console_entries_read": len(console), "two_session_exclusion": "passed",
             "cross_session_token_rejected": "passed", "lease_released": True,
             "unity_write_commands_dispatched": 0,
